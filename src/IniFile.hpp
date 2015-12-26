@@ -29,44 +29,24 @@ namespace inifile
         IniField& operator=(const std::string &value);
     };
 
-    class IniSection
+    class IniSection : public std::map<std::string, IniField>
     {
     public:
         IniSection();
         ~IniSection();
-
-        IniField& operator[](const std::string &fieldName);
-
-        typedef std::map<std::string, IniField>::iterator iterator;
-        typedef std::map<std::string, IniField>::const_iterator const_iterator;
-        iterator begin();
-        const_iterator begin();
-        iterator end();
-        const_iterator end();
     };
 
-    class IniFile
+    class IniFile: public std::map <std::string, IniSection>
     {
-    private:
-        std::map <std::string, IniSection> sections_;
     public:
         IniFile();
         ~IniFile();
 
-        void load(const std::istream &is);
+        void load(std::istream &is);
         void load(const std::string &fileName);
 
         void save(std::ostream &os);
         void save(const std::string &fileName);
-
-        IniSection& operator[](const std::string &sectionName);
-
-        typedef std::map<std::string, IniField>::iterator iterator;
-        typedef std::map<std::string, IniField>::const_iterator const_iterator;
-        iterator begin();
-        const_iterator begin();
-        iterator end();
-        const_iterator end();
     };
 }
 

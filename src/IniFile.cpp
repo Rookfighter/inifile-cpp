@@ -9,7 +9,6 @@
 
 namespace inifile
 {
-
     static bool strToBool (const std::string &value)
     {
         std::string tmp (value);
@@ -44,7 +43,6 @@ namespace inifile
     }
 
     IniFile::IniFile()
-            : sections_()
     {
     }
 
@@ -52,8 +50,38 @@ namespace inifile
     {
     }
 
-    void IniFile::load(const std::istream& is)
+    void IniFile::load(std::istream& is)
     {
+        clear();
+        int lineNo = 0;
+        std::string currentSection;
+        while (!is.eof() && is.fail())
+        {
+            std::string line;
+            std::getline(is, line, '\n');
+            ++lineNo;
+
+            if(line.size() == 0)
+                continue;
+            if (line[0] == '#')
+                continue;
+            if (line[0] == '[')
+            {
+            }
+            else
+            {
+                std::size_t pos = line.find("=");
+                if (pos == std::string::npos)
+                {
+                    std::stringstream ss;
+                    ss << "l" << lineNo << ": parsing failed, no '=' found";
+                    throw std::logic_error(ss.str());
+                }
+                std::string name = line.substr(0, pos);
+                std::string value = line.substr(pos + 1, std::string::npos);
+                (*this)[currentSection][name] = value;
+            }
+        }
     }
 
     void IniFile::load(const std::string& fileName)
@@ -70,11 +98,6 @@ namespace inifile
     {
         std::ofstream os(fileName);
         save(os);
-    }
-
-    IniSection& IniFile::operator[](const std::string &sectionName)
-    {
-        return sections_[sectionName];
     }
 
     IniField::IniField()
@@ -159,10 +182,5 @@ namespace inifile
 
     IniSection::~IniSection()
     {
-    }
-
-    IniField& IniSection::operator[](const std::string &fieldName)
-    {
-        return fields_[fieldName];
     }
 }
