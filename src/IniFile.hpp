@@ -1,8 +1,8 @@
 #ifndef INIFILE_HPP_
 #define INIFILE_HPP_
 
-#include <istream>
 #include <map>
+#include <istream>
 
 namespace inifile
 {
@@ -29,14 +29,14 @@ namespace inifile
         IniField& operator=(const std::string &value);
     };
 
-    class IniSection : public std::map<std::string, IniField>
+    class IniSection: public std::map<std::string, IniField>
     {
     public:
-        IniSection();
-        ~IniSection();
+        IniSection() { }
+        ~IniSection() { }
     };
 
-    class IniFile: public std::map <std::string, IniSection>
+    class IniFile: public std::map<std::string, IniSection>
     {
     public:
         IniFile();
