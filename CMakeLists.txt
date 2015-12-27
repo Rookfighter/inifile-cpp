@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.0)
 project(IniFileCpp)
 set(LIB_NAME "inifilecpp")
-set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic")
 
 set(SRC "src/IniFile.cpp")
 include_directories("src")
