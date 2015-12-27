@@ -4,7 +4,7 @@
 #include <map>
 #include <istream>
 
-namespace inifile
+namespace ini
 {
 
     class IniField

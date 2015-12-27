@@ -7,3 +7,9 @@ set(SRC "src/IniFile.cpp")
 include_directories("src")
 
 add_library(${LIB_NAME} ${SRC})
+
+include_directories("deps/Catch")
+set(TEST_NAME "Test${PROJECT_NAME}")
+set(TEST_SRC "test/TestIniFile.cpp")
+add_executable(${TEST_NAME} ${TEST_SRC})
+target_link_libraries(${TEST_NAME} ${LIB_NAME})

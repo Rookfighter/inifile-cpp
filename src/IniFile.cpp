@@ -4,10 +4,11 @@
 #include <sstream>
 #include <stdexcept>
 #include <fstream>
+#include <iostream>
 
 #define TO_UPPER(str) std::transform(str.begin(), str.end(),str.begin(), ::toupper)
 
-namespace inifile
+namespace ini
 {
 
     /************************************
@@ -144,7 +145,7 @@ namespace inifile
         clear();
         int lineNo = 0;
         IniSection *currentSection = NULL;
-        while(!is.eof() && is.fail()) {
+        while(!is.eof() && !is.fail()) {
             std::string line;
             std::getline(is, line, '\n');
             ++lineNo;
