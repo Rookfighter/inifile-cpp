@@ -22,6 +22,25 @@ TEST_CASE("parse empty file", "IniFile")
     REQUIRE(inif.size() == 0);
 }
 
+TEST_CASE("parse empty section", "IniFile")
+{
+    std::istringstream ss("[Foo]");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 0);
+}
+
+TEST_CASE("parse empty field", "IniFile")
+{
+    std::istringstream ss("[Foo]\nbar=");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 1);
+    REQUIRE(inif["Foo"]["bar"].asString() == "");
+}
+
 TEST_CASE("parse section with duplicate field", "IniFile")
 {
     std::istringstream ss("[Foo]\nbar=hello\nbar=world");
@@ -122,10 +141,40 @@ TEST_CASE("fail to load unclosed section", "IniFile")
     REQUIRE_THROWS(inif.load(ss));
 }
 
-TEST_CASE("fail to load unclosed section", "IniFile")
+TEST_CASE("fail to load field without equal", "IniFile")
 {
-    std::istringstream ss("[Foo\nbar=bla");
+    std::istringstream ss("[Foo]\nbar");
     ini::IniFile inif;
 
     REQUIRE_THROWS(inif.load(ss));
+}
+
+TEST_CASE("fail to parse as bool", "IniFile")
+{
+    std::istringstream ss("[Foo]\nbar=bla");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 1);
+    REQUIRE_THROWS(inif["Foo"]["bar"].asBool());
+}
+
+TEST_CASE("fail to parse as int", "IniFile")
+{
+    std::istringstream ss("[Foo]\nbar=bla");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 1);
+    REQUIRE_THROWS(inif["Foo"]["bar"].asInt());
+}
+
+TEST_CASE("fail to parse as double", "IniFile")
+{
+    std::istringstream ss("[Foo]\nbar=bla");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 1);
+    REQUIRE_THROWS(inif["Foo"]["bar"].asDouble());
 }
