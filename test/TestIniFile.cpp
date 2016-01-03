@@ -66,3 +66,66 @@ TEST_CASE("parse field as bool", "IniFile")
     REQUIRE_FALSE(inif["Foo"]["bar2"].asBool());
     REQUIRE(inif["Foo"]["bar3"].asBool());
 }
+
+TEST_CASE("parse with comment", "IniFile")
+{
+    std::istringstream ss("[Foo]\n# this is a test\nbar=bla");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 1);
+    REQUIRE(inif["Foo"]["bar"].asString() == "bla");
+}
+
+TEST_CASE("save with bool fields", "IniFile")
+{
+    std::ostringstream ss;
+    ini::IniFile inif;
+    inif["Foo"]["bar1"] = true;
+    inif["Foo"]["bar2"] = false;
+
+    inif.save(ss);
+    REQUIRE(ss.str() == "[Foo]\nbar1=true\nbar2=false\n");
+}
+
+TEST_CASE("save with int fields", "IniFile")
+{
+    std::ostringstream ss;
+    ini::IniFile inif;
+    inif["Foo"]["bar1"] = 1;
+    inif["Foo"]["bar2"] = -2;
+
+    inif.save(ss);
+    REQUIRE(ss.str() == "[Foo]\nbar1=1\nbar2=-2\n");
+}
+
+TEST_CASE("save with double fields", "IniFile")
+{
+    std::ostringstream ss;
+    ini::IniFile inif;
+    inif["Foo"]["bar1"] = 1.2;
+    inif["Foo"]["bar2"] = -2.4;
+
+    inif.save(ss);
+    REQUIRE(ss.str() == "[Foo]\nbar1=1.2\nbar2=-2.4\n");
+}
+
+/***************************************************
+ *                Failing Tests
+ ***************************************************/
+
+TEST_CASE("fail to load unclosed section", "IniFile")
+{
+    std::istringstream ss("[Foo\nbar=bla");
+    ini::IniFile inif;
+
+    REQUIRE_THROWS(inif.load(ss));
+}
+
+TEST_CASE("fail to load unclosed section", "IniFile")
+{
+    std::istringstream ss("[Foo\nbar=bla");
+    ini::IniFile inif;
+
+    REQUIRE_THROWS(inif.load(ss));
+}
