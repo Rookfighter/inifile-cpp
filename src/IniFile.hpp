@@ -40,6 +40,8 @@ namespace ini
     {
     public:
         IniFile();
+        IniFile(const std::string &fileName);
+        IniFile(std::istream &is);
         ~IniFile();
 
         void load(std::istream &is);

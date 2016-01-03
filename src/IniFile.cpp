@@ -136,6 +136,16 @@ namespace ini
     {
     }
 
+    IniFile::IniFile(const std::string &fileName)
+    {
+        load(fileName);
+    }
+
+    IniFile::IniFile(std::istream &is)
+    {
+        load(is);
+    }
+
     IniFile::~IniFile()
     {
     }
