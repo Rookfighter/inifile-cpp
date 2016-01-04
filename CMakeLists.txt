@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(IniFileCpp)
 #cmake_policy(SET NEW)
 set(LIB_NAME "inifilecpp")
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 get_filename_component(LOCAL_MODULE_PATH "./cmake-modules" ABSOLUTE)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${LOCAL_MODULE_PATH})
 
