@@ -1,4 +1,4 @@
-# IniFileCpp
+# IniFileCpp ![](https://travis-ci.org/Rookfighter/IniFileCpp.svg?branch=master)
 
 IniFileCpp is a simple and easy to use ini file en- and decoder for C++.
 
