@@ -11,7 +11,7 @@ include_directories("src")
 add_library(${LIB_NAME} ${SRC})
 
 if(${BUILD_TEST})
-    get_filename_component(CATCH_ROOT "./deps/Catch" ABSOLUTE)
+    get_filename_component(CATCH_ROOT "/opt/Catch-1.3.0" ABSOLUTE)
     find_package(Catch)
     include_directories(${CATCH_INCLUDE_DIR})
     set(TEST_NAME "Test${PROJECT_NAME}")
