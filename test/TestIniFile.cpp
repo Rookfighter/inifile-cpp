@@ -22,6 +22,15 @@ TEST_CASE("parse empty file", "IniFile")
     REQUIRE(inif.size() == 0);
 }
 
+TEST_CASE("parse comment only file", "IniFile")
+{
+    std::istringstream ss("# this is a comment");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.size() == 0);
+}
+
+
 TEST_CASE("parse empty section", "IniFile")
 {
     std::istringstream ss("[Foo]");
@@ -170,4 +179,10 @@ TEST_CASE("fail to parse as double", "IniFile")
     REQUIRE(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 1);
     REQUIRE_THROWS(inif["Foo"]["bar"].asDouble());
+}
+
+TEST_CASE("fail to parse field without section", "IniFile")
+{
+    ini::IniFile inif;
+    REQUIRE_THROWS(inif.decode("bar=bla"));
 }
