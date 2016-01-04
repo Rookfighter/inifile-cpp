@@ -44,10 +44,12 @@ namespace ini
         IniFile(std::istream &is);
         ~IniFile();
 
-        void load(std::istream &is);
-        void load(const std::string &fileName);
+        void decode(std::istream &is);
+        void decode(const std::string &content);
+        void encode(std::ostream &os);
+        std::string encode();
 
-        void save(std::ostream &os);
+        void load(const std::string &fileName);
         void save(const std::string &fileName);
     };
 }

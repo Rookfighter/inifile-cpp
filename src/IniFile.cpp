@@ -143,14 +143,14 @@ namespace ini
 
     IniFile::IniFile(std::istream &is)
     {
-        load(is);
+        decode(is);
     }
 
     IniFile::~IniFile()
     {
     }
 
-    void IniFile::load(std::istream& is)
+    void IniFile::decode(std::istream& is)
     {
         clear();
         int lineNo = 0;
@@ -208,13 +208,19 @@ namespace ini
         }
     }
 
+    void IniFile::decode(const std::string &content)
+    {
+        std::istringstream ss(content);
+        decode(ss);
+    }
+
     void IniFile::load(const std::string& fileName)
     {
         std::ifstream is(fileName.c_str());
-        load(is);
+        decode(is);
     }
 
-    void IniFile::save(std::ostream& os)
+    void IniFile::encode(std::ostream& os)
     {
         IniFile::iterator it;
         for(it = this->begin(); it != this->end(); it++) {
@@ -226,9 +232,16 @@ namespace ini
         }
     }
 
+    std::string IniFile::encode()
+    {
+        std::ostringstream ss;
+        encode(ss);
+        return ss.str();
+    }
+
     void IniFile::save(const std::string& fileName)
     {
         std::ofstream os(fileName.c_str());
-        save(os);
+        encode(os);
     }
 }
