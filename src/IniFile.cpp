@@ -132,22 +132,36 @@ namespace ini
      *          IniFile
      ************************************/
 
-    IniFile::IniFile()
+    IniFile::IniFile(const char fieldSep, const char comment)
+        : fieldSep_(fieldSep), comment_(comment)
     {
     }
 
-    IniFile::IniFile(const std::string &fileName)
+    IniFile::IniFile(const std::string &fileName, const char fieldSep,
+                     const char comment)
+        : fieldSep_(fieldSep), comment_(comment)
     {
         load(fileName);
     }
 
-    IniFile::IniFile(std::istream &is)
+    IniFile::IniFile(std::istream &is, const char fieldSep, const char comment)
+        : fieldSep_(fieldSep), comment_(comment)
     {
         decode(is);
     }
 
     IniFile::~IniFile()
     {
+    }
+
+    void IniFile::setFieldSep(const char sep)
+    {
+        fieldSep_ = sep;
+    }
+
+    void IniFile::setCommentChar(const char comment)
+    {
+        comment_ = comment;
     }
 
     void IniFile::decode(std::istream &is)
@@ -162,7 +176,7 @@ namespace ini
 
             if(line.size() == 0)
                 continue;
-            if(line[0] == '#')
+            if(line[0] == comment_)
                 continue;
             if(line[0] == '[') {
                 std::size_t pos = line.find("]");
@@ -188,6 +202,8 @@ namespace ini
                 std::string secName = line.substr(1, pos - 1);
                 currentSection = &((*this)[secName]);
             } else {
+                // line is a field definition
+                // check if section was already opened
                 if(currentSection == NULL) {
                     std::stringstream ss;
                     ss << "l" << lineNo
@@ -195,7 +211,8 @@ namespace ini
                     throw std::logic_error(ss.str());
                 }
 
-                std::size_t pos = line.find("=");
+                // find key value separator
+                std::size_t pos = line.find(fieldSep_);
                 if(pos == std::string::npos) {
                     std::stringstream ss;
                     ss << "l" << lineNo << ": ini parsing failed, no '=' found";
@@ -227,7 +244,7 @@ namespace ini
             os << "[" << it->first << "]" << std::endl;
             IniSection::iterator secIt;
             for(secIt = it->second.begin(); secIt != it->second.end(); secIt++)
-                os << secIt->first << "=" << secIt->second.asString()
+                os << secIt->first << fieldSep_ << secIt->second.asString()
                    << std::endl;
         }
     }

@@ -95,10 +95,32 @@ TEST_CASE("parse field as bool", "IniFile")
     REQUIRE(inif["Foo"]["bar3"].asBool());
 }
 
+TEST_CASE("parse field with custom field sep", "IniFile")
+{
+    std::istringstream ss("[Foo]\nbar1:true\nbar2:false\nbar3:tRuE");
+    ini::IniFile inif(ss, ':');
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 3);
+    REQUIRE(inif["Foo"]["bar1"].asBool());
+    REQUIRE_FALSE(inif["Foo"]["bar2"].asBool());
+    REQUIRE(inif["Foo"]["bar3"].asBool());
+}
+
 TEST_CASE("parse with comment", "IniFile")
 {
     std::istringstream ss("[Foo]\n# this is a test\nbar=bla");
     ini::IniFile inif(ss);
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 1);
+    REQUIRE(inif["Foo"]["bar"].asString() == "bla");
+}
+
+TEST_CASE("parse with custom comment char", "IniFile")
+{
+    std::istringstream ss("[Foo]\n$ this is a test\nbar=bla");
+    ini::IniFile inif(ss, '=', '$');
 
     REQUIRE(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 1);
@@ -133,6 +155,16 @@ TEST_CASE("save with double fields", "IniFile")
 
     std::string result = inif.encode();
     REQUIRE(result == "[Foo]\nbar1=1.2\nbar2=-2.4\n");
+}
+
+TEST_CASE("save with custom field sep", "IniFile")
+{
+    ini::IniFile inif(':');
+    inif["Foo"]["bar1"] = true;
+    inif["Foo"]["bar2"] = false;
+
+    std::string result = inif.encode();
+    REQUIRE(result == "[Foo]\nbar1:true\nbar2:false\n");
 }
 
 /***************************************************

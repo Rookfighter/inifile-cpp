@@ -38,11 +38,18 @@ namespace ini
 
     class IniFile: public std::map<std::string, IniSection>
     {
+    private:
+        char fieldSep_;
+        char comment_;
     public:
-        IniFile();
-        IniFile(const std::string &fileName);
-        IniFile(std::istream &is);
+        IniFile(const char fieldSep = '=', const char comment = '#');
+        IniFile(const std::string &fileName, const char fieldSep = '=',
+                const char comment = '#');
+        IniFile(std::istream &is, const char fieldSep = '=', const char comment = '#');
         ~IniFile();
+
+        void setFieldSep(const char sep);
+        void setCommentChar(const char comment);
 
         void decode(std::istream &is);
         void decode(const std::string &content);
