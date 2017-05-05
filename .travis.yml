@@ -8,6 +8,4 @@ before_install:
 
 install: ./scripts/get-linux-deps.sh
 
-script: mkdir -p build && cd build && cmake -DBUILD_TEST=true .. && make
-
-test: build/TestIniFileCpp
+script: ./scripts/travis-build.sh
