@@ -4,6 +4,10 @@ compiler:
     - gcc
     - clang
 
+dist: trusty
+
+sudo: false
+
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq build-essential cmake clang
