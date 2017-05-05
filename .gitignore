@@ -2,4 +2,4 @@ build
 .project
 .cproject
 .settings
-deps
+dep
