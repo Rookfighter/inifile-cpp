@@ -1,10 +1,13 @@
 language: cpp
+
 compiler: gcc
+
 before_install:
   - sudo apt-get update -qq
-install:
   - sudo apt-get install -qq build-essential cmake
-  - wget https://github.com/philsquared/Catch/archive/v1.3.0.tar.gz -O /tmp/Catch.tar.gz
-  - sudo tar xzf /tmp/Catch.tar.gz -C /opt/
+
+install: ./scripts/get-linux-deps.sh
+
 script: mkdir -p build && cd build && cmake -DBUILD_TEST=true .. && make
+
 test: build/TestIniFileCpp
