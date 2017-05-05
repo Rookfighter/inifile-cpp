@@ -177,16 +177,21 @@ namespace ini
         clear();
         int lineNo = 0;
         IniSection *currentSection = NULL;
+        // iterate file by line
         while(!is.eof() && !is.fail()) {
             std::string line;
             std::getline(is, line, '\n');
             ++lineNo;
 
+            // skip if line is empty
             if(line.size() == 0)
                 continue;
+            // skip if line is a comment
             if(line[0] == comment_)
                 continue;
             if(line[0] == '[') {
+                // line is a section
+                // check if the section is also closed on same line
                 std::size_t pos = line.find("]");
                 if(pos == std::string::npos) {
                     std::stringstream ss;
@@ -194,12 +199,14 @@ namespace ini
                        << ": ini parsing failed, section not closed";
                     throw std::logic_error(ss.str());
                 }
+                // check if the section name is empty
                 if(pos == 1) {
                     std::stringstream ss;
                     ss << "l" << lineNo
                        << ": ini parsing failed, section is empty";
                     throw std::logic_error(ss.str());
                 }
+                // check if there is a newline following closing bracket
                 if(pos + 1 != line.length()) {
                     std::stringstream ss;
                     ss << "l" << lineNo
@@ -207,6 +214,7 @@ namespace ini
                     throw std::logic_error(ss.str());
                 }
 
+                // retrieve section name
                 std::string secName = line.substr(1, pos - 1);
                 currentSection = &((*this)[secName]);
             } else {
@@ -226,6 +234,7 @@ namespace ini
                     ss << "l" << lineNo << ": ini parsing failed, no '=' found";
                     throw std::logic_error(ss.str());
                 }
+                // retrieve field name and value
                 std::string name = line.substr(0, pos);
                 std::string value = line.substr(pos + 1, std::string::npos);
                 (*currentSection)[name] = value;
@@ -248,9 +257,11 @@ namespace ini
     void IniFile::encode(std::ostream &os)
     {
         IniFile::iterator it;
+        // iterate through all sections in this file
         for(it = this->begin(); it != this->end(); it++) {
             os << "[" << it->first << "]" << std::endl;
             IniSection::iterator secIt;
+            // iterate through all fields in the section
             for(secIt = it->second.begin(); secIt != it->second.end(); secIt++)
                 os << secIt->first << fieldSep_ << secIt->second.asString()
                    << std::endl;
