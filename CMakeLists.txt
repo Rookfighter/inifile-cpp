@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 2.8)
 project(IniFileCpp)
-#cmake_policy(SET NEW)
+
 set(LIB_NAME "inifilecpp")
-set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS "-Wall")
+
 get_filename_component(LOCAL_MODULE_PATH "./cmake-modules" ABSOLUTE)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${LOCAL_MODULE_PATH})
 
@@ -11,10 +12,10 @@ include_directories("src")
 add_library(${LIB_NAME} ${SRC})
 
 if(${BUILD_TEST})
-    get_filename_component(CATCH_ROOT "/opt/Catch-1.3.0" ABSOLUTE)
+    get_filename_component(CATCH_ROOT "dep/catch" ABSOLUTE)
     find_package(Catch)
     include_directories(${CATCH_INCLUDE_DIR})
-    set(TEST_NAME "Test${PROJECT_NAME}")
+    set(TEST_NAME "TestIniFileCpp")
     set(TEST_SRC "test/TestIniFile.cpp")
     add_executable(${TEST_NAME} ${TEST_SRC})
     target_link_libraries(${TEST_NAME} ${LIB_NAME})
