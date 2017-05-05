@@ -1,0 +1,10 @@
+style=kr
+indent=spaces=4
+indent-namespaces
+indent-col1-comments
+pad-oper
+unpad-paren
+align-pointer=name
+align-reference=name
+max-code-length=80
+n
