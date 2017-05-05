@@ -57,13 +57,13 @@ namespace ini
     }
 
     IniField::IniField(const std::string &value)
-            : value_(value)
+        : value_(value)
     {
 
     }
 
-    IniField::IniField(const IniField& field)
-            : value_(field.value_)
+    IniField::IniField(const IniField &field)
+        : value_(field.value_)
     {
     }
 
@@ -71,7 +71,7 @@ namespace ini
     {
     }
 
-    const std::string& IniField::asString() const
+    const std::string &IniField::asString() const
     {
         return value_;
     }
@@ -91,13 +91,13 @@ namespace ini
         return strToBool(value_);
     }
 
-    IniField& IniField::operator=(const IniField& field)
+    IniField &IniField::operator=(const IniField &field)
     {
         value_ = field.value_;
         return *this;
     }
 
-    IniField& IniField::operator=(const int value)
+    IniField &IniField::operator=(const int value)
     {
         std::stringstream ss;
         ss << value;
@@ -105,7 +105,7 @@ namespace ini
         return *this;
     }
 
-    IniField& IniField::operator=(const double value)
+    IniField &IniField::operator=(const double value)
     {
         std::stringstream ss;
         ss << value;
@@ -113,7 +113,7 @@ namespace ini
         return *this;
     }
 
-    IniField& IniField::operator=(const bool value)
+    IniField &IniField::operator=(const bool value)
     {
         if(value)
             value_ = "true";
@@ -122,7 +122,7 @@ namespace ini
         return *this;
     }
 
-    IniField& IniField::operator=(const std::string &value)
+    IniField &IniField::operator=(const std::string &value)
     {
         value_ = value;
         return *this;
@@ -150,7 +150,7 @@ namespace ini
     {
     }
 
-    void IniFile::decode(std::istream& is)
+    void IniFile::decode(std::istream &is)
     {
         clear();
         int lineNo = 0;
@@ -169,19 +169,19 @@ namespace ini
                 if(pos == std::string::npos) {
                     std::stringstream ss;
                     ss << "l" << lineNo
-                            << ": ini parsing failed, section not closed";
+                       << ": ini parsing failed, section not closed";
                     throw std::logic_error(ss.str());
                 }
                 if(pos == 1) {
                     std::stringstream ss;
                     ss << "l" << lineNo
-                            << ": ini parsing failed, section is empty";
+                       << ": ini parsing failed, section is empty";
                     throw std::logic_error(ss.str());
                 }
                 if(pos + 1 != line.length()) {
                     std::stringstream ss;
                     ss << "l" << lineNo
-                            << ": ini parsing failed, no end of line after section";
+                       << ": ini parsing failed, no end of line after section";
                     throw std::logic_error(ss.str());
                 }
 
@@ -191,7 +191,7 @@ namespace ini
                 if(currentSection == NULL) {
                     std::stringstream ss;
                     ss << "l" << lineNo
-                            << ": ini parsing failed, field has no section";
+                       << ": ini parsing failed, field has no section";
                     throw std::logic_error(ss.str());
                 }
 
@@ -214,13 +214,13 @@ namespace ini
         decode(ss);
     }
 
-    void IniFile::load(const std::string& fileName)
+    void IniFile::load(const std::string &fileName)
     {
         std::ifstream is(fileName.c_str());
         decode(is);
     }
 
-    void IniFile::encode(std::ostream& os)
+    void IniFile::encode(std::ostream &os)
     {
         IniFile::iterator it;
         for(it = this->begin(); it != this->end(); it++) {
@@ -228,7 +228,7 @@ namespace ini
             IniSection::iterator secIt;
             for(secIt = it->second.begin(); secIt != it->second.end(); secIt++)
                 os << secIt->first << "=" << secIt->second.asString()
-                        << std::endl;
+                   << std::endl;
         }
     }
 
@@ -239,7 +239,7 @@ namespace ini
         return ss.str();
     }
 
-    void IniFile::save(const std::string& fileName)
+    void IniFile::save(const std::string &fileName)
     {
         std::ofstream os(fileName.c_str());
         encode(os);

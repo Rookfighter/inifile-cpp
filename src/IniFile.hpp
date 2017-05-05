@@ -17,16 +17,16 @@ namespace ini
         IniField(const IniField &field);
         ~IniField();
 
-        const std::string& asString() const;
+        const std::string &asString() const;
         int asInt() const;
         double asDouble() const;
         bool asBool() const;
 
-        IniField& operator=(const IniField& field);
-        IniField& operator=(const int value);
-        IniField& operator=(const double value);
-        IniField& operator=(const bool value);
-        IniField& operator=(const std::string &value);
+        IniField &operator=(const IniField &field);
+        IniField &operator=(const int value);
+        IniField &operator=(const double value);
+        IniField &operator=(const bool value);
+        IniField &operator=(const std::string &value);
     };
 
     class IniSection: public std::map<std::string, IniField>
