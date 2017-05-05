@@ -1,3 +1,11 @@
+/*
+ * IniFile.cpp
+ *
+ * Created on: 26 Dec 2015
+ *     Author: Fabian Meyer
+ *    License: MIT
+ */
+
 #include "IniFile.hpp"
 
 #include <algorithm>

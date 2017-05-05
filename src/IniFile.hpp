@@ -1,3 +1,11 @@
+/*
+ * IniFile.hpp
+ *
+ * Created on: 26 Dec 2015
+ *     Author: Fabian Meyer
+ *    License: MIT
+ */
+
 #ifndef INIFILE_HPP_
 #define INIFILE_HPP_
 
