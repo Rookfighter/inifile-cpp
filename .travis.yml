@@ -12,6 +12,6 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq build-essential cmake clang
 
-install: ./scripts/get-linux-deps.sh
+install: ./scripts/install-deps.sh
 
 script: ./scripts/travis-build.sh
