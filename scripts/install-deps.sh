@@ -22,9 +22,7 @@ download_dep()
     url="$1"
     archive="$2"
     wget \
-        --no-verbose \
         --quiet \
-        --show-progress \
         --no-check-certificate \
         -O "$archive" \
         "$url"
