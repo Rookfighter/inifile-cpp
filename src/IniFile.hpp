@@ -27,12 +27,16 @@ namespace ini
 
         const std::string &asString() const;
         int asInt() const;
+        unsigned int asUInt() const;
         double asDouble() const;
+        float asFloat() const;
         bool asBool() const;
 
         IniField &operator=(const IniField &field);
         IniField &operator=(const int value);
+        IniField &operator=(const unsigned int value);
         IniField &operator=(const double value);
+        IniField &operator=(const float value);
         IniField &operator=(const bool value);
         IniField &operator=(const std::string &value);
     };

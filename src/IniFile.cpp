@@ -89,9 +89,19 @@ namespace ini
         return strToInt(value_);
     }
 
+    unsigned int IniField::asUInt() const
+    {
+        return static_cast<unsigned int>(strToInt(value_));
+    }
+
     double IniField::asDouble() const
     {
         return strToDouble(value_);
+    }
+
+    float IniField::asFloat() const
+    {
+        return static_cast<float>(strToDouble(value_));
     }
 
     bool IniField::asBool() const
@@ -113,7 +123,23 @@ namespace ini
         return *this;
     }
 
+    IniField &IniField::operator=(const unsigned int value)
+    {
+        std::stringstream ss;
+        ss << value;
+        value_ = ss.str();
+        return *this;
+    }
+
     IniField &IniField::operator=(const double value)
+    {
+        std::stringstream ss;
+        ss << value;
+        value_ = ss.str();
+        return *this;
+    }
+
+    IniField &IniField::operator=(const float value)
     {
         std::stringstream ss;
         ss << value;
