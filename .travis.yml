@@ -12,6 +12,11 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq build-essential cmake clang
 
-install: ./scripts/install-deps.sh
+install:
 
-script: ./scripts/travis-build.sh
+script:
+    - mkdir build
+    - cd build
+    - cmake -DBUILD_TEST=true ..
+    - make
+    - ./TestIniFileCpp

@@ -1,20 +1,19 @@
-cmake_minimum_required(VERSION 2.8)
-project(IniFileCpp)
+cmake_minimum_required(VERSION 3.5)
 
-set(LIB_NAME "inifilecpp")
+project(IniFileCpp)
 set(CMAKE_CXX_FLAGS "-Wall")
 
-get_filename_component(LOCAL_MODULE_PATH "./cmake-modules" ABSOLUTE)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${LOCAL_MODULE_PATH})
+set(LIB_NAME "inifilecpp")
+
+set(DEP_DIR "${CMAKE_CURRENT_LIST_DIR}/dep")
 
 set(SRC "src/IniFile.cpp")
 include_directories("src")
 add_library(${LIB_NAME} ${SRC})
 
 if(${BUILD_TEST})
-    get_filename_component(CATCH_ROOT "dep/catch" ABSOLUTE)
-    find_package(Catch)
-    include_directories(${CATCH_INCLUDE_DIR})
+    add_subdirectory("dep")
+    include_directories(${CATCH2_INCLUDE_DIR})
     set(TEST_NAME "TestIniFileCpp")
     set(TEST_SRC "test/TestIniFile.cpp")
     add_executable(${TEST_NAME} ${TEST_SRC})
