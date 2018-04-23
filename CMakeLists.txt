@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 
 project(IniFileCpp)
+SET(CMAKE_CXX_STANDARD 11)
+SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "-Wall")
 
 set(LIB_NAME "inifilecpp")
