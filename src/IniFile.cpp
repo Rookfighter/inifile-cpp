@@ -204,7 +204,8 @@ namespace ini
         int lineNo = 0;
         IniSection *currentSection = NULL;
         // iterate file by line
-        while(!is.eof() && !is.fail()) {
+        while(!is.eof() && !is.fail())
+        {
             std::string line;
             std::getline(is, line, '\n');
             ++lineNo;
@@ -215,25 +216,29 @@ namespace ini
             // skip if line is a comment
             if(line[0] == comment_)
                 continue;
-            if(line[0] == '[') {
+            if(line[0] == '[')
+            {
                 // line is a section
                 // check if the section is also closed on same line
                 std::size_t pos = line.find("]");
-                if(pos == std::string::npos) {
+                if(pos == std::string::npos)
+                {
                     std::stringstream ss;
                     ss << "l" << lineNo
                        << ": ini parsing failed, section not closed";
                     throw std::logic_error(ss.str());
                 }
                 // check if the section name is empty
-                if(pos == 1) {
+                if(pos == 1)
+                {
                     std::stringstream ss;
                     ss << "l" << lineNo
                        << ": ini parsing failed, section is empty";
                     throw std::logic_error(ss.str());
                 }
                 // check if there is a newline following closing bracket
-                if(pos + 1 != line.length()) {
+                if(pos + 1 != line.length())
+                {
                     std::stringstream ss;
                     ss << "l" << lineNo
                        << ": ini parsing failed, no end of line after section";
@@ -243,10 +248,13 @@ namespace ini
                 // retrieve section name
                 std::string secName = line.substr(1, pos - 1);
                 currentSection = &((*this)[secName]);
-            } else {
+            }
+            else
+            {
                 // line is a field definition
                 // check if section was already opened
-                if(currentSection == NULL) {
+                if(currentSection == NULL)
+                {
                     std::stringstream ss;
                     ss << "l" << lineNo
                        << ": ini parsing failed, field has no section";
@@ -255,7 +263,8 @@ namespace ini
 
                 // find key value separator
                 std::size_t pos = line.find(fieldSep_);
-                if(pos == std::string::npos) {
+                if(pos == std::string::npos)
+                {
                     std::stringstream ss;
                     ss << "l" << lineNo << ": ini parsing failed, no '=' found";
                     throw std::logic_error(ss.str());
@@ -284,7 +293,8 @@ namespace ini
     {
         IniFile::iterator it;
         // iterate through all sections in this file
-        for(it = this->begin(); it != this->end(); it++) {
+        for(it = this->begin(); it != this->end(); it++)
+        {
             os << "[" << it->first << "]" << std::endl;
             IniSection::iterator secIt;
             // iterate through all fields in the section
