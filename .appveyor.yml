@@ -12,4 +12,4 @@ build:
     project: $(APPVEYOR_BUILD_FOLDER)\inifile-cpp.sln
 
 test_script:
-    - '%APPVEYOR_BUILD_FOLDER%\run_tests.exe'
+    - '%APPVEYOR_BUILD_FOLDER%\Debug\run_tests.exe'
