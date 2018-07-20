@@ -68,25 +68,33 @@ namespace ini
 
         IniField &operator=(const int value)
         {
-            value_ = std::to_string(value);
+            std::stringstream ss;
+            ss << value;
+            value_ = ss.str();
             return *this;
         }
 
         IniField &operator=(const unsigned int value)
         {
-            value_ = std::to_string(value);
+            std::stringstream ss;
+            ss << value;
+            value_ = ss.str();
             return *this;
         }
 
         IniField &operator=(const double value)
         {
-            value_ = std::to_string(value);
+            std::stringstream ss;
+            ss << value;
+            value_ = ss.str();
             return *this;
         }
 
         IniField &operator=(const float value)
         {
-            value_ = std::to_string(value);
+            std::stringstream ss;
+            ss << value;
+            value_ = ss.str();
             return *this;
         }
 

@@ -1,23 +1,22 @@
+# CMakeLists.txt
+#
+#     Author: Fabian Meyer
+# Created On: 26 Dec 2015
+#    License: MIT
+
 cmake_minimum_required(VERSION 3.5)
 
 project(IniFileCpp)
 SET(CMAKE_CXX_STANDARD 11)
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "-Wall")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 
-set(LIB_NAME "inifilecpp")
+add_subdirectory("dep")
 
-set(DEP_DIR "${CMAKE_CURRENT_LIST_DIR}/dep")
+include_directories(
+    "include"
+    ${CATCH2_INCLUDE_DIR}
+)
 
-set(SRC "src/IniFile.cpp")
-include_directories("src")
-add_library(${LIB_NAME} ${SRC})
-
-if(${BUILD_TEST})
-    add_subdirectory("dep")
-    include_directories(${CATCH2_INCLUDE_DIR})
-    set(TEST_NAME "TestIniFileCpp")
-    set(TEST_SRC "test/TestIniFile.cpp")
-    add_executable(${TEST_NAME} ${TEST_SRC})
-    target_link_libraries(${TEST_NAME} ${LIB_NAME})
- endif(${BUILD_TEST})
+set(TEST_SRC "test/main.cpp" "test/test_inifile.cpp")
+add_executable(run_tests ${TEST_SRC})

@@ -1,6 +1,13 @@
-#define CATCH_CONFIG_MAIN
-#include "catch.hpp"
-#include "IniFile.hpp"
+/*
+ * test_inifile.cpp
+ *
+ * Created on: 26 Dec 2015
+ *     Author: Fabian Meyer
+ *    License: MIT
+ */
+
+#include <catch.hpp>
+#include "inicpp.h"
 
 #include <sstream>
 
@@ -10,7 +17,7 @@ TEST_CASE("parse ini file", "IniFile")
     ini::IniFile inif(ss);
 
     REQUIRE(inif.size() == 2);
-    REQUIRE(inif["Foo"]["bar"].asString() == "hello world");
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "hello world");
     REQUIRE(inif["Test"].size() == 0);
 }
 
@@ -47,7 +54,7 @@ TEST_CASE("parse empty field", "IniFile")
 
     REQUIRE(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 1);
-    REQUIRE(inif["Foo"]["bar"].asString() == "");
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "");
 }
 
 TEST_CASE("parse section with duplicate field", "IniFile")
@@ -57,7 +64,7 @@ TEST_CASE("parse section with duplicate field", "IniFile")
 
     REQUIRE(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 1);
-    REQUIRE(inif["Foo"]["bar"].asString() == "world");
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "world");
 }
 
 TEST_CASE("parse field as double", "IniFile")
@@ -67,9 +74,9 @@ TEST_CASE("parse field as double", "IniFile")
 
     REQUIRE(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 3);
-    REQUIRE(inif["Foo"]["bar1"].asDouble() == 1.2);
-    REQUIRE(inif["Foo"]["bar2"].asDouble() == 1.0);
-    REQUIRE(inif["Foo"]["bar3"].asDouble() == -2.4);
+    REQUIRE(inif["Foo"]["bar1"].as<double>() == 1.2);
+    REQUIRE(inif["Foo"]["bar2"].as<double>() == 1.0);
+    REQUIRE(inif["Foo"]["bar3"].as<double>() == -2.4);
 }
 
 TEST_CASE("parse field as int", "IniFile")
@@ -79,8 +86,8 @@ TEST_CASE("parse field as int", "IniFile")
 
     REQUIRE(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 2);
-    REQUIRE(inif["Foo"]["bar1"].asInt() == 1);
-    REQUIRE(inif["Foo"]["bar2"].asInt() == -2);
+    REQUIRE(inif["Foo"]["bar1"].as<int>() == 1);
+    REQUIRE(inif["Foo"]["bar2"].as<int>() == -2);
 }
 
 TEST_CASE("parse field as bool", "IniFile")
@@ -90,9 +97,9 @@ TEST_CASE("parse field as bool", "IniFile")
 
     REQUIRE(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 3);
-    REQUIRE(inif["Foo"]["bar1"].asBool());
-    REQUIRE_FALSE(inif["Foo"]["bar2"].asBool());
-    REQUIRE(inif["Foo"]["bar3"].asBool());
+    REQUIRE(inif["Foo"]["bar1"].as<bool>());
+    REQUIRE_FALSE(inif["Foo"]["bar2"].as<bool>());
+    REQUIRE(inif["Foo"]["bar3"].as<bool>());
 }
 
 TEST_CASE("parse field with custom field sep", "IniFile")
@@ -102,9 +109,9 @@ TEST_CASE("parse field with custom field sep", "IniFile")
 
     REQUIRE(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 3);
-    REQUIRE(inif["Foo"]["bar1"].asBool());
-    REQUIRE_FALSE(inif["Foo"]["bar2"].asBool());
-    REQUIRE(inif["Foo"]["bar3"].asBool());
+    REQUIRE(inif["Foo"]["bar1"].as<bool>());
+    REQUIRE_FALSE(inif["Foo"]["bar2"].as<bool>());
+    REQUIRE(inif["Foo"]["bar3"].as<bool>());
 }
 
 TEST_CASE("parse with comment", "IniFile")
@@ -114,7 +121,7 @@ TEST_CASE("parse with comment", "IniFile")
 
     REQUIRE(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 1);
-    REQUIRE(inif["Foo"]["bar"].asString() == "bla");
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "bla");
 }
 
 TEST_CASE("parse with custom comment char", "IniFile")
@@ -124,7 +131,7 @@ TEST_CASE("parse with custom comment char", "IniFile")
 
     REQUIRE(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 1);
-    REQUIRE(inif["Foo"]["bar"].asString() == "bla");
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "bla");
 }
 
 TEST_CASE("save with bool fields", "IniFile")
@@ -159,7 +166,7 @@ TEST_CASE("save with double fields", "IniFile")
 
 TEST_CASE("save with custom field sep", "IniFile")
 {
-    ini::IniFile inif(':');
+    ini::IniFile inif(':', '#');
     inif["Foo"]["bar1"] = true;
     inif["Foo"]["bar2"] = false;
 
@@ -190,7 +197,7 @@ TEST_CASE("fail to parse as bool", "IniFile")
 
     REQUIRE(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 1);
-    REQUIRE_THROWS(inif["Foo"]["bar"].asBool());
+    REQUIRE_THROWS(inif["Foo"]["bar"].as<bool>());
 }
 
 TEST_CASE("fail to parse as int", "IniFile")
@@ -200,7 +207,7 @@ TEST_CASE("fail to parse as int", "IniFile")
 
     REQUIRE(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 1);
-    REQUIRE_THROWS(inif["Foo"]["bar"].asInt());
+    REQUIRE_THROWS(inif["Foo"]["bar"].as<int>());
 }
 
 TEST_CASE("fail to parse as double", "IniFile")
@@ -210,7 +217,7 @@ TEST_CASE("fail to parse as double", "IniFile")
 
     REQUIRE(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 1);
-    REQUIRE_THROWS(inif["Foo"]["bar"].asDouble());
+    REQUIRE_THROWS(inif["Foo"]["bar"].as<double>());
 }
 
 TEST_CASE("fail to parse field without section", "IniFile")
