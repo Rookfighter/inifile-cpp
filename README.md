@@ -1,8 +1,8 @@
-# IniFileCpp
+# Inifile-cpp
 ![](https://travis-ci.org/Rookfighter/inifile-cpp.svg?branch=master)
 ![](https://ci.appveyor.com/api/projects/status/xog92hd7x7t7ea2k?svg=true)
 
-IniFileCpp is a simple and easy to use header-only ini file en- and decoder for C++.
+Inifile-cpp is a simple and easy to use header-only ini file en- and decoder for C++.
 
 ## Install
 
@@ -20,7 +20,7 @@ Simply copy the header file into your project and include it directly.
 
 ## Usage
 
-IniFileCpp allows loading data from any ```std::istream``` and requires a
+Inifile-cpp allows loading data from any ```std::istream``` and requires a
 single function call or use the overloaded constructor.
 
 ```cpp
