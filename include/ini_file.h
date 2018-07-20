@@ -18,7 +18,7 @@
 
 namespace ini
 {
-
+    
     class IniField
     {
     private:
@@ -103,17 +103,17 @@ namespace ini
          * Cast Operators
          *********************************************************************/
 
-         operator const char*() const
+         explicit operator const char*() const
          {
              return value_.c_str();
          }
 
-         operator std::string() const
+         explicit operator std::string() const
          {
              return value_;
          }
 
-         operator int() const
+         explicit operator int() const
          {
             char *endptr;
             // check if decimal
@@ -132,7 +132,7 @@ namespace ini
            throw std::invalid_argument("field is not an int");
          }
 
-         operator unsigned int() const
+         explicit operator unsigned int() const
          {
              char *endptr;
              // check if decimal
@@ -151,17 +151,17 @@ namespace ini
              throw std::invalid_argument("field is not an unsigned int");
          }
 
-         operator float() const
+         explicit operator float() const
          {
              return std::stof(value_);
          }
 
-         operator double() const
+         explicit operator double() const
          {
              return std::stod(value_);
          }
 
-         operator bool() const
+         explicit operator bool() const
          {
              std::string str(value_);
              std::transform(str.begin(), str.end(),str.begin(), ::toupper);
@@ -188,22 +188,159 @@ namespace ini
         char fieldSep_;
         char comment_;
     public:
-        IniFile(const char fieldSep = '=', const char comment = '#');
-        IniFile(const std::string &fileName, const char fieldSep = '=',
-                const char comment = '#');
-        IniFile(std::istream &is, const char fieldSep = '=', const char comment = '#');
-        ~IniFile();
+        IniFile()
+            : IniFile('=', '#')
+        {}
 
-        void setFieldSep(const char sep);
-        void setCommentChar(const char comment);
+        IniFile(const char fieldSep, const char comment)
+            : fieldSep_(fieldSep), comment_(comment)
+        {}
 
-        void decode(std::istream &is);
-        void decode(const std::string &content);
-        void encode(std::ostream &os);
-        std::string encode();
+        IniFile(const std::string &filename,
+            const char fieldSep = '=',
+            const char comment = '#')
+            : IniFile(fieldSep, comment)
+        {
+            load(filename);
+        }
 
-        void load(const std::string &fileName);
-        void save(const std::string &fileName);
+        IniFile(std::istream &is,
+            const char fieldSep = '=',
+            const char comment = '#')
+            : IniFile(fieldSep, comment)
+        {
+            decode(is);
+        }
+
+        ~IniFile()
+        {}
+
+        void setFieldSep(const char sep)
+        {
+            fieldSep_ = sep;
+        }
+
+        void setCommentChar(const char comment)
+        {
+            comment_ = comment;
+        }
+
+        void decode(std::istream &is)
+        {
+            clear();
+            int lineNo = 0;
+            IniSection *currentSection = NULL;
+            // iterate file by line
+            while(!is.eof() && !is.fail())
+            {
+                std::string line;
+                std::getline(is, line, '\n');
+                ++lineNo;
+
+                // skip if line is empty
+                if(line.size() == 0)
+                    continue;
+                // skip if line is a comment
+                if(line[0] == comment_)
+                    continue;
+                if(line[0] == '[')
+                {
+                    // line is a section
+                    // check if the section is also closed on same line
+                    std::size_t pos = line.find("]");
+                    if(pos == std::string::npos)
+                    {
+                        std::stringstream ss;
+                        ss << "l" << lineNo
+                           << ": ini parsing failed, section not closed";
+                        throw std::logic_error(ss.str());
+                    }
+                    // check if the section name is empty
+                    if(pos == 1)
+                    {
+                        std::stringstream ss;
+                        ss << "l" << lineNo
+                           << ": ini parsing failed, section is empty";
+                        throw std::logic_error(ss.str());
+                    }
+                    // check if there is a newline following closing bracket
+                    if(pos + 1 != line.length())
+                    {
+                        std::stringstream ss;
+                        ss << "l" << lineNo
+                           << ": ini parsing failed, no end of line after section";
+                        throw std::logic_error(ss.str());
+                    }
+
+                    // retrieve section name
+                    std::string secName = line.substr(1, pos - 1);
+                    currentSection = &((*this)[secName]);
+                }
+                else
+                {
+                    // line is a field definition
+                    // check if section was already opened
+                    if(currentSection == NULL)
+                    {
+                        std::stringstream ss;
+                        ss << "l" << lineNo
+                           << ": ini parsing failed, field has no section";
+                        throw std::logic_error(ss.str());
+                    }
+
+                    // find key value separator
+                    std::size_t pos = line.find(fieldSep_);
+                    if(pos == std::string::npos)
+                    {
+                        std::stringstream ss;
+                        ss << "l" << lineNo << ": ini parsing failed, no '=' found";
+                        throw std::logic_error(ss.str());
+                    }
+                    // retrieve field name and value
+                    std::string name = line.substr(0, pos);
+                    std::string value = line.substr(pos + 1, std::string::npos);
+                    (*currentSection)[name] = value;
+                }
+            }
+        }
+
+        void decode(const std::string &content)
+        {
+            std::istringstream ss(content);
+            decode(ss);
+        }
+
+        void load(const std::string &fileName)
+        {
+            std::ifstream is(fileName.c_str());
+            decode(is);
+        }
+
+        void encode(std::ostream &os) const
+        {
+            // iterate through all sections in this file
+            for(const auto &filePair : *this)
+            {
+                os << "[" << filePair.first << "]" << std::endl;
+                // iterate through all fields in the section
+                for(const auto &secPair : filePair.second)
+                    os << secPair.first << fieldSep_ << secPair.second.as<std::string>()
+                       << std::endl;
+            }
+        }
+
+        std::string encode() const
+        {
+            std::ostringstream ss;
+            encode(ss);
+            return ss.str();
+        }
+
+        void save(const std::string &fileName) const
+        {
+            std::ofstream os(fileName.c_str());
+            encode(os);
+        }
     };
 }
 
