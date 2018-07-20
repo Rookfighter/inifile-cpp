@@ -9,30 +9,27 @@
 #ifndef INICPP_H_
 #define INICPP_H_
 
-#include <map>
-#include <istream>
 #include <algorithm>
+#include <fstream>
+#include <istream>
+#include <map>
 #include <sstream>
 #include <stdexcept>
-#include <fstream>
 
 namespace ini
 {
-
     class IniField
     {
     private:
         std::string value_;
+
     public:
-        IniField()
-            : value_()
+        IniField() : value_()
         {}
 
-        IniField(const std::string &value)
-            : value_(value)
+        IniField(const std::string &value) : value_(value)
         {}
-        IniField(const IniField &field)
-            : value_(field.value_)
+        IniField(const IniField &field) : value_(field.value_)
         {}
 
         ~IniField()
@@ -111,18 +108,18 @@ namespace ini
          * Cast Operators
          *********************************************************************/
 
-         explicit operator const char*() const
-         {
-             return value_.c_str();
-         }
+        explicit operator const char *() const
+        {
+            return value_.c_str();
+        }
 
-         explicit operator std::string() const
-         {
-             return value_;
-         }
+        explicit operator std::string() const
+        {
+            return value_;
+        }
 
-         explicit operator int() const
-         {
+        explicit operator int() const
+        {
             char *endptr;
             // check if decimal
             int result = std::strtol(value_.c_str(), &endptr, 10);
@@ -135,69 +132,71 @@ namespace ini
             // check if hex
             result = std::strtol(value_.c_str(), &endptr, 16);
             if(*endptr == '\0')
-               return result;
-
-           throw std::invalid_argument("field is not an int");
-         }
-
-         explicit operator unsigned int() const
-         {
-             char *endptr;
-             // check if decimal
-             int result = std::strtoul(value_.c_str(), &endptr, 10);
-             if(*endptr == '\0')
-                 return result;
-             // check if octal
-             result = std::strtoul(value_.c_str(), &endptr, 8);
-             if(*endptr == '\0')
-                 return result;
-             // check if hex
-             result = std::strtoul(value_.c_str(), &endptr, 16);
-             if(*endptr == '\0')
                 return result;
 
-             throw std::invalid_argument("field is not an unsigned int");
-         }
+            throw std::invalid_argument("field is not an int");
+        }
 
-         explicit operator float() const
-         {
-             return std::stof(value_);
-         }
+        explicit operator unsigned int() const
+        {
+            char *endptr;
+            // check if decimal
+            int result = std::strtoul(value_.c_str(), &endptr, 10);
+            if(*endptr == '\0')
+                return result;
+            // check if octal
+            result = std::strtoul(value_.c_str(), &endptr, 8);
+            if(*endptr == '\0')
+                return result;
+            // check if hex
+            result = std::strtoul(value_.c_str(), &endptr, 16);
+            if(*endptr == '\0')
+                return result;
 
-         explicit operator double() const
-         {
-             return std::stod(value_);
-         }
+            throw std::invalid_argument("field is not an unsigned int");
+        }
 
-         explicit operator bool() const
-         {
-             std::string str(value_);
-             std::transform(str.begin(), str.end(),str.begin(), ::toupper);
+        explicit operator float() const
+        {
+            return std::stof(value_);
+        }
 
-             if(str == "TRUE")
-                 return true;
-             else if(str == "FALSE")
-                 return false;
-             else
-                 throw std::invalid_argument("field is not a bool");
-         }
+        explicit operator double() const
+        {
+            return std::stod(value_);
+        }
+
+        explicit operator bool() const
+        {
+            std::string str(value_);
+            std::transform(str.begin(), str.end(), str.begin(), ::toupper);
+
+            if(str == "TRUE")
+                return true;
+            else if(str == "FALSE")
+                return false;
+            else
+                throw std::invalid_argument("field is not a bool");
+        }
     };
 
-    class IniSection: public std::map<std::string, IniField>
+    class IniSection : public std::map<std::string, IniField>
     {
     public:
-        IniSection() { }
-        ~IniSection() { }
+        IniSection()
+        {}
+        ~IniSection()
+        {}
     };
 
-    class IniFile: public std::map<std::string, IniSection>
+    class IniFile : public std::map<std::string, IniSection>
     {
     private:
         char fieldSep_;
         char comment_;
+
     public:
-        IniFile()
-            : IniFile('=', '#')
+        IniFile() : IniFile('=', '#')
         {}
 
         IniFile(const char fieldSep, const char comment)
@@ -276,7 +275,8 @@ namespace ini
                     {
                         std::stringstream ss;
                         ss << "l" << lineNo
-                           << ": ini parsing failed, no end of line after section";
+                           << ": ini parsing failed, no end of line after "
+                              "section";
                         throw std::logic_error(ss.str());
                     }
 
@@ -301,7 +301,8 @@ namespace ini
                     if(pos == std::string::npos)
                     {
                         std::stringstream ss;
-                        ss << "l" << lineNo << ": ini parsing failed, no '=' found";
+                        ss << "l" << lineNo
+                           << ": ini parsing failed, no '=' found";
                         throw std::logic_error(ss.str());
                     }
                     // retrieve field name and value
@@ -332,8 +333,8 @@ namespace ini
                 os << "[" << filePair.first << "]" << std::endl;
                 // iterate through all fields in the section
                 for(const auto &secPair : filePair.second)
-                    os << secPair.first << fieldSep_ << secPair.second.as<std::string>()
-                       << std::endl;
+                    os << secPair.first << fieldSep_
+                       << secPair.second.as<std::string>() << std::endl;
             }
         }
 
