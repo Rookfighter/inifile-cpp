@@ -20,3 +20,8 @@ include_directories(
 
 set(TEST_SRC "test/main.cpp" "test/test_inifile.cpp")
 add_executable(run_tests ${TEST_SRC})
+
+install(
+    FILES include/inicpp.h
+    DESTINATION include
+)
