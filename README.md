@@ -1,4 +1,6 @@
-# IniFileCpp ![](https://travis-ci.org/Rookfighter/inifile-cpp.svg?branch=master)
+# IniFileCpp
+![](https://travis-ci.org/Rookfighter/inifile-cpp.svg?branch=master)
+![](https://ci.appveyor.com/api/projects/status/xog92hd7x7t7ea2k?svg=true)
 
 IniFileCpp is a simple and easy to use header-only ini file en- and decoder for C++.
 
