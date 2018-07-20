@@ -3,12 +3,12 @@ version: '1.0.{build}'
 image: Visual Studio 2017
 
 platform:
-  - x86
-  - x64
+    - x86
+    - Any Cpu
 
 configuration:
-  - Release
-  - Debug
+    - Debug
+    - Release
 
 install:
     - git submodule update --init --recursive
@@ -17,7 +17,7 @@ before_build:
     - cmake -G "Visual Studio 15 2017 Win64" .
 
 build:
-  project: $(APPVEYOR_BUILD_FOLDER)\inifile-cpp.sln
+    project: $(APPVEYOR_BUILD_FOLDER)\inifile-cpp.sln
 
 test_script:
-  - '%APPVEYOR_BUILD_FOLDER%\run_tests.exe'
+    - '%APPVEYOR_BUILD_FOLDER%\run_tests.exe'
