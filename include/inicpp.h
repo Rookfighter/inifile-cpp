@@ -1,13 +1,13 @@
 /*
- * IniFile.hpp
+ * inicpp.h
  *
  * Created on: 26 Dec 2015
  *     Author: Fabian Meyer
  *    License: MIT
  */
 
-#ifndef INIFILE_HPP_
-#define INIFILE_HPP_
+#ifndef INICPP_H_
+#define INICPP_H_
 
 #include <map>
 #include <istream>
@@ -18,7 +18,7 @@
 
 namespace ini
 {
-    
+
     class IniField
     {
     private:
