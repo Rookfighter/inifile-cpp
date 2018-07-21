@@ -10,13 +10,14 @@ Install the headers using the CMake build system:
 
 ```sh
 cd <path-to-repo>
+git submodule update --init --recursive
 mkdir build
 cd build
 cmake ..
 make install
 ```
 
-Simply copy the header file into your project and include it directly.
+or simply copy the header file into your project and include it directly.
 
 ## Usage
 
