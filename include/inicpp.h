@@ -195,6 +195,18 @@ namespace ini
         char fieldSep_;
         char comment_;
 
+        static void trim(std::string &str)
+        {
+            size_t startpos = str.find_first_not_of(" \t");
+            if(std::string::npos != startpos)
+            {
+                size_t endpos = str.find_last_not_of(" \t");
+                str = str.substr(startpos, endpos - startpos + 1);
+            }
+            else
+                str = "";
+        }
+
     public:
         IniFile() : IniFile('=', '#')
         {}
@@ -242,6 +254,7 @@ namespace ini
             {
                 std::string line;
                 std::getline(is, line, '\n');
+                trim(line);
                 ++lineNo;
 
                 // skip if line is empty
@@ -307,7 +320,9 @@ namespace ini
                     }
                     // retrieve field name and value
                     std::string name = line.substr(0, pos);
+                    trim(name);
                     std::string value = line.substr(pos + 1, std::string::npos);
+                    trim(value);
                     (*currentSection)[name] = value;
                 }
             }
