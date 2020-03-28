@@ -225,3 +225,28 @@ TEST_CASE("fail to parse field without section", "IniFile")
     ini::IniFile inif;
     REQUIRE_THROWS(inif.decode("bar=bla"));
 }
+
+TEST_CASE("spaces are not taken into account in field names", "IniFile")
+{
+    std::istringstream ss(("[Foo]\n  \t  bar  \t  =hello world"));
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif["Foo"].find("bar") != inif["Foo"].end());
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "hello world");
+}
+
+TEST_CASE("spaces are not taken into account in field values", "IniFile")
+{
+    std::istringstream ss(("[Foo]\nbar=  \t  hello world  \t  "));
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "hello world");
+}
+
+TEST_CASE("spaces are not taken into account in sections", "IniFile")
+{
+    std::istringstream ss("  \t  [Foo]  \t  \nbar=bla");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.find("Foo") != inif.end());
+}
