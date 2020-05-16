@@ -29,6 +29,50 @@ TEST_CASE("parse empty file", "IniFile")
     REQUIRE(inif.size() == 0);
 }
 
+
+
+TEST_CASE("parse file with section not closed", "IniFile")
+{
+  std::istringstream ss(("[Foo]\nbar=hello world\n[Test\nfoo=never reached"));
+  ini::IniFile inif;
+  
+  CHECK_THROWS_AS(inif.decode(ss),  std::logic_error);
+}
+
+TEST_CASE("parse file with empty section", "IniFile")
+{
+  std::istringstream ss(("[Foo]\nbar=hello world\n[]\nfoo=never reached"));
+  ini::IniFile inif;
+  
+  CHECK_THROWS_AS(inif.decode(ss),  std::logic_error);
+}
+
+TEST_CASE("parse file with text after section", "IniFile")
+{
+  std::istringstream ss(("[Foo]\nbar=hello world\n[Test]superfluous\nfoo=never reached"));
+  ini::IniFile inif;
+  
+  CHECK_THROWS_AS(inif.decode(ss),  std::logic_error);
+}
+
+TEST_CASE("parse file with field without section", "IniFile")
+{
+  std::istringstream ss(("; comment only\nbar=hello world\n[Test]\nfoo=say goodby"));
+  ini::IniFile inif;
+  
+  CHECK_THROWS_AS(inif.decode(ss),  std::logic_error);
+}
+
+TEST_CASE("parse file with field without separator", "IniFile")
+{
+  std::istringstream ss(("[Foo]\nbar no_separator\n[Test]\nfoo=never reached"));
+  ini::IniFile inif;
+  
+  CHECK_THROWS_AS(inif.decode(ss),  std::logic_error);
+}
+
+
+
 TEST_CASE("parse comment only file", "IniFile")
 {
     std::istringstream ss("# this is a comment");

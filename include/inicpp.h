@@ -244,6 +244,14 @@ namespace ini
             comment_ = comment;
         }
 
+	/**
+	 * @throws logic_error if 
+	 *   - section not closed 
+	 *   - section is empty 
+	 *   - section: no end of line after section
+	 *   - field has no section 
+	 *   - field has no field separator 
+	 */
         void decode(std::istream &is)
         {
             clear();
@@ -315,7 +323,7 @@ namespace ini
                     {
                         std::stringstream ss;
                         ss << "l" << lineNo
-                           << ": ini parsing failed, no '=' found";
+                           << ": ini parsing failed, field without separator '" << fieldSep_ << "' found";
                         throw std::logic_error(ss.str());
                     }
                     // retrieve field name and value
