@@ -191,6 +191,7 @@ namespace ini
 
     class IniFile : public std::map<std::string, IniSection>
     {
+	//friend class DecodeResult;
     private:
         char fieldSep_;
         char comment_;
@@ -208,6 +209,91 @@ namespace ini
         }
 
     public:
+
+	enum DecodeErrorCode
+	{
+	    NO_FAILURE = 0,
+	    SECTION_NOT_CLOSED,
+	    SECTION_EMPTY,
+	    SECTION_TEXT_AFTER,
+	    FIELD_WITHOUT_SECTION,
+	    FIELD_WITHOUT_SEPARATOR
+	};
+	    
+	class DecodeResult
+	{
+	    
+	    /**
+	     * This is DecodeErrorCode#NO_FAILURE if all ok so far. 
+	     */
+	    DecodeErrorCode errorCode;
+	    /**
+	     * This is -1 if no failure occurred yet. 
+	     */
+	    uint lineNumber;
+	    /*
+	     * This is <c>null</c> if reading from a stream without file. 
+	     */
+	    //std::string fileName;
+
+	public:
+	    // DecodeResult(DecodeErrorCode errorCode,
+	    // 		 uint lineNumber,
+	    // 		 std::string fileName)
+	    // {
+	    // 	this->errorCode = errorCode;
+	    // 	this->lineNumber = lineNumber;
+	    // 	this->fileName = fileName;
+	    // }
+	    
+	    DecodeResult(DecodeErrorCode errorCode,
+			 uint lineNumber) //:  DecodeResult(errorCode, lineNumber, (const char*)NULL)
+	    {
+	     	this->errorCode = errorCode;
+	     	this->lineNumber = lineNumber;
+	    }
+
+	    DecodeResult() : DecodeResult(NO_FAILURE, -1)//, (const char*)NULL)
+	    {
+	    }
+
+	    // TBD: close stream?
+	    void throwIfError()
+	    {
+		std::stringstream ss;
+		ss << "l" << this->lineNumber
+		   << ": ini parsing failed, ";
+		switch(this->errorCode)
+		{
+		case NO_FAILURE:
+		    // all ok 
+		    return;
+		case SECTION_NOT_CLOSED:
+		    ss << "section not closed";
+		    break;
+		case SECTION_EMPTY:
+		    ss << "section is empty";
+		    break;
+		case SECTION_TEXT_AFTER:
+		    ss << "no end of line after section";
+		    break;
+		case FIELD_WITHOUT_SECTION:
+		    ss << "field has no section";
+		    break;
+		case FIELD_WITHOUT_SEPARATOR:
+		    ss << "field without separator '" << //fieldSep_ << TBD: reactivated later
+			"' found";
+		    break;
+		default:
+		    ss << "unknown failure code " << this->errorCode << " found";
+		    throw std::logic_error(ss.str());
+		}
+		// TBD: this shall be a kind of parse error 
+		throw std::logic_error(ss.str());
+	    }
+
+	};
+	
         IniFile() : IniFile('=', '#')
         {}
 
@@ -254,13 +340,19 @@ namespace ini
 	 */
         void decode(std::istream &is)
         {
-            clear();
+	    DecodeResult* res = tryDecode(is);
+	    res->throwIfError();
+        }
+
+        DecodeResult* tryDecode(std::istream &is)
+	{
+	    clear();
             int lineNo = 0;
             IniSection *currentSection = NULL;
             // iterate file by line
             while(!is.eof() && !is.fail())
             {
-                std::string line;
+               std::string line;
                 std::getline(is, line, '\n');
                 trim(line);
                 ++lineNo;
@@ -268,7 +360,8 @@ namespace ini
                 // skip if line is empty
                 if(line.size() == 0)
                     continue;
-                // skip if line is a comment
+
+		// skip if line is a comment
                 if(line[0] == comment_)
                     continue;
                 if(line[0] == '[')
@@ -277,29 +370,13 @@ namespace ini
                     // check if the section is also closed on same line
                     std::size_t pos = line.find("]");
                     if(pos == std::string::npos)
-                    {
-                        std::stringstream ss;
-                        ss << "l" << lineNo
-                           << ": ini parsing failed, section not closed";
-                        throw std::logic_error(ss.str());
-                    }
+			return new DecodeResult(SECTION_NOT_CLOSED, lineNo);
                     // check if the section name is empty
                     if(pos == 1)
-                    {
-                        std::stringstream ss;
-                        ss << "l" << lineNo
-                           << ": ini parsing failed, section is empty";
-                        throw std::logic_error(ss.str());
-                    }
+			return new DecodeResult(SECTION_EMPTY, lineNo);
                     // check if there is a newline following closing bracket
                     if(pos + 1 != line.length())
-                    {
-                        std::stringstream ss;
-                        ss << "l" << lineNo
-                           << ": ini parsing failed, no end of line after "
-                              "section";
-                        throw std::logic_error(ss.str());
-                    }
+			return new DecodeResult(SECTION_TEXT_AFTER, lineNo);
 
                     // retrieve section name
                     std::string secName = line.substr(1, pos - 1);
@@ -310,31 +387,28 @@ namespace ini
                     // line is a field definition
                     // check if section was already opened
                     if(currentSection == NULL)
-                    {
-                        std::stringstream ss;
-                        ss << "l" << lineNo
-                           << ": ini parsing failed, field has no section";
-                        throw std::logic_error(ss.str());
-                    }
+			return new DecodeResult(FIELD_WITHOUT_SECTION, lineNo);
 
                     // find key value separator
                     std::size_t pos = line.find(fieldSep_);
                     if(pos == std::string::npos)
-                    {
-                        std::stringstream ss;
-                        ss << "l" << lineNo
-                           << ": ini parsing failed, field without separator '" << fieldSep_ << "' found";
-                        throw std::logic_error(ss.str());
-                    }
+			return new DecodeResult(FIELD_WITHOUT_SEPARATOR, lineNo);
+
                     // retrieve field name and value
                     std::string name = line.substr(0, pos);
                     trim(name);
                     std::string value = line.substr(pos + 1, std::string::npos);
                     trim(value);
                     (*currentSection)[name] = value;
-                }
-            }
-        }
+		}
+		
+	    }
+
+	    // signifies success
+	    return new DecodeResult();
+	}	
+
+	
 
         void decode(const std::string &content)
         {
