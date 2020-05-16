@@ -152,13 +152,13 @@ namespace ini
         explicit operator double() const
         {
 	    // may throw an invalid argument exception 
-            return std::stod(value_);
+            //return std::stod(value_);
 	    
-	    // char *endptr;
-	    // double result = std::strtod(value_.c_str(), &endptr);
-	    // if (*endptr != '\0' || value_.empty())
-	    //   throw std::invalid_argument("field is no double");
-	    // return result;
+	    char *endptr;
+	    double result = std::strtod(value_.c_str(), &endptr);
+	    if (*endptr != '\0' || value_.empty())
+	      throw std::invalid_argument("field is no double");
+	    return result;
         }
 
         explicit operator bool() const
