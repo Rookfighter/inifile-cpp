@@ -148,17 +148,16 @@ namespace ini
             return std::stof(value_);
         }
 
-	// strtod would have a no throw guarantee 
+	// strtod has a no throw guarantee 
         explicit operator double() const
         {
 	    // may throw an invalid argument exception 
             return std::stod(value_);
 	    
 	    // char *endptr;
-	    // CAUTION: this delivers a value even if string starts with '-'
-	    // unsigned int result = std::strtod(value_.c_str(), &endptr);
+	    // double result = std::strtod(value_.c_str(), &endptr);
 	    // if (*endptr != '\0' || value_.empty())
-	    //   throw std::invalid_argument("field is not an unsigned int");
+	    //   throw std::invalid_argument("field is no double");
 	    // return result;
         }
 

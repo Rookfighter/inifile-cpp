@@ -10,6 +10,7 @@
 #include "inicpp.h"
 
 #include <sstream>
+#include <cmath>
 
 TEST_CASE("decode ini file", "IniFile")
 {
@@ -138,14 +139,36 @@ TEST_CASE("parse section with duplicate field", "IniFile")
 
 TEST_CASE("parse field as double", "IniFile")
 {
-    std::istringstream ss("[Foo]\nbar1=1.2\nbar2=1\nbar3=-2.4");
-    ini::IniFile inif(ss);
+    std::istringstream ss("[Foo]"
+			  "\nbar0=-0" "\nbar1=1.2" "\nbar2=1" "\nbar3=-2.4"
+			  "\nbar4=-nan" "\nbar5=-inF" "\nbar6=infinity"
+			  "\nbar7=-2.5e4");
+    ini::IniFile inif(ss); 
 
     REQUIRE(inif.size() == 1);
-    REQUIRE(inif["Foo"].size() == 3);
-    REQUIRE(inif["Foo"]["bar1"].as<double>() == 1.2);
-    REQUIRE(inif["Foo"]["bar2"].as<double>() == 1.0);
-    REQUIRE(inif["Foo"]["bar3"].as<double>() == -2.4);
+    ini::IniSection sec = inif["Foo"];
+    REQUIRE(sec["bar0"].as<double>() == 0.0);
+    REQUIRE(std::signbit(sec["bar0"].as<double>()));
+    REQUIRE(sec["bar1"].as<double>() == 1.2);
+    REQUIRE(sec["bar2"].as<double>() == 1.0);
+    REQUIRE(sec["bar3"].as<double>() == -2.4);
+    REQUIRE(std::isnan  (sec["bar4"].as<double>()));
+    REQUIRE(std::signbit(sec["bar4"].as<double>()));
+    REQUIRE(sec["bar5"].as<double>() == -INFINITY);
+    REQUIRE(sec["bar6"].as<double>() == +INFINITY);
+    REQUIRE(sec["bar7"].as<double>() == -2.5e4);
+}
+
+TEST_CASE("fail to parse as double", "IniFile")
+{
+   std::istringstream ss("[Foo]"
+			  "\nbar1=bla" "\nbar1=-2.5e4x");
+    ini::IniFile inif(ss); 
+
+    REQUIRE(inif.size() == 1);
+    ini::IniSection sec = inif["Foo"];
+    REQUIRE_THROWS_AS(sec["bar1"].as<unsigned int>(), std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar2"].as<unsigned int>(), std::invalid_argument);
 }
 
 TEST_CASE("parse field as (unsigned) int, fail if negative unsigned", "IniFile")
@@ -178,6 +201,7 @@ TEST_CASE("parse field as (unsigned) int, fail if negative unsigned", "IniFile")
     REQUIRE(sec["barG1"].as<unsigned int>() == 255);
 
     REQUIRE(sec["barG2"].as<         int>() == -128);
+    // TBC: baG2 shall be NULL
     REQUIRE_THROWS_AS(sec["baG2"].as<unsigned int>(), std::invalid_argument);
 }
 
@@ -314,17 +338,6 @@ TEST_CASE("fail to parse as bool", "IniFile")
     REQUIRE_THROWS(inif["Foo"]["bar"].as<bool>());
 }
 
-
-
-TEST_CASE("fail to parse as double", "IniFile")
-{
-    std::istringstream ss("[Foo]\nbar=bla");
-    ini::IniFile inif(ss);
-
-    REQUIRE(inif.size() == 1);
-    REQUIRE(inif["Foo"].size() == 1);
-    REQUIRE_THROWS(inif["Foo"]["bar"].as<double>());
-}
 
 
 /***************************************************
