@@ -11,7 +11,7 @@
 
 #include <sstream>
 
-TEST_CASE("parse ini file", "IniFile")
+TEST_CASE("decode ini file", "IniFile")
 {
     std::istringstream ss(("[Foo]\nbar=hello world\n[Test]"));
     ini::IniFile inif(ss);
@@ -21,7 +21,7 @@ TEST_CASE("parse ini file", "IniFile")
     REQUIRE(inif["Test"].size() == 0);
 }
 
-TEST_CASE("parse empty file", "IniFile")
+TEST_CASE("decode empty file", "IniFile")
 {
     std::istringstream ss("");
     ini::IniFile inif(ss);
@@ -31,7 +31,7 @@ TEST_CASE("parse empty file", "IniFile")
 
 
 
-TEST_CASE("parse file with section not closed", "IniFile")
+TEST_CASE("fail to decode file with section not closed", "IniFile")
 {
   std::istringstream ss(("[Foo]\nbar=hello world\n[Test\nfoo=never reached"));
   ini::IniFile inif;
@@ -39,7 +39,15 @@ TEST_CASE("parse file with section not closed", "IniFile")
   CHECK_THROWS_AS(inif.decode(ss),  std::logic_error);
 }
 
-TEST_CASE("parse file with empty section", "IniFile")
+TEST_CASE("fail to load unclosed section", "IniFile")
+{
+    ini::IniFile inif;
+    REQUIRE_THROWS_AS(inif.decode("[Foo\nbar=bla"),  std::logic_error);
+}
+
+
+
+TEST_CASE("fail to decode file with empty section name", "IniFile")
 {
   std::istringstream ss(("[Foo]\nbar=hello world\n[]\nfoo=never reached"));
   ini::IniFile inif;
@@ -47,7 +55,7 @@ TEST_CASE("parse file with empty section", "IniFile")
   CHECK_THROWS_AS(inif.decode(ss),  std::logic_error);
 }
 
-TEST_CASE("parse file with text after section", "IniFile")
+TEST_CASE("fail to decode file with text after section", "IniFile")
 {
   std::istringstream ss(("[Foo]\nbar=hello world\n[Test]superfluous\nfoo=never reached"));
   ini::IniFile inif;
@@ -55,7 +63,7 @@ TEST_CASE("parse file with text after section", "IniFile")
   CHECK_THROWS_AS(inif.decode(ss),  std::logic_error);
 }
 
-TEST_CASE("parse file with field without section", "IniFile")
+TEST_CASE("fail to decode file with field without section", "IniFile")
 {
   std::istringstream ss(("; comment only\nbar=hello world\n[Test]\nfoo=say goodby"));
   ini::IniFile inif;
@@ -63,7 +71,14 @@ TEST_CASE("parse file with field without section", "IniFile")
   CHECK_THROWS_AS(inif.decode(ss),  std::logic_error);
 }
 
-TEST_CASE("parse file with field without separator", "IniFile")
+TEST_CASE("fail to load field without section", "IniFile")
+{
+    ini::IniFile inif;
+    REQUIRE_THROWS_AS(inif.decode("bar=bla"),  std::logic_error);
+}
+
+
+TEST_CASE("fail to decode file with field without separator", "IniFile")
 {
   std::istringstream ss(("[Foo]\nbar no_separator\n[Test]\nfoo=never reached"));
   ini::IniFile inif;
@@ -71,9 +86,14 @@ TEST_CASE("parse file with field without separator", "IniFile")
   CHECK_THROWS_AS(inif.decode(ss),  std::logic_error);
 }
 
+TEST_CASE("fail to load field without equal", "IniFile")
+{
+    ini::IniFile inif;
+    REQUIRE_THROWS_AS(inif.decode("[Foo]\nbar"),  std::logic_error);
+}
 
 
-TEST_CASE("parse comment only file", "IniFile")
+TEST_CASE("decode file with comment only", "IniFile")
 {
     std::istringstream ss("# this is a comment");
     ini::IniFile inif(ss);
@@ -82,7 +102,7 @@ TEST_CASE("parse comment only file", "IniFile")
 }
 
 
-TEST_CASE("parse empty section", "IniFile")
+TEST_CASE("decode file with empty section", "IniFile")
 {
     std::istringstream ss("[Foo]");
     ini::IniFile inif(ss);
@@ -101,15 +121,20 @@ TEST_CASE("parse empty field", "IniFile")
     REQUIRE(inif["Foo"]["bar"].as<std::string>() == "");
 }
 
+// TBD: this seems to be very crude to me 
 TEST_CASE("parse section with duplicate field", "IniFile")
 {
-    std::istringstream ss("[Foo]\nbar=hello\nbar=world");
+    std::istringstream ss("[Foo]\nbar=hello\nbar=World");
     ini::IniFile inif(ss);
 
     REQUIRE(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 1);
-    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "world");
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "World");
 }
+
+/***************************************************
+ * get as type
+ ***************************************************/
 
 TEST_CASE("parse field as double", "IniFile")
 {
@@ -123,16 +148,69 @@ TEST_CASE("parse field as double", "IniFile")
     REQUIRE(inif["Foo"]["bar3"].as<double>() == -2.4);
 }
 
-TEST_CASE("parse field as int", "IniFile")
+TEST_CASE("parse field as (unsigned) int, fail if negative unsigned", "IniFile")
 {
-    std::istringstream ss("[Foo]\nbar1=1\nbar2=-2");
+    std::istringstream ss("[Foo]" "\nbar0=0" "\nbar1=1" "\nbar2=-42"
+			  "\nbar80=00" "\nbar81=02" "\nbar82=-07"
+			  "\nbarG0=-0x0" "\nbarG1=0xfF" "\nbarG2=-0x80");
     ini::IniFile inif(ss);
 
     REQUIRE(inif.size() == 1);
-    REQUIRE(inif["Foo"].size() == 2);
-    REQUIRE(inif["Foo"]["bar1"].as<int>() == 1);
-    REQUIRE(inif["Foo"]["bar2"].as<int>() == -2);
+    ini::IniSection sec = inif["Foo"];
+    REQUIRE(sec["bar0"].as<         int>() == 0);
+    REQUIRE(sec["bar0"].as<unsigned int>() == 0);
+    REQUIRE(sec["bar1"].as<         int>() == 1);
+    REQUIRE(sec["bar1"].as<unsigned int>() == 1);
+    REQUIRE(sec["bar2"].as<         int>() == -42);
+    REQUIRE_THROWS_AS(sec["bar2"].as<unsigned int>(), std::invalid_argument);
+
+    REQUIRE(sec["bar80"].as<         int>() == 0);
+    REQUIRE(sec["bar80"].as<unsigned int>() == 0);
+    REQUIRE(sec["bar81"].as<         int>() == 2);
+    REQUIRE(sec["bar81"].as<unsigned int>() == 2);
+    REQUIRE(sec["bar82"].as<int>() == -7);
+    REQUIRE_THROWS_AS(sec["bar82"].as<unsigned int>(), std::invalid_argument);
+
+    
+    REQUIRE(sec["barG0"].as<int>() == 0);
+    REQUIRE_THROWS_AS(sec["baG0"].as<unsigned int>(), std::invalid_argument);
+    REQUIRE(sec["barG1"].as<         int>() == 255);
+    REQUIRE(sec["barG1"].as<unsigned int>() == 255);
+
+    REQUIRE(sec["barG2"].as<         int>() == -128);
+    REQUIRE_THROWS_AS(sec["baG2"].as<unsigned int>(), std::invalid_argument);
 }
+
+
+TEST_CASE("fail to parse as (unsigned) int", "IniFile")
+{
+    std::istringstream ss("[Foo]"
+			  "\nbar1=bla" "\nbar2=" "\nbar3=2x" "\nbar4=+"
+			  "\nbar82=08" "\nbarG0=0x" "\nbarG1=0xg");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.size() == 1);
+    ini::IniSection sec = inif["Foo"];
+    REQUIRE_THROWS_AS(sec["bar1"].as<         int>(), std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar1"].as<unsigned int>(), std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar2"].as<         int>(), std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar2"].as<unsigned  int>(), std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar3"].as<         int>(), std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar3"].as<unsigned int>(), std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar4"].as<         int>(), std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar4"].as<unsigned int>(), std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar82"].as<         int>(), std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar82"].as<unsigned int>(), std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["barG0"].as<         int>(), std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["barG0"].as<unsigned int>(), std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["barG1"].as<         int>(), std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["barG1"].as<unsigned int>(), std::invalid_argument);
+
+
+    
+}
+
+
 
 TEST_CASE("parse field as bool", "IniFile")
 {
@@ -158,7 +236,7 @@ TEST_CASE("parse field with custom field sep", "IniFile")
     REQUIRE(inif["Foo"]["bar3"].as<bool>());
 }
 
-TEST_CASE("parse with comment", "IniFile")
+TEST_CASE("parse file with comment", "IniFile")
 {
     std::istringstream ss("[Foo]\n# this is a test\nbar=bla");
     ini::IniFile inif(ss);
@@ -198,6 +276,7 @@ TEST_CASE("save with int fields", "IniFile")
     REQUIRE(result == "[Foo]\nbar1=1\nbar2=-2\n");
 }
 
+// TBD: infinite and NaN
 TEST_CASE("save with double fields", "IniFile")
 {
     ini::IniFile inif;
@@ -218,21 +297,12 @@ TEST_CASE("save with custom field sep", "IniFile")
     REQUIRE(result == "[Foo]\nbar1:true\nbar2:false\n");
 }
 
+
+
 /***************************************************
- *                Failing Tests
+ * get as type
  ***************************************************/
-
-TEST_CASE("fail to load unclosed section", "IniFile")
-{
-    ini::IniFile inif;
-    REQUIRE_THROWS(inif.decode("[Foo\nbar=bla"));
-}
-
-TEST_CASE("fail to load field without equal", "IniFile")
-{
-    ini::IniFile inif;
-    REQUIRE_THROWS(inif.decode("[Foo]\nbar"));
-}
+// TBD: 
 
 TEST_CASE("fail to parse as bool", "IniFile")
 {
@@ -244,15 +314,7 @@ TEST_CASE("fail to parse as bool", "IniFile")
     REQUIRE_THROWS(inif["Foo"]["bar"].as<bool>());
 }
 
-TEST_CASE("fail to parse as int", "IniFile")
-{
-    std::istringstream ss("[Foo]\nbar=bla");
-    ini::IniFile inif(ss);
 
-    REQUIRE(inif.size() == 1);
-    REQUIRE(inif["Foo"].size() == 1);
-    REQUIRE_THROWS(inif["Foo"]["bar"].as<int>());
-}
 
 TEST_CASE("fail to parse as double", "IniFile")
 {
@@ -264,11 +326,12 @@ TEST_CASE("fail to parse as double", "IniFile")
     REQUIRE_THROWS(inif["Foo"]["bar"].as<double>());
 }
 
-TEST_CASE("fail to parse field without section", "IniFile")
-{
-    ini::IniFile inif;
-    REQUIRE_THROWS(inif.decode("bar=bla"));
-}
+
+/***************************************************
+ * Treatment of spaces 
+ ***************************************************/
+
+
 
 TEST_CASE("spaces are not taken into account in field names", "IniFile")
 {

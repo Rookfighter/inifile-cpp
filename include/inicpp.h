@@ -16,6 +16,8 @@
 #include <sstream>
 #include <stdexcept>
 
+#include <iostream>
+
 namespace ini
 {
     class IniField
@@ -118,52 +120,46 @@ namespace ini
             return value_;
         }
 
+	// strtol has a no thow guarantee 
         explicit operator int() const
         {
             char *endptr;
-            // check if decimal
-            int result = std::strtol(value_.c_str(), &endptr, 10);
-            if(*endptr == '\0')
-                return result;
-            // check if octal
-            result = std::strtol(value_.c_str(), &endptr, 8);
-            if(*endptr == '\0')
-                return result;
-            // check if hex
-            result = std::strtol(value_.c_str(), &endptr, 16);
-            if(*endptr == '\0')
-                return result;
-
-            throw std::invalid_argument("field is not an int");
+            int result = std::strtol(value_.c_str(), &endptr, 0);
+	    if (*endptr != '\0' || value_.empty())
+	        throw std::invalid_argument("field is not an int");
+	    return result;
         }
 
+	// strtoul has a no thow guarantee 
         explicit operator unsigned int() const
         {
-            char *endptr;
-            // check if decimal
-            int result = std::strtoul(value_.c_str(), &endptr, 10);
-            if(*endptr == '\0')
-                return result;
-            // check if octal
-            result = std::strtoul(value_.c_str(), &endptr, 8);
-            if(*endptr == '\0')
-                return result;
-            // check if hex
-            result = std::strtoul(value_.c_str(), &endptr, 16);
-            if(*endptr == '\0')
-                return result;
-
-            throw std::invalid_argument("field is not an unsigned int");
+	    char *endptr;
+	    // CAUTION: this delivers a value even if string starts with '-'
+	    unsigned int result = std::strtoul(value_.c_str(), &endptr, 0);
+	    if (*endptr != '\0' || value_.empty() || value_[0] == '-')
+	      throw std::invalid_argument("field is not an unsigned int");
+	    return result;
         }
 
-        explicit operator float() const
+ 	// strtod would have a no throw guarantee 
+	explicit operator float() const
         {
+	    // may throw an invalid argument exception 
             return std::stof(value_);
         }
 
+	// strtod would have a no throw guarantee 
         explicit operator double() const
         {
+	    // may throw an invalid argument exception 
             return std::stod(value_);
+	    
+	    // char *endptr;
+	    // CAUTION: this delivers a value even if string starts with '-'
+	    // unsigned int result = std::strtod(value_.c_str(), &endptr);
+	    // if (*endptr != '\0' || value_.empty())
+	    //   throw std::invalid_argument("field is not an unsigned int");
+	    // return result;
         }
 
         explicit operator bool() const
@@ -171,12 +167,11 @@ namespace ini
             std::string str(value_);
             std::transform(str.begin(), str.end(), str.begin(), ::toupper);
 
-            if(str == "TRUE")
+            if (str == "TRUE")
                 return true;
-            else if(str == "FALSE")
+            if (str == "FALSE")
                 return false;
-            else
-                throw std::invalid_argument("field is not a bool");
+	    throw std::invalid_argument("field is not a bool");
         }
     };
 
@@ -199,7 +194,7 @@ namespace ini
         static void trim(std::string &str)
         {
             size_t startpos = str.find_first_not_of(" \t");
-            if(std::string::npos != startpos)
+            if (std::string::npos != startpos)
             {
                 size_t endpos = str.find_last_not_of(" \t");
                 str = str.substr(startpos, endpos - startpos + 1);
@@ -263,7 +258,7 @@ namespace ini
 		std::stringstream ss;
 		ss << "l" << this->lineNumber
 		   << ": ini parsing failed, ";
-		switch(this->errorCode)
+		switch (this->errorCode)
 		{
 		case NO_FAILURE:
 		    // all ok 
@@ -350,7 +345,7 @@ namespace ini
             int lineNo = 0;
             IniSection *currentSection = NULL;
             // iterate file by line
-            while(!is.eof() && !is.fail())
+            while (!is.eof() && !is.fail())
             {
                std::string line;
                 std::getline(is, line, '\n');
@@ -401,7 +396,6 @@ namespace ini
                     trim(value);
                     (*currentSection)[name] = value;
 		}
-		
 	    }
 
 	    // signifies success
