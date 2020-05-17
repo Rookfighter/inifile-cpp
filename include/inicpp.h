@@ -27,6 +27,7 @@ namespace ini
     private:
         std::string value_;
         mutable bool failedLastConversion_;
+        mutable std::string typeLastConversion;
 
     public:
         IniField() : value_(), failedLastConversion_(false)
@@ -121,9 +122,10 @@ namespace ini
       
         explicit operator const char *() const
         {
+	    typeLastConversion = "char*";
 	    const char* result = castToCString();
 	    if (failedLastConversion_)
-	        throw std::invalid_argument("field is no char*");
+	        throw std::invalid_argument("field is no " + typeLastConversion);
 
  	    return result;
         }
@@ -136,9 +138,10 @@ namespace ini
       
         explicit operator std::string() const
         {
+	    typeLastConversion = "std::string";
 	    const std::string result = castToString();
 	    if (failedLastConversion_)
-	        throw std::invalid_argument("field is no string");
+	        throw std::invalid_argument("field is no " + typeLastConversion);
             return result;
         }
 
@@ -153,15 +156,17 @@ namespace ini
       
         explicit operator long int() const
         {
+	    typeLastConversion = "long int";
  	    long int result = castToLongIntCheckFail();
-	    
+
 	    if (failedLastConversion_)
-	        throw std::invalid_argument("field is no long int");
+	        throw std::invalid_argument("field is no " + typeLastConversion);
 	    return result;
         }
       
         explicit operator int() const
         {
+	    typeLastConversion = "int";
 	    long int result = castToLongIntCheckFail();
 
 	    if (result > std::numeric_limits<int>::max())
@@ -169,8 +174,9 @@ namespace ini
 	    else if (result < std::numeric_limits<int>::min())
 	      result = std::numeric_limits<int>::min();
 
+
 	    if (failedLastConversion_)
-	      throw std::invalid_argument("field is no long int");
+	      throw std::invalid_argument("field is no " + typeLastConversion);
 	    return (int)result;
         }
 
@@ -187,22 +193,24 @@ namespace ini
 
         explicit operator unsigned long int() const
         {
+	    typeLastConversion = "unsigned long int";
 	    unsigned long int result = castToUnsignedLongIntCheckFail();
 
 	    if (failedLastConversion_)
-	      throw std::invalid_argument("field is not an unsigned int");
+	      throw std::invalid_argument("field is no " + typeLastConversion);
 	    return result;
         }
 
         explicit operator unsigned int() const
         {
+	    typeLastConversion = "unsigned int";
 	    unsigned long int result = castToUnsignedLongIntCheckFail();
 
 	    if (result > std::numeric_limits<unsigned int>::max())
 	      result = std::numeric_limits<unsigned int>::max();
 	    
 	    if (failedLastConversion_)
-	      throw std::invalid_argument("field is not an unsigned int");
+	      throw std::invalid_argument("field is no " + typeLastConversion);
 	    return result;
         }
 
@@ -217,18 +225,20 @@ namespace ini
 
         explicit operator double() const
         {
+	    typeLastConversion = "double";
 	    double result = castToDoubleCheckFail();
 	    if (failedLastConversion_)
-	      throw std::invalid_argument("field is no double");
+	      throw std::invalid_argument("field is no " + typeLastConversion);
 	    return result;
         }
 
 	explicit operator float() const
         {
+	    typeLastConversion = "float";
 	    float result = (float)castToDoubleCheckFail();
 
 	    if (failedLastConversion_)
-	      throw std::invalid_argument("field is no float");
+	      throw std::invalid_argument("field is no " + typeLastConversion);
 	    return result;
 	}
 
@@ -236,6 +246,7 @@ namespace ini
 
         explicit operator bool() const
         {
+	    typeLastConversion = "bool";
             std::string str(value_);
             std::transform(str.begin(), str.end(), str.begin(), ::tolower);
 	    failedLastConversion_ = true;
@@ -249,9 +260,9 @@ namespace ini
 	    {
  	        failedLastConversion_ = false;
 	    }
-	    
+
 	    if (failedLastConversion_)
-	      throw std::invalid_argument("field is not a bool");
+	      throw std::invalid_argument("field is no " + typeLastConversion);
 	    return result;
         }
     };
