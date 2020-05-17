@@ -123,14 +123,14 @@ namespace ini
         }
 
 	// strtol has a no thow guarantee 
-        // explicit operator long int() const
-        // {
-        //     char *endptr;
-        //     long int result = std::strtol(value_.c_str(), &endptr, 0);
-	//     if (*endptr != '\0' || value_.empty())
-	//         throw std::invalid_argument("field is no long int");
-	//     return result;
-        // }
+        explicit operator long int() const
+        {
+            char *endptr;
+            long int result = std::strtol(value_.c_str(), &endptr, 0);
+	    if (*endptr != '\0' || value_.empty())
+	        throw std::invalid_argument("field is no long int");
+	    return result;
+        }
       
 	// strtol has a no thow guarantee 
         explicit operator int() const
@@ -143,15 +143,15 @@ namespace ini
         }
 
 	// strtoul has a no thow guarantee 
-        // explicit operator unsigned long int() const
-        // {
-	//     char *endptr;
-	//     CAUTION: this delivers a value even if string starts with '-'
-	//     unsigned long int result = std::strtoul(value_.c_str(), &endptr, 0);
-	//     if (*endptr != '\0' || value_.empty() || value_[0] == '-')
-	//       throw std::invalid_argument("field is not an unsigned int");
-	//     return result;
-        // }
+        explicit operator unsigned long int() const
+        {
+	    char *endptr;
+	    // CAUTION: this delivers a value even if string starts with '-'
+	    unsigned long int result = std::strtoul(value_.c_str(), &endptr, 0);
+	    if (*endptr != '\0' || value_.empty() || value_[0] == '-')
+	      throw std::invalid_argument("field is not an unsigned int");
+	    return result;
+        }
 
 	// strtoul has a no thow guarantee 
         explicit operator unsigned int() const

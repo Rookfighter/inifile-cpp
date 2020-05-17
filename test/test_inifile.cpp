@@ -247,8 +247,116 @@ TEST_CASE("fail to parse as float", "IniFile")
     REQUIRE_THROWS_AS(sec["bar3"].as<float>(), std::invalid_argument);   
 }
 
+TEST_CASE("parse field as (unsigned) long int, fail if negative unsigned",
+	  "IniFile")
+{
+    std::istringstream ss("[Foo]" "\nbar0=0" "\nbar1=1" "\nbar2=-42"
+			  "\nbar80=00" "\nbar81=02" "\nbar82=-07"
+			  "\nbarG0=-0x0" "\nbarG1=0xfF" "\nbarG2=-0x80"
+			  "\nbarB1=0x7fffffffffffffff"// max          long 
+			  "\nbarB2=0xffffffffffffffff"// max unsigned long 
+			  "\nbarB3=-0x8000000000000000"// min          long 
+			  "\nbarB4=0x0"                // min unsigned long
+			  "\nbarO1=0x8000000000000000" // max unsigned long + 1
+			  "\nbarO2=0x10000000000000000"// max          long + 1
+			  "\nbarO3=-0x8000000000000001");// min        long - 1
+    ini::IniFile inif(ss);
 
-TEST_CASE("parse field as (unsigned) int, fail if negative unsigned", "IniFile")
+    REQUIRE(inif.size() == 1);
+    ini::IniSection sec = inif["Foo"];
+    REQUIRE(sec["bar0"].as<         long int>() == 0);
+    REQUIRE(sec["bar0"].as<unsigned long int>() == 0);
+    REQUIRE(sec["bar1"].as<         long int>() == 1);
+    REQUIRE(sec["bar1"].as<unsigned long int>() == 1);
+    REQUIRE(sec["bar2"].as<         long int>() == -42);
+    REQUIRE_THROWS_AS(sec["bar2"].as<unsigned long int>(),
+		      std::invalid_argument);
+
+    REQUIRE(sec["bar80"].as<         long int>() == 0);
+    REQUIRE(sec["bar80"].as<unsigned long int>() == 0);
+    REQUIRE(sec["bar81"].as<         long int>() == 2);
+    REQUIRE(sec["bar81"].as<unsigned long int>() == 2);
+    REQUIRE(sec["bar82"].as<long int>() == -7);
+    REQUIRE_THROWS_AS(sec["bar82"].as<unsigned long int>(),
+		      std::invalid_argument);
+
+    
+    REQUIRE(sec["barG0"].as<long int>() == 0);
+    REQUIRE_THROWS_AS(sec["baG0"].as<unsigned long int>(),
+		      std::invalid_argument);
+    REQUIRE(sec["barG1"].as<         long int>() == 255);
+    REQUIRE(sec["barG1"].as<unsigned long int>() == 255);
+
+    REQUIRE(sec["barG2"].as<         long int>() == -128);
+    // TBC: baG2 shall be NULL
+    REQUIRE_THROWS_AS(sec["baG2"].as<unsigned long int>(),
+		      std::invalid_argument);
+
+    
+    REQUIRE(sec["barB1"]       .as<         long int>()
+	    == std::numeric_limits<         long int>::max());
+    REQUIRE(sec["barB2"]       .as<unsigned long int>()
+	    == std::numeric_limits<unsigned long int>::max());
+    REQUIRE(sec["barB3"]       .as<         long int>()
+	    == std::numeric_limits<         long int>::min());
+    REQUIRE(sec["barB4"]       .as<unsigned long int>()
+	    == std::numeric_limits<unsigned long int>::min());
+    
+    REQUIRE(sec["barO1"]       .as<         long int>() 
+    	    == std::numeric_limits<         long int>::max());
+    REQUIRE(sec["barO2"]       .as<unsigned long int>() 
+    	    == std::numeric_limits<unsigned long int>::max());
+    REQUIRE(sec["barO3"]       .as<         long int>() 
+    	    == std::numeric_limits<         long int>::min());
+}
+
+
+TEST_CASE("fail to parse as (unsigned) long int", "IniFile")
+{
+    std::istringstream ss("[Foo]"
+			  "\nbar1=bla" "\nbar2=" "\nbar3=2x" "\nbar4=+"
+			  "\nbar82=08" "\nbarG0=0x" "\nbarG1=0xg"
+			  );
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.size() == 1);
+    ini::IniSection sec = inif["Foo"];
+    REQUIRE_THROWS_AS(sec["bar1"].as<         long int>(),
+		      std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar1"].as<unsigned long int>(),
+		      std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar2"].as<         long int>(),
+		      std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar2"].as<unsigned long int>(),
+		      std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar3"].as<         long int>(),
+		      std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar3"].as<unsigned long int>(),
+		      std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar4"].as<         long int>(),
+		      std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar4"].as<unsigned long int>(),
+		      std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar82"].as<         long int>(),
+		      std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar82"].as<unsigned long int>(),
+		      std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["barG0"].as<         long int>(),
+		      std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["barG0"].as<unsigned long int>(),
+		      std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["barG1"].as<         long int>(),
+		      std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["barG1"].as<unsigned long int>(),
+		      std::invalid_argument);
+
+}
+
+
+
+
+TEST_CASE("parse field as (unsigned) int, fail if negative unsigned",
+	  "IniFile")
 {
     std::istringstream ss("[Foo]" "\nbar0=0" "\nbar1=1" "\nbar2=-42"
 			  "\nbar80=00" "\nbar81=02" "\nbar82=-07"
@@ -283,6 +391,10 @@ TEST_CASE("parse field as (unsigned) int, fail if negative unsigned", "IniFile")
 }
 
 
+
+
+
+
 TEST_CASE("fail to parse as (unsigned) int", "IniFile")
 {
     std::istringstream ss("[Foo]"
@@ -295,7 +407,7 @@ TEST_CASE("fail to parse as (unsigned) int", "IniFile")
     REQUIRE_THROWS_AS(sec["bar1"].as<         int>(), std::invalid_argument);
     REQUIRE_THROWS_AS(sec["bar1"].as<unsigned int>(), std::invalid_argument);
     REQUIRE_THROWS_AS(sec["bar2"].as<         int>(), std::invalid_argument);
-    REQUIRE_THROWS_AS(sec["bar2"].as<unsigned  int>(), std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar2"].as<unsigned int>(), std::invalid_argument);
     REQUIRE_THROWS_AS(sec["bar3"].as<         int>(), std::invalid_argument);
     REQUIRE_THROWS_AS(sec["bar3"].as<unsigned int>(), std::invalid_argument);
     REQUIRE_THROWS_AS(sec["bar4"].as<         int>(), std::invalid_argument);
@@ -306,9 +418,6 @@ TEST_CASE("fail to parse as (unsigned) int", "IniFile")
     REQUIRE_THROWS_AS(sec["barG0"].as<unsigned int>(), std::invalid_argument);
     REQUIRE_THROWS_AS(sec["barG1"].as<         int>(), std::invalid_argument);
     REQUIRE_THROWS_AS(sec["barG1"].as<unsigned int>(), std::invalid_argument);
-
-
-    
 }
 
 
