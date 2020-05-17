@@ -57,6 +57,13 @@ namespace ini
 	    T result = static_cast<T>(*this);
 	    return failedLastConversion_ ? defaultValue : result;
  	}
+      
+        // template<typename T>
+        // T &operator ||(T defaultValue)
+        // {
+	//     T result = static_cast<T>(*this);
+	//     return failedLastConversion_ ? defaultValue : result;
+ 	// }
 
         bool failedLastConversion()
         {
