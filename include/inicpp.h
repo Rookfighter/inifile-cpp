@@ -135,11 +135,8 @@ namespace ini
 	// strtol has a no thow guarantee 
         explicit operator int() const
         {
-            char *endptr;
-            long int result = std::strtol(value_.c_str(), &endptr, 0);
-	    if (*endptr != '\0' || value_.empty())
-	        throw std::invalid_argument("field is not an int");
-	    
+ 	    long int result = this->as<long int>();
+ 	    
 	    if (result > std::numeric_limits<int>::max())
 	      result = std::numeric_limits<int>::max();
 	    else if (result < std::numeric_limits<int>::min())
@@ -161,11 +158,7 @@ namespace ini
 	// strtoul has a no thow guarantee 
         explicit operator unsigned int() const
         {
-	    char *endptr;
-	    // CAUTION: this delivers a value even if string starts with '-'
-	    unsigned long int result = std::strtoul(value_.c_str(), &endptr, 0);
-	    if (*endptr != '\0' || value_.empty() || value_[0] == '-')
-	      throw std::invalid_argument("field is not an unsigned int");
+	    unsigned long int result = this->as<unsigned long int>();
 	    
 	    if (result > std::numeric_limits<unsigned int>::max())
 	      result = std::numeric_limits<unsigned int>::max();
