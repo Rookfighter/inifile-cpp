@@ -12,6 +12,7 @@
 #include <sstream>
 #include <cmath>
 #include <limits>
+#include <string.h>
 
 TEST_CASE("decode ini file", "IniFile")
 {
@@ -137,6 +138,27 @@ TEST_CASE("parse section with duplicate field", "IniFile")
 /***************************************************
  * get as type
  ***************************************************/
+
+
+TEST_CASE("parse field as c-string", "IniFile")
+{
+     std::istringstream ss("[Foo]" "\nbar=blaC");
+     
+     ini::IniFile inif(ss); 
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(strcmp(inif["Foo"]["bar"].as<const char*>(), "blaC") == 0);
+}
+
+TEST_CASE("parse field as std::string", "IniFile")
+{
+     std::istringstream ss("[Foo]" "\nbar=blaS");
+     
+     ini::IniFile inif(ss); 
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == std::string("blaS"));
+}
 
 TEST_CASE("parse field as double", "IniFile")
 {
@@ -415,10 +437,6 @@ TEST_CASE("parse field as (unsigned) int, fail if negative unsigned",
 }
 
 
-
-
-
-
 TEST_CASE("fail to parse field as (unsigned) int", "IniFile")
 {
     std::istringstream ss("[Foo]"
@@ -467,7 +485,6 @@ TEST_CASE("failed to parse field as bool", "IniFile")
     //REQUIRE(inif["Foo"].size() == 3);
     REQUIRE_THROWS_AS(inif["Foo"]["bar"].as<bool>(), std::invalid_argument);
 }
-
 
 
 
@@ -545,21 +562,6 @@ TEST_CASE("save with custom field sep", "IniFile")
 }
 
 
-
-/***************************************************
- * get as type
- ***************************************************/
-// TBD: 
-
-TEST_CASE("fail to parse as bool", "IniFile")
-{
-    std::istringstream ss("[Foo]\nbar=bla");
-    ini::IniFile inif(ss);
-
-    REQUIRE(inif.size() == 1);
-    REQUIRE(inif["Foo"].size() == 1);
-    REQUIRE_THROWS(inif["Foo"]["bar"].as<bool>());
-}
 
 
 

@@ -113,81 +113,126 @@ namespace ini
          * Cast Operators
          *********************************************************************/
 
+        const char* castToCString() const 
+        {
+	    failedLastConversion_ = false;
+            return value_.c_str();
+	}
+      
         explicit operator const char *() const
         {
-            return value_.c_str();
+	    const char* result = castToCString();
+	    if (failedLastConversion_)
+	        throw std::invalid_argument("field is no char*");
+
+ 	    return result;
         }
 
+        const std::string castToString() const 
+        {
+	    failedLastConversion_ = false;
+            return value_;
+	}
+      
         explicit operator std::string() const
         {
-            return value_;
+	    const std::string result = castToString();
+	    if (failedLastConversion_)
+	        throw std::invalid_argument("field is no string");
+            return result;
         }
 
-	// strtol has a no thow guarantee 
-        explicit operator long int() const
+ 	// strtol has a no thow guarantee 
+        long int castToLongIntCheckFail() const 
         {
             char *endptr;
             long int result = std::strtol(value_.c_str(), &endptr, 0);
 	    failedLastConversion_ = *endptr != '\0' || value_.empty();
+	    return result;
+ 	}
+      
+        explicit operator long int() const
+        {
+ 	    long int result = castToLongIntCheckFail();
 	    
 	    if (failedLastConversion_)
 	        throw std::invalid_argument("field is no long int");
 	    return result;
         }
       
-	// strtol has a no thow guarantee 
         explicit operator int() const
         {
- 	    long int result = this->as<long int>();
- 	    
+	    long int result = castToLongIntCheckFail();
+
 	    if (result > std::numeric_limits<int>::max())
 	      result = std::numeric_limits<int>::max();
 	    else if (result < std::numeric_limits<int>::min())
 	      result = std::numeric_limits<int>::min();
+
+	    if (failedLastConversion_)
+	      throw std::invalid_argument("field is no long int");
 	    return (int)result;
         }
 
 	// strtoul has a no thow guarantee 
-        explicit operator unsigned long int() const
+        unsigned long int castToUnsignedLongIntCheckFail() const 
         {
-	    char *endptr;
+ 	    char *endptr;
 	    // CAUTION: this delivers a value even if string starts with '-'
 	    unsigned long int result = std::strtoul(value_.c_str(), &endptr, 0);
 	    failedLastConversion_ =
 	      *endptr != '\0' || value_.empty() || value_[0] == '-';
+	    return result;
+ 	}
 
+        explicit operator unsigned long int() const
+        {
+	    unsigned long int result = castToUnsignedLongIntCheckFail();
+
+	    if (failedLastConversion_)
+	      throw std::invalid_argument("field is not an unsigned int");
+	    return result;
+        }
+
+        explicit operator unsigned int() const
+        {
+	    unsigned long int result = castToUnsignedLongIntCheckFail();
+
+	    if (result > std::numeric_limits<unsigned int>::max())
+	      result = std::numeric_limits<unsigned int>::max();
 	    
 	    if (failedLastConversion_)
 	      throw std::invalid_argument("field is not an unsigned int");
 	    return result;
         }
 
-	// strtoul has a no thow guarantee 
-        explicit operator unsigned int() const
-        {
-	    unsigned long int result = this->as<unsigned long int>();
-	    
-	    if (result > std::numeric_limits<unsigned int>::max())
-	      result = std::numeric_limits<unsigned int>::max();
-	    return result;
-        }
-
- 	// strtod would have a no throw guarantee 
-	explicit operator float() const
-        {
-  	    return (float)this->as<double>();
-        }
-
-	// strtod has a no throw guarantee 
-        explicit operator double() const
+ 	// strtod has a no throw guarantee 
+        double castToDoubleCheckFail() const 
         {
 	    char *endptr;
 	    double result = std::strtod(value_.c_str(), &endptr);
 	    failedLastConversion_ = *endptr != '\0' || value_.empty();
+	    return result;
+	}
+
+        explicit operator double() const
+        {
+	    double result = castToDoubleCheckFail();
 	    if (failedLastConversion_)
 	      throw std::invalid_argument("field is no double");
 	    return result;
         }
+
+	explicit operator float() const
+        {
+	    float result = (float)castToDoubleCheckFail();
+
+	    if (failedLastConversion_)
+	      throw std::invalid_argument("field is no float");
+	    return result;
+	}
+
+
 
         explicit operator bool() const
         {
@@ -204,6 +249,7 @@ namespace ini
 	    {
  	        failedLastConversion_ = false;
 	    }
+	    
 	    if (failedLastConversion_)
 	      throw std::invalid_argument("field is not a bool");
 	    return result;
