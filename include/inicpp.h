@@ -44,7 +44,11 @@ namespace ini
         template<typename T>
         T as() const
         {
-            return static_cast<T>(*this);
+	    T result = static_cast<T>(*this);
+	    if (failedLastConversion_)
+	      throw std::invalid_argument("field is no " + typeLastConversion);
+
+            return result;
         }
 
         /**********************************************************************
@@ -124,9 +128,6 @@ namespace ini
         {
 	    typeLastConversion = "char*";
 	    const char* result = castToCString();
-	    if (failedLastConversion_)
-	        throw std::invalid_argument("field is no " + typeLastConversion);
-
  	    return result;
         }
 
@@ -140,8 +141,6 @@ namespace ini
         {
 	    typeLastConversion = "std::string";
 	    const std::string result = castToString();
-	    if (failedLastConversion_)
-	        throw std::invalid_argument("field is no " + typeLastConversion);
             return result;
         }
 
@@ -158,9 +157,6 @@ namespace ini
         {
 	    typeLastConversion = "long int";
  	    long int result = castToLongIntCheckFail();
-
-	    if (failedLastConversion_)
-	        throw std::invalid_argument("field is no " + typeLastConversion);
 	    return result;
         }
       
@@ -173,10 +169,6 @@ namespace ini
 	      result = std::numeric_limits<int>::max();
 	    else if (result < std::numeric_limits<int>::min())
 	      result = std::numeric_limits<int>::min();
-
-
-	    if (failedLastConversion_)
-	      throw std::invalid_argument("field is no " + typeLastConversion);
 	    return (int)result;
         }
 
@@ -195,9 +187,6 @@ namespace ini
         {
 	    typeLastConversion = "unsigned long int";
 	    unsigned long int result = castToUnsignedLongIntCheckFail();
-
-	    if (failedLastConversion_)
-	      throw std::invalid_argument("field is no " + typeLastConversion);
 	    return result;
         }
 
@@ -208,9 +197,6 @@ namespace ini
 
 	    if (result > std::numeric_limits<unsigned int>::max())
 	      result = std::numeric_limits<unsigned int>::max();
-	    
-	    if (failedLastConversion_)
-	      throw std::invalid_argument("field is no " + typeLastConversion);
 	    return result;
         }
 
@@ -227,8 +213,6 @@ namespace ini
         {
 	    typeLastConversion = "double";
 	    double result = castToDoubleCheckFail();
-	    if (failedLastConversion_)
-	      throw std::invalid_argument("field is no " + typeLastConversion);
 	    return result;
         }
 
@@ -236,9 +220,6 @@ namespace ini
         {
 	    typeLastConversion = "float";
 	    float result = (float)castToDoubleCheckFail();
-
-	    if (failedLastConversion_)
-	      throw std::invalid_argument("field is no " + typeLastConversion);
 	    return result;
 	}
 
@@ -261,8 +242,6 @@ namespace ini
  	        failedLastConversion_ = false;
 	    }
 
-	    if (failedLastConversion_)
-	      throw std::invalid_argument("field is no " + typeLastConversion);
 	    return result;
         }
     };
