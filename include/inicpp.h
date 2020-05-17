@@ -51,6 +51,19 @@ namespace ini
             return result;
         }
 
+        template<typename T>
+        T orDefault(T defaultValue)
+        {
+	    T result = static_cast<T>(*this);
+	    return failedLastConversion_ ? defaultValue : result;
+ 	}
+
+        bool failedLastConversion()
+        {
+	  return failedLastConversion_;
+	}
+
+      
         /**********************************************************************
          * Assignment Operators
          *********************************************************************/
@@ -144,7 +157,7 @@ namespace ini
             return result;
         }
 
- 	// strtol has a no thow guarantee 
+ 	// strtol has a no throw guarantee 
         long int castToLongIntCheckFail() const 
         {
             char *endptr;
@@ -172,7 +185,7 @@ namespace ini
 	    return (int)result;
         }
 
-	// strtoul has a no thow guarantee 
+	// strtoul has a no throw guarantee 
         unsigned long int castToUnsignedLongIntCheckFail() const 
         {
  	    char *endptr;
