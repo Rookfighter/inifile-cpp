@@ -11,6 +11,7 @@
 
 #include <sstream>
 #include <cmath>
+#include <limits>
 
 TEST_CASE("decode ini file", "IniFile")
 {
@@ -34,7 +35,7 @@ TEST_CASE("decode empty file", "IniFile")
 
 TEST_CASE("fail to decode file with section not closed", "IniFile")
 {
-  std::istringstream ss(("[Foo]\nbar=hello world\n[Test\nfoo=never reached"));
+  std::istringstream ss("[Foo]\nbar=hello world\n[Test\nfoo=never reached");
   ini::IniFile inif;
   
   CHECK_THROWS_AS(inif.decode(ss),  std::logic_error);
@@ -50,7 +51,7 @@ TEST_CASE("fail to load unclosed section", "IniFile")
 
 TEST_CASE("fail to decode file with empty section name", "IniFile")
 {
-  std::istringstream ss(("[Foo]\nbar=hello world\n[]\nfoo=never reached"));
+  std::istringstream ss("[Foo]\nbar=hello world\n[]\nfoo=never reached");
   ini::IniFile inif;
   
   CHECK_THROWS_AS(inif.decode(ss),  std::logic_error);
@@ -141,8 +142,30 @@ TEST_CASE("parse field as double", "IniFile")
 {
     std::istringstream ss("[Foo]"
 			  "\nbar0=-0" "\nbar1=1.2" "\nbar2=1" "\nbar3=-2.4"
-			  "\nbar4=-nan" "\nbar5=-inF" "\nbar6=infinity"
-			  "\nbar7=-2.5e4");
+			  "\nbarNF4=-nan" "\nbarNF5=-inF" "\nbarNF6=infinity"
+			  "\nbar7=-2.5e4"
+			  "\nbarL1=" 
+"1797693134862315708145274237317043567980705675258449965989174768031572607800"
+"2853876058955863276687817154045895351438246423432132688946418276846754670353"
+"7516986049910576551282076245490090389328944075868508455133942304583236903222"
+"9481658085593321233482747978262041447231687381771809192998812504040261841248"
+			 "58368.0" //  max 
+			  //std::to_string(std::numeric_limits<double>::max())// +
+			  //"\nbarL2=" +
+			  //std::to_string(std::numeric_limits<double>::min())
+			 "\nbarL2=" 
+"1797693134862315708145274237317043567980705675258449965989174768031572607800"
+"2853876058955863276687817154045895351438246423432132688946418276846754670353"
+"7516986049910576551282076245490090389328944075868508455133942304583236903222"
+"9481658085593321233482747978262041447231687381771809192998812504040261841248"
+			 "58368.01" // with 68.0 this is max 
+			 "\nbarL3=" 
+"1797693134862315708145274237317043567980705675258449965989174768031572607800"
+"2853876058955863276687817154045895351438246423432132688946418276846754670353"
+"7516986049910576551282076245490090389328944075868508455133942304583236903222"
+"9481658085593321233482747978262041447231687381771809192998812504040261841248"
+			 "5836800.01" // with 68.0 this is max 
+			  );
     ini::IniFile inif(ss); 
 
     REQUIRE(inif.size() == 1);
@@ -152,24 +175,78 @@ TEST_CASE("parse field as double", "IniFile")
     REQUIRE(sec["bar1"].as<double>() == 1.2);
     REQUIRE(sec["bar2"].as<double>() == 1.0);
     REQUIRE(sec["bar3"].as<double>() == -2.4);
-    REQUIRE(std::isnan  (sec["bar4"].as<double>()));
-    REQUIRE(std::signbit(sec["bar4"].as<double>()));
-    REQUIRE(sec["bar5"].as<double>() == -INFINITY);
-    REQUIRE(sec["bar6"].as<double>() == +INFINITY);
+    REQUIRE(std::isnan  (sec["barNF4"].as<double>()));
+    REQUIRE(std::signbit(sec["barNF4"].as<double>()));
+    REQUIRE(sec["barNF5"].as<double>() == -INFINITY);
+    REQUIRE(sec["barNF6"].as<double>() == +INFINITY);
     REQUIRE(sec["bar7"].as<double>() == -2.5e4);
+    REQUIRE(sec["barL1"].as<double>() == std::numeric_limits<double>::max());
+    REQUIRE(sec["barL2"].as<double>() == std::numeric_limits<double>::max());
+    REQUIRE(sec["barL3"].as<double>() == INFINITY);
 }
 
 TEST_CASE("fail to parse as double", "IniFile")
 {
    std::istringstream ss("[Foo]"
-			  "\nbar1=bla" "\nbar1=-2.5e4x");
+			 "\nbar1=bla" "\nbar2=-2.5e4x" "\nbar3="
+			 );
     ini::IniFile inif(ss); 
 
     REQUIRE(inif.size() == 1);
     ini::IniSection sec = inif["Foo"];
-    REQUIRE_THROWS_AS(sec["bar1"].as<unsigned int>(), std::invalid_argument);
-    REQUIRE_THROWS_AS(sec["bar2"].as<unsigned int>(), std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar1"].as<double>(), std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar2"].as<double>(), std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar3"].as<double>(), std::invalid_argument);
 }
+
+
+TEST_CASE("parse field as float", "IniFile")
+{
+    std::istringstream ss("[Foo]"
+			  "\nbar0=-0" "\nbar1=1.2" "\nbar2=1" "\nbar3=-2.4"
+			  "\nbarNF4=-nan" "\nbarNF5=-inF" "\nbarNF6=infinity"
+			  "\nbar7=-2.5e4"
+			  "\nbarL1="
+			  "340282346638528859811704183484516925440.0" // max
+			  //std::numeric_limits<float>::max()
+			  "\nbarL2=" 
+			  "340282346638528859811704183484516925440.0001" // 
+			  "\nbarL3=" 
+			  "340282346638528859811704183484516925440000.1" // 
+			  );
+    ini::IniFile inif(ss); 
+
+    REQUIRE(inif.size() == 1);
+    ini::IniSection sec = inif["Foo"];
+    REQUIRE(sec["bar0"].as<float>() == 0.0f);
+    REQUIRE(std::signbit(sec["bar0"].as<float>()));
+    REQUIRE(sec["bar1"].as<float>() == 1.2f);
+    REQUIRE(sec["bar2"].as<float>() == 1.0f);
+    REQUIRE(sec["bar3"].as<float>() == -2.4f);
+    REQUIRE(std::isnan  (sec["barNF4"].as<float>()));
+    REQUIRE(std::signbit(sec["barNF4"].as<float>()));
+    REQUIRE(sec["barNF5"].as<float>() == -INFINITY);
+    REQUIRE(sec["barNF6"].as<float>() == +INFINITY);
+    REQUIRE(sec["bar7"].as<float>() == -2.5e4f);
+    REQUIRE(sec["barL1"].as<float>() == std::numeric_limits<float>::max());
+    // TBC
+    // REQUIRE(sec["barL2"].as<float>() == std::numeric_limits<float>::max());
+    REQUIRE(sec["barL3"].as<float>() == INFINITY);
+}
+
+TEST_CASE("fail to parse as float", "IniFile")
+{
+   std::istringstream ss("[Foo]"
+			 "\nbar1=bla" "\nbar2=-2.5e4x" "\nbar3=");
+    ini::IniFile inif(ss); 
+
+    REQUIRE(inif.size() == 1);
+    ini::IniSection sec = inif["Foo"];
+    REQUIRE_THROWS_AS(sec["bar1"].as<float>(), std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar2"].as<float>(), std::invalid_argument);
+    REQUIRE_THROWS_AS(sec["bar3"].as<float>(), std::invalid_argument);   
+}
+
 
 TEST_CASE("parse field as (unsigned) int, fail if negative unsigned", "IniFile")
 {

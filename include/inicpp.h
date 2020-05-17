@@ -17,6 +17,8 @@
 #include <stdexcept>
 
 #include <iostream>
+#include <limits>
+#include <cmath>
 
 namespace ini
 {
@@ -121,6 +123,16 @@ namespace ini
         }
 
 	// strtol has a no thow guarantee 
+        // explicit operator long int() const
+        // {
+        //     char *endptr;
+        //     long int result = std::strtol(value_.c_str(), &endptr, 0);
+	//     if (*endptr != '\0' || value_.empty())
+	//         throw std::invalid_argument("field is no long int");
+	//     return result;
+        // }
+      
+	// strtol has a no thow guarantee 
         explicit operator int() const
         {
             char *endptr;
@@ -129,6 +141,17 @@ namespace ini
 	        throw std::invalid_argument("field is not an int");
 	    return result;
         }
+
+	// strtoul has a no thow guarantee 
+        // explicit operator unsigned long int() const
+        // {
+	//     char *endptr;
+	//     CAUTION: this delivers a value even if string starts with '-'
+	//     unsigned long int result = std::strtoul(value_.c_str(), &endptr, 0);
+	//     if (*endptr != '\0' || value_.empty() || value_[0] == '-')
+	//       throw std::invalid_argument("field is not an unsigned int");
+	//     return result;
+        // }
 
 	// strtoul has a no thow guarantee 
         explicit operator unsigned int() const
@@ -144,16 +167,12 @@ namespace ini
  	// strtod would have a no throw guarantee 
 	explicit operator float() const
         {
-	    // may throw an invalid argument exception 
-            return std::stof(value_);
+  	    return (float)this->as<double>();
         }
 
 	// strtod has a no throw guarantee 
         explicit operator double() const
         {
-	    // may throw an invalid argument exception 
-            //return std::stod(value_);
-	    
 	    char *endptr;
 	    double result = std::strtod(value_.c_str(), &endptr);
 	    if (*endptr != '\0' || value_.empty())
