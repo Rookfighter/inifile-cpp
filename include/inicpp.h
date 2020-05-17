@@ -26,9 +26,10 @@ namespace ini
     {
     private:
         std::string value_;
+        mutable bool failedLastConversion_;
 
     public:
-        IniField() : value_()
+        IniField() : value_(), failedLastConversion_(false)
         {}
 
         IniField(const std::string &value) : value_(value)
@@ -127,7 +128,9 @@ namespace ini
         {
             char *endptr;
             long int result = std::strtol(value_.c_str(), &endptr, 0);
-	    if (*endptr != '\0' || value_.empty())
+	    failedLastConversion_ = *endptr != '\0' || value_.empty();
+	    
+	    if (failedLastConversion_)
 	        throw std::invalid_argument("field is no long int");
 	    return result;
         }
@@ -150,7 +153,11 @@ namespace ini
 	    char *endptr;
 	    // CAUTION: this delivers a value even if string starts with '-'
 	    unsigned long int result = std::strtoul(value_.c_str(), &endptr, 0);
-	    if (*endptr != '\0' || value_.empty() || value_[0] == '-')
+	    failedLastConversion_ =
+	      *endptr != '\0' || value_.empty() || value_[0] == '-';
+
+	    
+	    if (failedLastConversion_)
 	      throw std::invalid_argument("field is not an unsigned int");
 	    return result;
         }
@@ -176,7 +183,8 @@ namespace ini
         {
 	    char *endptr;
 	    double result = std::strtod(value_.c_str(), &endptr);
-	    if (*endptr != '\0' || value_.empty())
+	    failedLastConversion_ = *endptr != '\0' || value_.empty();
+	    if (failedLastConversion_)
 	      throw std::invalid_argument("field is no double");
 	    return result;
         }
@@ -184,13 +192,21 @@ namespace ini
         explicit operator bool() const
         {
             std::string str(value_);
-            std::transform(str.begin(), str.end(), str.begin(), ::toupper);
-
-            if (str == "TRUE")
-                return true;
-            if (str == "FALSE")
-                return false;
-	    throw std::invalid_argument("field is not a bool");
+            std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+	    failedLastConversion_ = true;
+	    bool result = false;
+            if (str == "true")
+	    {
+	        failedLastConversion_ = false;
+                result = true;
+	    }
+            if (str == "false")
+	    {
+ 	        failedLastConversion_ = false;
+	    }
+	    if (failedLastConversion_)
+	      throw std::invalid_argument("field is not a bool");
+	    return result;
         }
     };
 

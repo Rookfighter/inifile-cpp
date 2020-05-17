@@ -185,7 +185,7 @@ TEST_CASE("parse field as double", "IniFile")
     REQUIRE(sec["barL3"].as<double>() == INFINITY);
 }
 
-TEST_CASE("fail to parse as double", "IniFile")
+TEST_CASE("fail to parse field as double", "IniFile")
 {
    std::istringstream ss("[Foo]"
 			 "\nbar1=bla" "\nbar2=-2.5e4x" "\nbar3="
@@ -234,7 +234,7 @@ TEST_CASE("parse field as float", "IniFile")
     REQUIRE(sec["barL3"].as<float>() == INFINITY);
 }
 
-TEST_CASE("fail to parse as float", "IniFile")
+TEST_CASE("fail to parse field as float", "IniFile")
 {
    std::istringstream ss("[Foo]"
 			 "\nbar1=bla" "\nbar2=-2.5e4x" "\nbar3=");
@@ -311,7 +311,7 @@ TEST_CASE("parse field as (unsigned) long int, fail if negative unsigned",
 }
 
 
-TEST_CASE("fail to parse as (unsigned) long int", "IniFile")
+TEST_CASE("fail to parse field as (unsigned) long int", "IniFile")
 {
     std::istringstream ss("[Foo]"
 			  "\nbar1=bla" "\nbar2=" "\nbar3=2x" "\nbar4=+"
@@ -419,7 +419,7 @@ TEST_CASE("parse field as (unsigned) int, fail if negative unsigned",
 
 
 
-TEST_CASE("fail to parse as (unsigned) int", "IniFile")
+TEST_CASE("fail to parse field as (unsigned) int", "IniFile")
 {
     std::istringstream ss("[Foo]"
 			  "\nbar1=bla" "\nbar2=" "\nbar3=2x" "\nbar4=+"
@@ -457,6 +457,19 @@ TEST_CASE("parse field as bool", "IniFile")
     REQUIRE_FALSE(inif["Foo"]["bar2"].as<bool>());
     REQUIRE(inif["Foo"]["bar3"].as<bool>());
 }
+
+TEST_CASE("failed to parse field as bool", "IniFile")
+{
+    std::istringstream ss("[Foo]\nbar1=yes");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.size() == 1);
+    //REQUIRE(inif["Foo"].size() == 3);
+    REQUIRE_THROWS_AS(inif["Foo"]["bar"].as<bool>(), std::invalid_argument);
+}
+
+
+
 
 TEST_CASE("parse field with custom field sep", "IniFile")
 {
