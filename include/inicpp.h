@@ -136,10 +136,15 @@ namespace ini
         explicit operator int() const
         {
             char *endptr;
-            int result = std::strtol(value_.c_str(), &endptr, 0);
+            long int result = std::strtol(value_.c_str(), &endptr, 0);
 	    if (*endptr != '\0' || value_.empty())
 	        throw std::invalid_argument("field is not an int");
-	    return result;
+	    
+	    if (result > std::numeric_limits<int>::max())
+	      result = std::numeric_limits<int>::max();
+	    else if (result < std::numeric_limits<int>::min())
+	      result = std::numeric_limits<int>::min();
+	    return (int)result;
         }
 
 	// strtoul has a no thow guarantee 
@@ -158,9 +163,12 @@ namespace ini
         {
 	    char *endptr;
 	    // CAUTION: this delivers a value even if string starts with '-'
-	    unsigned int result = std::strtoul(value_.c_str(), &endptr, 0);
+	    unsigned long int result = std::strtoul(value_.c_str(), &endptr, 0);
 	    if (*endptr != '\0' || value_.empty() || value_[0] == '-')
 	      throw std::invalid_argument("field is not an unsigned int");
+	    
+	    if (result > std::numeric_limits<unsigned int>::max())
+	      result = std::numeric_limits<unsigned int>::max();
 	    return result;
         }
 

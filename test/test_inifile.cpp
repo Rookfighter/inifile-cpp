@@ -253,13 +253,13 @@ TEST_CASE("parse field as (unsigned) long int, fail if negative unsigned",
     std::istringstream ss("[Foo]" "\nbar0=0" "\nbar1=1" "\nbar2=-42"
 			  "\nbar80=00" "\nbar81=02" "\nbar82=-07"
 			  "\nbarG0=-0x0" "\nbarG1=0xfF" "\nbarG2=-0x80"
-			  "\nbarB1=0x7fffffffffffffff"// max          long 
-			  "\nbarB2=0xffffffffffffffff"// max unsigned long 
-			  "\nbarB3=-0x8000000000000000"// min          long 
-			  "\nbarB4=0x0"                // min unsigned long
-			  "\nbarO1=0x8000000000000000" // max unsigned long + 1
-			  "\nbarO2=0x10000000000000000"// max          long + 1
-			  "\nbarO3=-0x8000000000000001");// min        long - 1
+			  "\nbarB1= 0x7fffffffffffffff" // max          long 
+			  "\nbarB2= 0xffffffffffffffff" // max unsigned long 
+			  "\nbarB3=-0x8000000000000000" // min          long 
+			  "\nbarB4= 0x0"                // min unsigned long
+			  "\nbarO1= 0x8000000000000000" // max          long + 1
+			  "\nbarO2= 0x10000000000000000"// max unsigned long + 1
+			  "\nbarO3=-0x8000000000000001");// min         long - 1
     ini::IniFile inif(ss);
 
     REQUIRE(inif.size() == 1);
@@ -349,7 +349,6 @@ TEST_CASE("fail to parse as (unsigned) long int", "IniFile")
 		      std::invalid_argument);
     REQUIRE_THROWS_AS(sec["barG1"].as<unsigned long int>(),
 		      std::invalid_argument);
-
 }
 
 
@@ -360,7 +359,14 @@ TEST_CASE("parse field as (unsigned) int, fail if negative unsigned",
 {
     std::istringstream ss("[Foo]" "\nbar0=0" "\nbar1=1" "\nbar2=-42"
 			  "\nbar80=00" "\nbar81=02" "\nbar82=-07"
-			  "\nbarG0=-0x0" "\nbarG1=0xfF" "\nbarG2=-0x80");
+			  "\nbarG0=-0x0" "\nbarG1=0xfF" "\nbarG2=-0x80"
+			  "\nbarB1= 0x7fffffff"  // max          int 
+			  "\nbarB2= 0xffffffff"  // max unsigned int 
+			  "\nbarB3=-0x80000000"  // min          int 
+			  "\nbarB4= 0x0"         // min unsigned int
+			  "\nbarO1= 0x80000000"  // max          int + 1
+			  "\nbarO2= 0x100000000" // max unsigned int + 1
+			  "\nbarO3=-0x80000001");// min          int - 1
     ini::IniFile inif(ss);
 
     REQUIRE(inif.size() == 1);
@@ -388,6 +394,24 @@ TEST_CASE("parse field as (unsigned) int, fail if negative unsigned",
     REQUIRE(sec["barG2"].as<         int>() == -128);
     // TBC: baG2 shall be NULL
     REQUIRE_THROWS_AS(sec["baG2"].as<unsigned int>(), std::invalid_argument);
+
+
+    REQUIRE(sec["barB1"]       .as<         int>()
+	    == std::numeric_limits<         int>::max());
+    REQUIRE(sec["barB2"]       .as<unsigned int>()
+	    == std::numeric_limits<unsigned int>::max());
+    REQUIRE(sec["barB3"]       .as<         int>()
+	    == std::numeric_limits<         int>::min());
+    REQUIRE(sec["barB4"]       .as<unsigned int>()
+	    == std::numeric_limits<unsigned int>::min());
+    
+    REQUIRE(sec["barO1"]       .as<         int>() 
+    	    == std::numeric_limits<         int>::max());
+    REQUIRE(sec["barO2"]       .as<unsigned int>() 
+    	    == std::numeric_limits<unsigned int>::max());
+    REQUIRE(sec["barO3"]       .as<         int>() 
+    	    == std::numeric_limits<         int>::min());
+
 }
 
 
