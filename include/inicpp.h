@@ -22,34 +22,44 @@
 
 namespace ini
 {
-    class IniField
+  class IniField;
+ 
+    class IniFieldBase
     {
-    private:
+        friend IniField;
+    protected:
         std::string value_;
         mutable bool failedLastConversion_;
         mutable std::string typeLastConversion;
 
     public:
-        IniField() : value_(), failedLastConversion_(false)
+        IniFieldBase() : value_(), failedLastConversion_(false)
         {}
 
-        IniField(const std::string &value) : value_(value)
+        IniFieldBase(const std::string &value) : value_(value)
         {}
-        IniField(const IniField &field) : value_(field.value_)
+        IniFieldBase(const IniFieldBase &field) : value_(field.value_)
         {}
 
-        ~IniField()
+        ~IniFieldBase()
         {}
+
+        // template<typename T>
+        // T as() const
+        // {
+	//     T result = static_cast<T>(*this);
+	//     if (failedLastConversion_)
+	//       throw std::invalid_argument("field is no " + typeLastConversion);
+
+        //     return result;
+        // }
 
         template<typename T>
-        T as() const
+        T asUnconditional() const
         {
-	    T result = static_cast<T>(*this);
-	    if (failedLastConversion_)
-	      throw std::invalid_argument("field is no " + typeLastConversion);
+	    return static_cast<T>(*this);
+	}
 
-            return result;
-        }
 
         template<typename T>
         T orDefault(T defaultValue)
@@ -65,6 +75,11 @@ namespace ini
 	//     return failedLastConversion_ ? defaultValue : result;
  	// }
 
+        const std::string toString() const
+        {
+	    return value_;
+	}
+
         bool failedLastConversion()
         {
 	  return failedLastConversion_;
@@ -75,25 +90,25 @@ namespace ini
          * Assignment Operators
          *********************************************************************/
 
-        IniField &operator=(const char *value)
-        {
-            value_ = std::string(value);
-            return *this;
-        }
-
-        IniField &operator=(const std::string &value)
-        {
-            value_ = value;
-            return *this;
-        }
-
-        IniField &operator=(const IniField &field)
+        IniFieldBase &operator=(const IniFieldBase &field)
         {
             value_ = field.value_;
             return *this;
         }
 
-        IniField &operator=(const int value)
+        IniFieldBase &operator=(const char *value)
+        {
+            value_ = std::string(value);
+            return *this;
+        }
+
+        IniFieldBase &operator=(const std::string &value)
+        {
+            value_ = value;
+            return *this;
+        }
+
+        IniFieldBase &operator=(const int value)
         {
             std::stringstream ss;
             ss << value;
@@ -101,7 +116,7 @@ namespace ini
             return *this;
         }
 
-        IniField &operator=(const unsigned int value)
+        IniFieldBase &operator=(const unsigned int value)
         {
             std::stringstream ss;
             ss << value;
@@ -109,7 +124,7 @@ namespace ini
             return *this;
         }
 
-        IniField &operator=(const double value)
+        IniFieldBase &operator=(const long int value)
         {
             std::stringstream ss;
             ss << value;
@@ -117,7 +132,7 @@ namespace ini
             return *this;
         }
 
-        IniField &operator=(const float value)
+        IniFieldBase &operator=(const unsigned long int value)
         {
             std::stringstream ss;
             ss << value;
@@ -125,12 +140,25 @@ namespace ini
             return *this;
         }
 
-        IniField &operator=(const bool value)
+        IniFieldBase &operator=(const double value)
         {
-            if(value)
-                value_ = "true";
-            else
-                value_ = "false";
+            std::stringstream ss;
+            ss << value;
+            value_ = ss.str();
+            return *this;
+        }
+
+        IniFieldBase &operator=(const float value)
+        {
+            std::stringstream ss;
+            ss << value;
+            value_ = ss.str();
+            return *this;
+        }
+
+        IniFieldBase &operator=(const bool value)
+        {
+	    value_ = value ? "true" : "false";
             return *this;
         }
 
@@ -266,19 +294,24 @@ namespace ini
         }
     };
 
-    class IniSection : public std::map<std::string, IniField>
+
+
+    template<class t_field>
+    class t_Section : public std::map<std::string, t_field>
     {
     public:
-        IniSection()
+        t_Section()
         {}
-        ~IniSection()
+        ~t_Section()
         {}
     };
 
-    class IniFile : public std::map<std::string, IniSection>
+
+  template<class t_field>
+  class t_IniFile : public std::map<std::string, t_Section<t_field>>
     {
 	//friend class DecodeResult;
-    private:
+    protected:
         char fieldSep_;
         char comment_;
 
@@ -295,7 +328,6 @@ namespace ini
         }
 
     public:
-
 	enum DecodeErrorCode
 	{
 	    NO_FAILURE = 0,
@@ -305,10 +337,12 @@ namespace ini
 	    FIELD_WITHOUT_SECTION,
 	    FIELD_WITHOUT_SEPARATOR
 	};
+
 	    
 	class DecodeResult
 	{
 	    
+	public:
 	    /**
 	     * This is DecodeErrorCode#NO_FAILURE if all ok so far. 
 	     */
@@ -322,7 +356,6 @@ namespace ini
 	     */
 	    //std::string fileName;
 
-	public:
 	    // DecodeResult(DecodeErrorCode errorCode,
 	    // 		 uint lineNumber,
 	    // 		 std::string fileName)
@@ -343,67 +376,56 @@ namespace ini
 	    {
 	    }
 
-	    // TBD: close stream?
-	    void throwIfError()
+	    bool isOk()
 	    {
-		std::stringstream ss;
-		ss << "l" << this->lineNumber
-		   << ": ini parsing failed, ";
-		switch (this->errorCode)
-		{
-		case NO_FAILURE:
-		    // all ok 
-		    return;
-		case SECTION_NOT_CLOSED:
-		    ss << "section not closed";
-		    break;
-		case SECTION_EMPTY:
-		    ss << "section is empty";
-		    break;
-		case SECTION_TEXT_AFTER:
-		    ss << "no end of line after section";
-		    break;
-		case FIELD_WITHOUT_SECTION:
-		    ss << "field has no section";
-		    break;
-		case FIELD_WITHOUT_SEPARATOR:
-		    ss << "field without separator '" << //fieldSep_ << TBD: reactivated later
-			"' found";
-		    break;
-		default:
-		    ss << "unknown failure code " << this->errorCode << " found";
-		    throw std::logic_error(ss.str());
-		}
-		// TBD: this shall be a kind of parse error 
-		throw std::logic_error(ss.str());
+	      return this->errorCode == NO_FAILURE;
 	    }
+
+	    // // TBD: close stream?
+	    // void throwIfError()
+	    // {
+	    // 	std::stringstream ss;
+	    // 	ss << "l" << this->lineNumber
+	    // 	   << ": ini parsing failed, ";
+	    // 	switch (this->errorCode)
+	    // 	{
+	    // 	case NO_FAILURE:
+	    // 	    // all ok 
+	    // 	    return;
+	    // 	case SECTION_NOT_CLOSED:
+	    // 	    ss << "section not closed";
+	    // 	    break;
+	    // 	case SECTION_EMPTY:
+	    // 	    ss << "section is empty";
+	    // 	    break;
+	    // 	case SECTION_TEXT_AFTER:
+	    // 	    ss << "no end of line after section";
+	    // 	    break;
+	    // 	case FIELD_WITHOUT_SECTION:
+	    // 	    ss << "field has no section";
+	    // 	    break;
+	    // 	case FIELD_WITHOUT_SEPARATOR:
+	    // 	    ss << "field without separator '" << //fieldSep_ << TBD: reactivated later
+	    // 		"' found";
+	    // 	    break;
+	    // 	default:
+	    // 	    ss << "unknown failure code " << this->errorCode << " found";
+	    // 	    throw std::logic_error(ss.str());
+	    // 	}
+	    // 	// TBD: this shall be a kind of parse error 
+	    // 	throw std::logic_error(ss.str());
+	    // }
 
 	};
 	
-        IniFile() : IniFile('=', '#')
+        t_IniFile() : t_IniFile('=', '#')
         {}
 
-        IniFile(const char fieldSep, const char comment)
+        t_IniFile(const char fieldSep, const char comment)
             : fieldSep_(fieldSep), comment_(comment)
         {}
 
-        IniFile(const std::string &filename,
-            const char fieldSep = '=',
-            const char comment = '#')
-            : IniFile(fieldSep, comment)
-        {
-            load(filename);
-        }
-
-        IniFile(std::istream &is,
-            const char fieldSep = '=',
-            const char comment = '#')
-            : IniFile(fieldSep, comment)
-        {
-            decode(is);
-        }
-
-        ~IniFile()
+        ~t_IniFile()
         {}
 
         void setFieldSep(const char sep)
@@ -416,25 +438,12 @@ namespace ini
             comment_ = comment;
         }
 
-	/**
-	 * @throws logic_error if 
-	 *   - section not closed 
-	 *   - section is empty 
-	 *   - section: no end of line after section
-	 *   - field has no section 
-	 *   - field has no field separator 
-	 */
-        void decode(std::istream &is)
-        {
-	    DecodeResult* res = tryDecode(is);
-	    res->throwIfError();
-        }
-
         DecodeResult* tryDecode(std::istream &is)
 	{
-	    clear();
+	    this->clear();
             int lineNo = 0;
-            IniSection *currentSection = NULL;
+            //IniSection *currentSection = NULL;
+            t_Section<t_field> *currentSection = NULL;
             // iterate file by line
             while (!is.eof() && !is.fail())
             {
@@ -478,7 +487,7 @@ namespace ini
                     // find key value separator
                     std::size_t pos = line.find(fieldSep_);
                     if(pos == std::string::npos)
-			return new DecodeResult(FIELD_WITHOUT_SEPARATOR, lineNo);
+		      return new DecodeResult(FIELD_WITHOUT_SEPARATOR, lineNo);
 
                     // retrieve field name and value
                     std::string name = line.substr(0, pos);
@@ -493,18 +502,17 @@ namespace ini
 	    return new DecodeResult();
 	}	
 
-	
-
-        void decode(const std::string &content)
-        {
+	DecodeResult* tryDecode(const std::string &content)
+	{
             std::istringstream ss(content);
-            decode(ss);
-        }
+            return tryDecode(ss);
+ 	}
 
-        void load(const std::string &fileName)
+
+        DecodeResult* tryLoad(const std::string &fileName)
         {
             std::ifstream is(fileName.c_str());
-            decode(is);
+            return tryDecode(is);
         }
 
         void encode(std::ostream &os) const
@@ -516,7 +524,7 @@ namespace ini
                 // iterate through all fields in the section
                 for(const auto &secPair : filePair.second)
                     os << secPair.first << fieldSep_
-                       << secPair.second.as<std::string>() << std::endl;
+                       << secPair.second.toString() << std::endl;
             }
         }
 
@@ -533,6 +541,236 @@ namespace ini
             encode(os);
         }
     };
+
+    class IniFileBase : public t_IniFile<IniFieldBase>
+    {
+
+    public:
+        IniFileBase() : IniFileBase('=', '#')
+        {}
+      
+        IniFileBase(const char fieldSep, const char comment)
+            : t_IniFile(fieldSep, comment)
+        {}
+
+        ~IniFileBase()
+        {}
+    };
+
+
+
+    class IniField : public IniFieldBase
+    {
+    public:
+        IniField() : IniFieldBase()
+        {}
+
+        IniField(const std::string &value) : IniFieldBase(value)
+        {}
+        IniField(const IniFieldBase &field) : IniField(field.value_)
+        {}
+
+        ~IniField()
+        {}
+
+#ifndef THROW_PREVENTED
+        template<typename T>
+        T as() const
+        {
+	    T result = asUnconditional<T>();
+	    if (failedLastConversion_)
+	      throw std::invalid_argument
+		("field '" + value_ + "' is no " + typeLastConversion);
+            return result;
+        }
+#endif
+
+        IniField &operator=(const IniFieldBase &field)
+        {
+            value_ = field.value_;
+            return *this;
+        }
+
+        IniField &operator=(const char *value)
+        {
+            value_ = std::string(value);
+            return *this;
+        }
+
+        IniField &operator=(const std::string &value)
+        {
+            value_ = value;
+            return *this;
+        }
+
+        IniField &operator=(const int value)
+        {
+            std::stringstream ss;
+            ss << value;
+            value_ = ss.str();
+            return *this;
+        }
+
+        IniField &operator=(const unsigned int value)
+        {
+            std::stringstream ss;
+            ss << value;
+            value_ = ss.str();
+            return *this;
+        }
+
+        IniField &operator=(const long int value)
+        {
+            std::stringstream ss;
+            ss << value;
+            value_ = ss.str();
+            return *this;
+        }
+
+        IniField &operator=(const unsigned long int value)
+        {
+            std::stringstream ss;
+            ss << value;
+            value_ = ss.str();
+            return *this;
+        }
+
+        IniField &operator=(const double value)
+        {
+            std::stringstream ss;
+            ss << value;
+            value_ = ss.str();
+            return *this;
+        }
+
+        IniField &operator=(const float value)
+        {
+            std::stringstream ss;
+            ss << value;
+            value_ = ss.str();
+            return *this;
+        }
+
+        IniField &operator=(const bool value)
+        {
+	    value_ = value ? "true" : "false";
+            return *this;
+ 	}
+
+    };
+ 
+    // TBD: currently not needed but later on
+  // when parsing sections. 
+  // class IniSection : public t_Section<IniField>//std::map<std::string, IniField>
+  //   {
+  //   public:
+  //       IniSection()
+  //       {}
+  //       ~IniSection()
+  //       {}
+  //   };
+
+
+
+    class IniFile : public t_IniFile<IniField>
+    {
+
+    public:
+        IniFile() : IniFile('=', '#')
+        {}
+
+        IniFile(const char fieldSep, const char comment)
+            : t_IniFile(fieldSep, comment)
+        {}
+      
+#ifndef THROW_PREVENTED
+        IniFile(const std::string &filename,
+            const char fieldSep = '=',
+            const char comment = '#')
+	  : t_IniFile(fieldSep, comment)
+        {
+	    load(filename);
+        }
+
+        IniFile(std::istream &is,
+            const char fieldSep = '=',
+            const char comment = '#')
+	  : t_IniFile(fieldSep, comment)
+        {
+           decode(is);
+         }
+#endif
+
+        ~IniFile()
+        {}
+
+    private:
+#ifndef THROW_PREVENTED
+
+      	    // TBD: close stream?
+	    void throwIfError(DecodeResult dRes)
+	    {
+		std::stringstream ss;
+		ss << "l" << dRes.lineNumber
+		   << ": ini parsing failed, ";
+		switch (dRes.errorCode)
+		{
+		case NO_FAILURE:
+		    // all ok 
+		    return;
+		case SECTION_NOT_CLOSED:
+		    ss << "section not closed";
+		    break;
+		case SECTION_EMPTY:
+		    ss << "section is empty";
+		    break;
+		case SECTION_TEXT_AFTER:
+		    ss << "no end of line after section";
+		    break;
+		case FIELD_WITHOUT_SECTION:
+		    ss << "field has no section";
+		    break;
+		case FIELD_WITHOUT_SEPARATOR:
+		    ss << "field without separator '" << fieldSep_ << 
+			"' found";
+		    break;
+		default:
+		    ss << "unknown failure code " << dRes.errorCode << " found";
+		    throw std::logic_error(ss.str());
+		}
+		// TBD: this shall be a kind of parse error 
+		throw std::logic_error(ss.str());
+	    }
+
+
+    public:
+
+      	/**
+	 * @throws logic_error if 
+	 *   - section not closed 
+	 *   - section is empty 
+	 *   - section: no end of line after section
+	 *   - field has no section 
+	 *   - field has no field separator 
+	 */
+        void decode(std::istream &is)
+        {
+	    throwIfError(*tryDecode(is));
+        }
+
+        void decode(const std::string &content)
+        {
+	    throwIfError(*tryDecode(content));
+        }
+      
+        void load(const std::string &fileName)
+        {
+	    throwIfError(*tryLoad(fileName));
+        }
+#endif
+
+    };
+
 }
 
 #endif
