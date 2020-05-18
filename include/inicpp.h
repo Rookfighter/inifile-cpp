@@ -60,6 +60,17 @@ namespace ini
 	    return static_cast<T>(*this);
 	}
 
+#ifndef THROW_PREVENTED
+        template<typename T>
+        T as() const
+        {
+	    T result = asUnconditional<T>();
+	    if (failedLastConversion_)
+	      throw std::invalid_argument
+		("field '" + value_ + "' is no " + typeLastConversion);
+            return result;
+        }
+#endif
 
         template<typename T>
         T orDefault(T defaultValue)
@@ -573,17 +584,6 @@ namespace ini
         ~IniField()
         {}
 
-#ifndef THROW_PREVENTED
-        template<typename T>
-        T as() const
-        {
-	    T result = asUnconditional<T>();
-	    if (failedLastConversion_)
-	      throw std::invalid_argument
-		("field '" + value_ + "' is no " + typeLastConversion);
-            return result;
-        }
-#endif
 
         IniField &operator=(const IniFieldBase &field)
         {
