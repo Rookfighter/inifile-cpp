@@ -9,16 +9,13 @@
 #ifndef INICPP_H_
 #define INICPP_H_
 
-#include <algorithm>
 #include <fstream>
-#include <istream>
-#include <map>
 #include <sstream>
-#include <stdexcept>
+#include <map>
+//#include <stdexcept>
 
-#include <iostream>
-#include <limits>
-#include <cmath>
+//#include <limits>
+//#include <cmath>
 
 namespace ini
 {
@@ -311,8 +308,7 @@ namespace ini
 
   class IniFile : public std::map<std::string, IniSection>
     {
-	//friend class DecodeResult;
-    protected:
+   protected:
         char fieldSep_;
         char comment_;
 

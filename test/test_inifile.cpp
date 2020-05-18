@@ -8,12 +8,11 @@
 
 #include <catch.hpp>
 //#define THROW_PREVENTED
-
 #include "inicpp.h"
 
-#include <sstream>
-#include <cmath>
-#include <limits>
+//#include <sstream>
+//#include <cmath>
+//#include <limits>
 #include <string.h>
 
 
