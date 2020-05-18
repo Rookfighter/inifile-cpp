@@ -309,7 +309,6 @@ namespace ini
     };
 
 
-  template<class t_field>
   class t_IniFile : public std::map<std::string, IniSection>
     {
 	//friend class DecodeResult;
@@ -382,41 +381,6 @@ namespace ini
 	    {
 	      return this->errorCode == NO_FAILURE;
 	    }
-
-	    // // TBD: close stream?
-	    // void throwIfError()
-	    // {
-	    // 	std::stringstream ss;
-	    // 	ss << "l" << this->lineNumber
-	    // 	   << ": ini parsing failed, ";
-	    // 	switch (this->errorCode)
-	    // 	{
-	    // 	case NO_FAILURE:
-	    // 	    // all ok 
-	    // 	    return;
-	    // 	case SECTION_NOT_CLOSED:
-	    // 	    ss << "section not closed";
-	    // 	    break;
-	    // 	case SECTION_EMPTY:
-	    // 	    ss << "section is empty";
-	    // 	    break;
-	    // 	case SECTION_TEXT_AFTER:
-	    // 	    ss << "no end of line after section";
-	    // 	    break;
-	    // 	case FIELD_WITHOUT_SECTION:
-	    // 	    ss << "field has no section";
-	    // 	    break;
-	    // 	case FIELD_WITHOUT_SEPARATOR:
-	    // 	    ss << "field without separator '" << //fieldSep_ << TBD: reactivated later
-	    // 		"' found";
-	    // 	    break;
-	    // 	default:
-	    // 	    ss << "unknown failure code " << this->errorCode << " found";
-	    // 	    throw std::logic_error(ss.str());
-	    // 	}
-	    // 	// TBD: this shall be a kind of parse error 
-	    // 	throw std::logic_error(ss.str());
-	    // }
 
 	};
 	
@@ -544,7 +508,7 @@ namespace ini
         }
     };
 
-    class IniFileBase : public t_IniFile<IniField>
+    class IniFileBase : public t_IniFile
     {
 
     public:
@@ -561,7 +525,7 @@ namespace ini
 
 
 
-    class IniFile : public t_IniFile<IniField>
+    class IniFile : public t_IniFile
     {
 
     public:
