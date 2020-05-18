@@ -394,6 +394,28 @@ namespace ini
         ~t_IniFile()
         {}
 
+
+# ifndef THROW_PREVENTED
+        t_IniFile(const std::string &filename,
+            const char fieldSep = '=',
+            const char comment = '#')
+	  : t_IniFile(fieldSep, comment)
+        {
+	    load(filename);
+        }
+
+        t_IniFile(std::istream &is,
+            const char fieldSep = '=',
+            const char comment = '#')
+	  : t_IniFile(fieldSep, comment)
+        {
+           decode(is);
+         }
+#endif
+
+
+      
+
         void setFieldSep(const char sep)
         {
             fieldSep_ = sep;
@@ -506,43 +528,10 @@ namespace ini
             std::ofstream os(fileName.c_str());
             encode(os);
         }
-    };
 
- 
-    class IniFile : public t_IniFile
-    {
 
-    public:
-        IniFile() : IniFile('=', '#')
-        {}
-
-        IniFile(const char fieldSep, const char comment)
-            : t_IniFile(fieldSep, comment)
-        {}
-      
-#ifndef THROW_PREVENTED
-        IniFile(const std::string &filename,
-            const char fieldSep = '=',
-            const char comment = '#')
-	  : t_IniFile(fieldSep, comment)
-        {
-	    load(filename);
-        }
-
-        IniFile(std::istream &is,
-            const char fieldSep = '=',
-            const char comment = '#')
-	  : t_IniFile(fieldSep, comment)
-        {
-           decode(is);
-         }
-#endif
-
-        ~IniFile()
-        {}
-
+      #ifndef THROW_PREVENTED
     private:
-#ifndef THROW_PREVENTED
 
       	    // TBD: close stream?
 	    void throwIfError(DecodeResult dRes)
@@ -605,6 +594,42 @@ namespace ini
 	    throwIfError(*tryLoad(fileName));
         }
 #endif
+
+    };
+
+ 
+    class IniFile : public t_IniFile
+    {
+
+    public:
+        IniFile() : IniFile('=', '#')
+        {}
+
+        IniFile(const char fieldSep, const char comment)
+            : t_IniFile(fieldSep, comment)
+        {}
+      
+#ifndef THROW_PREVENTED
+        IniFile(const std::string &filename,
+            const char fieldSep = '=',
+            const char comment = '#')
+	  : t_IniFile(fieldSep, comment)
+        {
+	    load(filename);
+        }
+
+        IniFile(std::istream &is,
+            const char fieldSep = '=',
+            const char comment = '#')
+	  : t_IniFile(fieldSep, comment)
+        {
+           decode(is);
+         }
+#endif
+
+        ~IniFile()
+        {}
+
 
     };
 
