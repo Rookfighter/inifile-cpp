@@ -22,26 +22,24 @@
 
 namespace ini
 {
-  class IniField;
  
-    class IniFieldBase
+    class IniField
     {
-        friend IniField;
-    protected:
+    private:
         std::string value_;
         mutable bool failedLastConversion_;
         mutable std::string typeLastConversion;
 
     public:
-        IniFieldBase() : value_(), failedLastConversion_(false)
+        IniField() : value_(), failedLastConversion_(false)
         {}
 
-        IniFieldBase(const std::string &value) : value_(value)
+        IniField(const std::string &value) : value_(value)
         {}
-        IniFieldBase(const IniFieldBase &field) : value_(field.value_)
+        IniField(const IniField &field) : value_(field.value_)
         {}
 
-        ~IniFieldBase()
+        ~IniField()
         {}
 
         // template<typename T>
@@ -101,25 +99,20 @@ namespace ini
          * Assignment Operators
          *********************************************************************/
 
-        IniFieldBase &operator=(const IniFieldBase &field)
-        {
-            value_ = field.value_;
-            return *this;
-        }
 
-        IniFieldBase &operator=(const char *value)
+        IniField &operator=(const char *value)
         {
             value_ = std::string(value);
             return *this;
         }
 
-        IniFieldBase &operator=(const std::string &value)
+        IniField &operator=(const std::string &value)
         {
             value_ = value;
             return *this;
         }
 
-        IniFieldBase &operator=(const int value)
+        IniField &operator=(const int value)
         {
             std::stringstream ss;
             ss << value;
@@ -127,7 +120,7 @@ namespace ini
             return *this;
         }
 
-        IniFieldBase &operator=(const unsigned int value)
+        IniField &operator=(const unsigned int value)
         {
             std::stringstream ss;
             ss << value;
@@ -135,7 +128,7 @@ namespace ini
             return *this;
         }
 
-        IniFieldBase &operator=(const long int value)
+        IniField &operator=(const long int value)
         {
             std::stringstream ss;
             ss << value;
@@ -143,7 +136,7 @@ namespace ini
             return *this;
         }
 
-        IniFieldBase &operator=(const unsigned long int value)
+        IniField &operator=(const unsigned long int value)
         {
             std::stringstream ss;
             ss << value;
@@ -151,7 +144,7 @@ namespace ini
             return *this;
         }
 
-        IniFieldBase &operator=(const double value)
+        IniField &operator=(const double value)
         {
             std::stringstream ss;
             ss << value;
@@ -159,7 +152,7 @@ namespace ini
             return *this;
         }
 
-        IniFieldBase &operator=(const float value)
+        IniField &operator=(const float value)
         {
             std::stringstream ss;
             ss << value;
@@ -167,7 +160,7 @@ namespace ini
             return *this;
         }
 
-        IniFieldBase &operator=(const bool value)
+        IniField &operator=(const bool value)
         {
 	    value_ = value ? "true" : "false";
             return *this;
@@ -553,7 +546,7 @@ namespace ini
         }
     };
 
-    class IniFileBase : public t_IniFile<IniFieldBase>
+    class IniFileBase : public t_IniFile<IniField>
     {
 
     public:
@@ -569,95 +562,6 @@ namespace ini
     };
 
 
-
-    class IniField : public IniFieldBase
-    {
-    public:
-        IniField() : IniFieldBase()
-        {}
-
-        IniField(const std::string &value) : IniFieldBase(value)
-        {}
-        IniField(const IniFieldBase &field) : IniField(field.value_)
-        {}
-
-        ~IniField()
-        {}
-
-
-        IniField &operator=(const IniFieldBase &field)
-        {
-            value_ = field.value_;
-            return *this;
-        }
-
-        IniField &operator=(const char *value)
-        {
-            value_ = std::string(value);
-            return *this;
-        }
-
-        IniField &operator=(const std::string &value)
-        {
-            value_ = value;
-            return *this;
-        }
-
-        IniField &operator=(const int value)
-        {
-            std::stringstream ss;
-            ss << value;
-            value_ = ss.str();
-            return *this;
-        }
-
-        IniField &operator=(const unsigned int value)
-        {
-            std::stringstream ss;
-            ss << value;
-            value_ = ss.str();
-            return *this;
-        }
-
-        IniField &operator=(const long int value)
-        {
-            std::stringstream ss;
-            ss << value;
-            value_ = ss.str();
-            return *this;
-        }
-
-        IniField &operator=(const unsigned long int value)
-        {
-            std::stringstream ss;
-            ss << value;
-            value_ = ss.str();
-            return *this;
-        }
-
-        IniField &operator=(const double value)
-        {
-            std::stringstream ss;
-            ss << value;
-            value_ = ss.str();
-            return *this;
-        }
-
-        IniField &operator=(const float value)
-        {
-            std::stringstream ss;
-            ss << value;
-            value_ = ss.str();
-            return *this;
-        }
-
-        IniField &operator=(const bool value)
-        {
-	    value_ = value ? "true" : "false";
-            return *this;
- 	}
-
-    };
  
     // TBD: currently not needed but later on
   // when parsing sections. 
