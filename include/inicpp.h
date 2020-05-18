@@ -309,7 +309,7 @@ namespace ini
     };
 
 
-  class t_IniFile : public std::map<std::string, IniSection>
+  class IniFile : public std::map<std::string, IniSection>
     {
 	//friend class DecodeResult;
     protected:
@@ -384,30 +384,30 @@ namespace ini
 
 	};
 	
-        t_IniFile() : t_IniFile('=', '#')
+        IniFile() : IniFile('=', '#')
         {}
 
-        t_IniFile(const char fieldSep, const char comment)
+        IniFile(const char fieldSep, const char comment)
             : fieldSep_(fieldSep), comment_(comment)
         {}
 
-        ~t_IniFile()
+        ~IniFile()
         {}
 
 
 # ifndef THROW_PREVENTED
-        t_IniFile(const std::string &filename,
+        IniFile(const std::string &filename,
             const char fieldSep = '=',
             const char comment = '#')
-	  : t_IniFile(fieldSep, comment)
+	  : IniFile(fieldSep, comment)
         {
 	    load(filename);
         }
 
-        t_IniFile(std::istream &is,
+        IniFile(std::istream &is,
             const char fieldSep = '=',
             const char comment = '#')
-	  : t_IniFile(fieldSep, comment)
+	  : IniFile(fieldSep, comment)
         {
            decode(is);
          }
@@ -597,41 +597,6 @@ namespace ini
 
     };
 
- 
-    class IniFile : public t_IniFile
-    {
-
-    public:
-        IniFile() : IniFile('=', '#')
-        {}
-
-        IniFile(const char fieldSep, const char comment)
-            : t_IniFile(fieldSep, comment)
-        {}
-      
-#ifndef THROW_PREVENTED
-        IniFile(const std::string &filename,
-            const char fieldSep = '=',
-            const char comment = '#')
-	  : t_IniFile(fieldSep, comment)
-        {
-	    load(filename);
-        }
-
-        IniFile(std::istream &is,
-            const char fieldSep = '=',
-            const char comment = '#')
-	  : t_IniFile(fieldSep, comment)
-        {
-           decode(is);
-         }
-#endif
-
-        ~IniFile()
-        {}
-
-
-    };
 
 }
 
