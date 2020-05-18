@@ -262,9 +262,7 @@ TEST_CASE("parse field as double", "IniFile")
     //ini::IniFile inif(ss); 
 
     REQUIRE(inif.size() == 1);
-    //ni::IniSection sec = inif["Foo"];
-    ini::t_Section<ini::IniField> sec = inif["Foo"];
-
+    ini::IniSection sec = inif["Foo"];
 
 
 #ifndef THROW_PREVENTED   
@@ -308,8 +306,7 @@ TEST_CASE("fail to parse field as double", "IniFile")
     //ini::IniFile inif(ss); 
 
     REQUIRE(inif.size() == 1);
-    ini::t_Section<ini::IniField> sec = inif["Foo"];
-    //ini::IniSection sec = inif["Foo"];
+    ini::IniSection sec = inif["Foo"];
 #ifndef THROW_PREVENTED
     REQUIRE_THROWS_AS(sec["bar1"].as<double>(), std::invalid_argument);
     REQUIRE_THROWS_AS(sec["bar2"].as<double>(), std::invalid_argument);
@@ -343,8 +340,7 @@ TEST_CASE("parse field as float", "IniFile")
     //ini::IniFile inif(ss); 
 
     REQUIRE(inif.size() == 1);
-    ini::t_Section<ini::IniField> sec = inif["Foo"];
-    //ini::IniSection sec = inif["Foo"];
+    ini::IniSection sec = inif["Foo"];
 #ifndef THROW_PREVENTED  
     REQUIRE(sec["bar0"].as<float>()     == 0.0f);
     REQUIRE(std::signbit(sec["bar0"].as<float>()));
@@ -390,8 +386,7 @@ TEST_CASE("fail to parse field as float", "IniFile")
     //ini::IniFile inif(ss); 
       
     REQUIRE(inif.size() == 1);
-    ini::t_Section<ini::IniField> sec = inif["Foo"];
-    //ini::IniSection sec = inif["Foo"];
+    ini::IniSection sec = inif["Foo"];
 #ifndef THROW_PREVENTED
     REQUIRE_THROWS_AS(sec["bar1"].as<float>(), std::invalid_argument);
     REQUIRE_THROWS_AS(sec["bar2"].as<float>(), std::invalid_argument);
@@ -423,8 +418,7 @@ TEST_CASE("parse field as (unsigned) long int, fail if negative unsigned",
     //ini::IniFile inif(ss);
 
     REQUIRE(inif.size() == 1);
-    ini::t_Section<ini::IniField> sec = inif["Foo"];
-    //ini::IniSection sec = inif["Foo"];
+    ini::IniSection sec = inif["Foo"];
 #ifndef THROW_PREVENTED
     REQUIRE( sec["bar0"].as<         long int>() == 0);
     REQUIRE( sec["bar0"].as<unsigned long int>() == 0);
@@ -523,8 +517,7 @@ TEST_CASE("fail to parse field as (unsigned) long int", "IniFile")
 #endif
 
     REQUIRE(inif.size() == 1);
-    ini::t_Section<ini::IniField> sec = inif["Foo"];
-    //ini::IniSection sec = inif["Foo"];
+    ini::IniSection sec = inif["Foo"];
 #ifndef THROW_PREVENTED
     REQUIRE_THROWS_AS(sec["bar1"].as<         long int>(),
 		      std::invalid_argument);
@@ -610,8 +603,7 @@ TEST_CASE("parse field as (unsigned) int, fail if negative unsigned",
 #endif
 
     REQUIRE(inif.size() == 1);
-    ini::t_Section<ini::IniField> sec = inif["Foo"];
-    //ini::IniSection sec = inif["Foo"];
+    ini::IniSection sec = inif["Foo"];
 #ifndef THROW_PREVENTED
     REQUIRE( sec["bar0"].as<         int>() == 0);
     REQUIRE( sec["bar0"].as<unsigned int>() == 0);
@@ -705,8 +697,7 @@ TEST_CASE("fail to parse field as (unsigned) int", "IniFile")
 #endif
 
     REQUIRE(inif.size() == 1);
-    ini::t_Section<ini::IniField> sec = inif["Foo"];
-    //ini::IniSection sec = inif["Foo"];
+    ini::IniSection sec = inif["Foo"];
 #ifndef THROW_PREVENTED
     REQUIRE_THROWS_AS(sec["bar1"].as<         int>(), std::invalid_argument);
     REQUIRE_THROWS_AS(sec["bar1"].as<unsigned int>(), std::invalid_argument);
@@ -769,8 +760,7 @@ TEST_CASE("parse field as bool", "IniFile")
 #endif
 
     REQUIRE(inif.size() == 1);
-    ini::t_Section<ini::IniField> sec = inif["Foo"];
-    //ini::IniSection sec = inif["Foo"];
+    ini::IniSection sec = inif["Foo"];
     REQUIRE( sec.size() == 3);
 
  #ifndef THROW_PREVENTED   
@@ -800,8 +790,7 @@ TEST_CASE("failed to parse field as bool", "IniFile")
 #endif
 
     REQUIRE(inif.size() == 1);
-    ini::t_Section<ini::IniField> sec = inif["Foo"];
-    //ini::IniSection sec = inif["Foo"];
+    ini::IniSection sec = inif["Foo"];
     //REQUIRE(inif["Foo"].size() == 3);
 #ifndef THROW_PREVENTED
     REQUIRE_THROWS_AS(sec["bar"].as<bool>(), std::invalid_argument);

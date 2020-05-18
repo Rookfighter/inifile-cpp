@@ -299,20 +299,18 @@ namespace ini
     };
 
 
-
-    template<class t_field>
-    class t_Section : public std::map<std::string, t_field>
+    class IniSection : public std::map<std::string, IniField>
     {
     public:
-        t_Section()
+        IniSection()
         {}
-        ~t_Section()
+        ~IniSection()
         {}
     };
 
 
   template<class t_field>
-  class t_IniFile : public std::map<std::string, t_Section<t_field>>
+  class t_IniFile : public std::map<std::string, IniSection>
     {
 	//friend class DecodeResult;
     protected:
@@ -447,7 +445,7 @@ namespace ini
 	    this->clear();
             int lineNo = 0;
             //IniSection *currentSection = NULL;
-            t_Section<t_field> *currentSection = NULL;
+            IniSection *currentSection = NULL;
             // iterate file by line
             while (!is.eof() && !is.fail())
             {
@@ -560,19 +558,6 @@ namespace ini
         ~IniFileBase()
         {}
     };
-
-
- 
-    // TBD: currently not needed but later on
-  // when parsing sections. 
-  // class IniSection : public t_Section<IniField>//std::map<std::string, IniField>
-  //   {
-  //   public:
-  //       IniSection()
-  //       {}
-  //       ~IniSection()
-  //       {}
-  //   };
 
 
 
