@@ -508,23 +508,7 @@ namespace ini
         }
     };
 
-    class IniFileBase : public t_IniFile
-    {
-
-    public:
-        IniFileBase() : IniFileBase('=', '#')
-        {}
-      
-        IniFileBase(const char fieldSep, const char comment)
-            : t_IniFile(fieldSep, comment)
-        {}
-
-        ~IniFileBase()
-        {}
-    };
-
-
-
+ 
     class IniFile : public t_IniFile
     {
 
