@@ -19,21 +19,39 @@
 
 namespace ini
 {
- 
+    /**
+     * Represents a value in a key value pair of an ini-file. 
+     */
     class IniField
     {
     private:
+        /**
+	 * Represents the value as a string which may be empty. 
+	 */
         std::string value_;
+        /**
+	 * Whether the last cast conversion of value_ 
+	 * e.g. into <c>int</>. 
+	 * This is insignificant but false if there was no conversion yet. 
+	 * This is used by #as() to throw an exception 
+	 * and by #orDefault(T) to set the defalt value. 
+	 *
+	 * @see failedLastConversion()
+	 */
         mutable bool failedLastConversion_;
         mutable std::string typeLastConversion;
 
     public:
-        IniField() : value_(), failedLastConversion_(false)
-        {}
+      // TBC: needed? 
+         IniField() : value_(), failedLastConversion_(false)
+         {}
 
-        IniField(const std::string &value) : value_(value)
+        IniField(const std::string &value)
+	  : value_(value), failedLastConversion_(false)
         {}
-        IniField(const IniField &field) : value_(field.value_)
+        IniField(const IniField &field)
+	  : value_(field.value_),
+	    failedLastConversion_(field.failedLastConversion_)
         {}
 
         ~IniField()
@@ -201,7 +219,12 @@ namespace ini
 	    failedLastConversion_ = *endptr != '\0' || value_.empty();
 	    return result;
  	}
-      
+
+        /**
+	 * Returns the value of this field, i.e. value_ 
+	 * as a long int if possible; else returns 0. 
+	 * As a side effect sets #typeLastConversion. 
+	 */
         explicit operator long int() const
         {
 	    typeLastConversion = "long int";
@@ -305,6 +328,20 @@ namespace ini
         {}
     };
 
+    /**
+     * Enumeration of error codes which may occur during decoding an ini-file, 
+     * whether as a stream, a string or a file. 
+     */
+    enum DecodeErrorCode
+    {
+        NO_FAILURE = 0,
+	SECTION_NOT_CLOSED,
+	SECTION_NAME_EMPTY,
+	SECTION_TEXT_AFTER,
+	FIELD_WITHOUT_SECTION,
+	FIELD_WITHOUT_SEPARATOR
+    };
+
 
   class IniFile : public std::map<std::string, IniSection>
     {
@@ -325,15 +362,6 @@ namespace ini
         }
 
     public:
-	enum DecodeErrorCode
-	{
-	    NO_FAILURE = 0,
-	    SECTION_NOT_CLOSED,
-	    SECTION_EMPTY,
-	    SECTION_TEXT_AFTER,
-	    FIELD_WITHOUT_SECTION,
-	    FIELD_WITHOUT_SEPARATOR
-	};
 
 	    
 	class DecodeResult
@@ -451,7 +479,7 @@ namespace ini
 			return *new DecodeResult(SECTION_NOT_CLOSED, lineNo);
                     // check if the section name is empty
                     if(pos == 1)
-			return *new DecodeResult(SECTION_EMPTY, lineNo);
+			return *new DecodeResult(SECTION_NAME_EMPTY, lineNo);
                     // check if there is a newline following closing bracket
                     if(pos + 1 != line.length())
 			return *new DecodeResult(SECTION_TEXT_AFTER, lineNo);
@@ -542,8 +570,8 @@ namespace ini
 		case SECTION_NOT_CLOSED:
 		    ss << "section not closed";
 		    break;
-		case SECTION_EMPTY:
-		    ss << "section is empty";
+		case SECTION_NAME_EMPTY:
+		    ss << "section name is empty";
 		    break;
 		case SECTION_TEXT_AFTER:
 		    ss << "no end of line after section";

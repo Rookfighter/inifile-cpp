@@ -7,8 +7,9 @@
  */
 
 #include <catch.hpp>
-//#define THROW_PREVENTED
+#define THROW_PREVENTED
 #include "inicpp.h"
+
 
 //#include <sstream>
 //#include <cmath>
@@ -32,7 +33,6 @@ TEST_CASE("decode ini file", "IniFile")
 {
     std::istringstream ss("[Foo]\nbar=hello world\n[Test]");
     INIF
-    //ini::IniFile inif(ss);
 
     REQUIRE(inif.size() == 2);
     REQUIRE(inif["Foo"]["bar"].toString() == "hello world");
@@ -43,7 +43,6 @@ TEST_CASE("decode empty file", "IniFile")
 {
     std::istringstream ss("");
     INIF
-    //ini::IniFile inif(ss);
 
     REQUIRE(inif.size() == 0);
 }
@@ -52,28 +51,16 @@ TEST_CASE("decode empty file", "IniFile")
 
 TEST_CASE("fail to decode file with section not closed", "IniFile")
 {
-  std::istringstream ss("[Foo]\nbar=hello world\n[Test\nfoo=never reached");
+    std::istringstream ss("[Foo]\nbar=hello world\n[Test\nfoo=never reached");
 #ifdef THROW_PREVENTED
     ini::IniFile inif;
-    REQUIRE(!inif.tryDecode(ss).isOk());// TBD: error code 
+    REQUIRE(inif.tryDecode(ss).errorCode
+	    == ini::DecodeErrorCode::SECTION_NOT_CLOSED);
 #else
     ini::IniFile inif;
     REQUIRE_THROWS_AS(inif.decode(ss),  std::logic_error);
 #endif
 }
-
-TEST_CASE("fail to load unclosed section", "IniFile")
-{
-    std::istringstream ss("[Foo\nbar=bla");
-#ifdef THROW_PREVENTED
-    ini::IniFile inif;
-    REQUIRE(!inif.tryDecode(ss).isOk());// TBD: error code 
-#else
-    ini::IniFile inif;
-    REQUIRE_THROWS_AS(inif.decode(ss),  std::logic_error);
-#endif
-}
-
 
 
 TEST_CASE("fail to decode file with empty section name", "IniFile")
@@ -81,7 +68,8 @@ TEST_CASE("fail to decode file with empty section name", "IniFile")
     std::istringstream ss("[Foo]\nbar=hello world\n[]\nfoo=never reached");
 #ifdef THROW_PREVENTED
     ini::IniFile inif;
-    REQUIRE(!inif.tryDecode(ss).isOk());// TBD: error code 
+    REQUIRE(inif.tryDecode(ss).errorCode
+	    == ini::DecodeErrorCode::SECTION_NAME_EMPTY);
 #else
     ini::IniFile inif;
     REQUIRE_THROWS_AS(inif.decode(ss),  std::logic_error);
@@ -93,7 +81,8 @@ TEST_CASE("fail to decode file with text after section", "IniFile")
     std::istringstream ss("[Foo]\nbar=hello world\n[Test]superfluous\nfoo=never reached");
 #ifdef THROW_PREVENTED
     ini::IniFile inif;
-    REQUIRE(!inif.tryDecode(ss).isOk());// TBD: error code 
+    REQUIRE(inif.tryDecode(ss).errorCode
+	    == ini::DecodeErrorCode::SECTION_TEXT_AFTER);
 #else
     ini::IniFile inif;
     REQUIRE_THROWS_AS(inif.decode(ss),  std::logic_error);
@@ -105,19 +94,8 @@ TEST_CASE("fail to decode file with field without section", "IniFile")
     std::istringstream ss("; comment only\nbar=hello world\n[Test]\nfoo=say goodby");
 #ifdef THROW_PREVENTED
     ini::IniFile inif;
-    REQUIRE(!inif.tryDecode(ss).isOk());// TBD: error code 
-#else
-    ini::IniFile inif;
-    REQUIRE_THROWS_AS(inif.decode(ss),  std::logic_error);
-#endif
-}
-
-TEST_CASE("fail to load field without section", "IniFile")
-{
-    std::istringstream ss("bar=bla");
-#ifdef THROW_PREVENTED
-    ini::IniFile inif;
-    REQUIRE(!inif.tryDecode(ss).isOk());// TBD: error code 
+    REQUIRE(inif.tryDecode(ss).errorCode
+	    == ini::DecodeErrorCode::FIELD_WITHOUT_SECTION);
 #else
     ini::IniFile inif;
     REQUIRE_THROWS_AS(inif.decode(ss),  std::logic_error);
@@ -130,21 +108,23 @@ TEST_CASE("fail to decode file with field without separator", "IniFile")
     std::istringstream ss("[Foo]\nbar no_separator\n[Test]\nfoo=never reached");
 #ifdef THROW_PREVENTED
     ini::IniFile inif;
-    REQUIRE(!inif.tryDecode(ss).isOk());// TBD: error code 
+    REQUIRE(inif.tryDecode(ss).errorCode
+	    == ini::DecodeErrorCode::FIELD_WITHOUT_SEPARATOR);
 #else
     ini::IniFile inif;
     REQUIRE_THROWS_AS(inif.decode(ss),  std::logic_error);
 #endif
 }
 
-TEST_CASE("fail to load field without equal", "IniFile")
+TEST_CASE("fail to decode file with field without custom separator", "IniFile")
 {
-    std::istringstream ss("[Foo]\nbar");
+    std::istringstream ss("[Foo]\nbar=no_separator\n[Test]\nfoo=never reached");
 #ifdef THROW_PREVENTED
-    ini::IniFile inif;
-    REQUIRE(!inif.tryDecode(ss).isOk());// TBD: error code 
+    ini::IniFile inif(':', '#');
+    REQUIRE(inif.tryDecode(ss).errorCode
+	    == ini::DecodeErrorCode::FIELD_WITHOUT_SEPARATOR);
 #else
-    ini::IniFile inif;
+    ini::IniFile inif(':', '#');
     REQUIRE_THROWS_AS(inif.decode(ss),  std::logic_error);
 #endif
 }
@@ -912,9 +892,6 @@ TEST_CASE("save with custom field sep", "IniFile")
 TEST_CASE("spaces are not taken into account in field names", "IniFile")
 {
     std::istringstream ss("[Foo]\n  \t  bar  \t  =hello world");
-    // ini::IniFile inif;
-    // bool isOk = inif.tryDecode(ss).isOk();
-    // REQUIRE(isOk);
     INIF
 
     REQUIRE(inif["Foo"].find("bar") != inif["Foo"].end());
@@ -924,9 +901,6 @@ TEST_CASE("spaces are not taken into account in field names", "IniFile")
 TEST_CASE("spaces are not taken into account in field values", "IniFile")
 {
     std::istringstream ss("[Foo]\nbar=  \t  hello world  \t  ");
-    // ini::IniFile inif;
-    // bool isOk = inif.tryDecode(ss).isOk();
-    // REQUIRE(isOk);
     INIF
 
     REQUIRE(inif["Foo"]["bar"].toString() == "hello world");
@@ -935,14 +909,6 @@ TEST_CASE("spaces are not taken into account in field values", "IniFile")
 TEST_CASE("spaces are not taken into account in sections", "IniFile")
 {
     std::istringstream ss("  \t  [Foo]  \t  \nbar=bla");
-
-// #ifdef THROW_PREVENTED
-//     ini::IniFile inif;
-//     bool isOk = inif.tryDecode(ss).isOk();
-//     REQUIRE(isOk);
-// #else
-//     ini::IniFile inif(ss);
-// #endif
     INIF
     REQUIRE(inif.find("Foo") != inif.end());
 }
