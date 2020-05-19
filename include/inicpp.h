@@ -422,12 +422,11 @@ namespace ini
             comment_ = comment;
         }
 
-        DecodeResult* tryDecode(std::istream &is)
+        DecodeResult tryDecode(std::istream &is)
 	{
-	    this->clear();
+	    clear();
             int lineNo = 0;
-            //IniSection *currentSection = NULL;
-            IniSection *currentSection = NULL;
+	    IniSection *currentSection = NULL;
             // iterate file by line
             while (!is.eof() && !is.fail())
             {
@@ -449,13 +448,13 @@ namespace ini
                     // check if the section is also closed on same line
                     std::size_t pos = line.find("]");
                     if(pos == std::string::npos)
-			return new DecodeResult(SECTION_NOT_CLOSED, lineNo);
+			return *new DecodeResult(SECTION_NOT_CLOSED, lineNo);
                     // check if the section name is empty
                     if(pos == 1)
-			return new DecodeResult(SECTION_EMPTY, lineNo);
+			return *new DecodeResult(SECTION_EMPTY, lineNo);
                     // check if there is a newline following closing bracket
                     if(pos + 1 != line.length())
-			return new DecodeResult(SECTION_TEXT_AFTER, lineNo);
+			return *new DecodeResult(SECTION_TEXT_AFTER, lineNo);
 
                     // retrieve section name
                     std::string secName = line.substr(1, pos - 1);
@@ -466,12 +465,12 @@ namespace ini
                     // line is a field definition
                     // check if section was already opened
                     if(currentSection == NULL)
-			return new DecodeResult(FIELD_WITHOUT_SECTION, lineNo);
+			return *new DecodeResult(FIELD_WITHOUT_SECTION, lineNo);
 
                     // find key value separator
                     std::size_t pos = line.find(fieldSep_);
                     if(pos == std::string::npos)
-		      return new DecodeResult(FIELD_WITHOUT_SEPARATOR, lineNo);
+		      return *new DecodeResult(FIELD_WITHOUT_SEPARATOR, lineNo);
 
                     // retrieve field name and value
                     std::string name = line.substr(0, pos);
@@ -483,17 +482,17 @@ namespace ini
 	    }
 
 	    // signifies success
-	    return new DecodeResult();
+	    return *new DecodeResult();
 	}	
 
-	DecodeResult* tryDecode(const std::string &content)
+	DecodeResult tryDecode(const std::string &content)
 	{
             std::istringstream ss(content);
             return tryDecode(ss);
  	}
 
 
-        DecodeResult* tryLoad(const std::string &fileName)
+        DecodeResult tryLoad(const std::string &fileName)
         {
             std::ifstream is(fileName.c_str());
             return tryDecode(is);
@@ -577,17 +576,17 @@ namespace ini
 	 */
         void decode(std::istream &is)
         {
-	    throwIfError(*tryDecode(is));
+	    throwIfError(tryDecode(is));
         }
 
         void decode(const std::string &content)
         {
-	    throwIfError(*tryDecode(content));
+	    throwIfError(tryDecode(content));
         }
       
         void load(const std::string &fileName)
         {
-	    throwIfError(*tryLoad(fileName));
+	    throwIfError(tryLoad(fileName));
         }
 #endif
 
