@@ -7,7 +7,8 @@
  */
 
 #include <catch.hpp>
-#define THROW_PREVENTED
+// TBD: tests whether throws prevented or not. 
+//#define THROW_PREVENTED
 #include "inicpp.h"
 
 
