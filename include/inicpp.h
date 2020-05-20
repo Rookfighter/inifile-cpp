@@ -10,12 +10,23 @@
 #define INICPP_H_
 
 #include <fstream>
+#define SSTREAM_PREVENTED
+//#ifndef SSTREAM_PREVENTED
 #include <sstream>
-#include <map>
-//#include <stdexcept>
+//#endif
 
-//#include <limits>
-//#include <cmath>
+#include <limits.h>
+#include <string.h>
+
+#include <iostream>
+
+#include <map>
+
+
+// CAUTION: for embedded systems in general it is recommanded
+// to set following switches:
+// - THROW_PREVENTED disallows methods (and constructors) throwing exceptions
+// - SSTREAM_PREVENTED
 
 namespace ini
 {
@@ -29,29 +40,61 @@ namespace ini
 	 * Represents the value as a string which may be empty. 
 	 */
         std::string value_;
+
         /**
-	 * Whether the last cast conversion of value_ 
-	 * e.g. into <c>int</>. 
-	 * This is insignificant but false if there was no conversion yet. 
+	 * The type of the last outgoing cast conversion from value_. 
+	 * This is insignificant and NULL if there was no out conversion yet. 
+	 * This is used only to create an appropriate message 
+	 * for exception in #as(). 
+	 */
+        mutable std::string typeLastOutConversion_;
+
+        /**
+	 * Whether the last outgoing cast conversion from value_ 
+	 * e.g. into <c>int</> failed. 
+	 * This is insignificant but false if there was no out conversion yet. 
 	 * This is used by #as() to throw an exception 
 	 * and by #orDefault(T) to set the defalt value. 
 	 *
-	 * @see failedLastConversion()
+	 * @see failedLastOutConversion()
 	 */
-        mutable bool failedLastConversion_;
-        mutable std::string typeLastConversion;
+        mutable bool failedLastOutConversion_;
+
+        /**
+	 * Whether any ingoing cast conversion to value_ 
+	 * e.g. from <c>int</> failed 
+	 * since creation of this IniField 
+	 * or reset of this flag via #resetFailedAnyInConversion(). 
+	 * This is insignificant but false if there was no in conversion yet. 
+	 * This is used by #as() to throw an exception 
+	 * and by #orDefault(T) to set the defalt value. 
+	 *
+	 * @see failedAnyInConversion()
+	 */
+        bool failedAnyInConversion_;
+      
 
     public:
       // TBC: needed? 
-         IniField() : value_(), failedLastConversion_(false)
-         {}
+         IniField()
+	   : value_(),
+	     typeLastOutConversion_(),
+	     failedLastOutConversion_(false),
+	     failedAnyInConversion_(false)
+          {}
 
         IniField(const std::string &value)
-	  : value_(value), failedLastConversion_(false)
+	  : value_(value),
+	    typeLastOutConversion_(),
+	    failedLastOutConversion_(false),
+	    failedAnyInConversion_(false)
         {}
         IniField(const IniField &field)
 	  : value_(field.value_),
-	    failedLastConversion_(field.failedLastConversion_)
+	    typeLastOutConversion_  (field.typeLastOutConversion_),
+	    failedLastOutConversion_(field.failedLastOutConversion_),
+	    failedAnyInConversion_  (field.failedAnyInConversion_)
+
         {}
 
         ~IniField()
@@ -61,8 +104,8 @@ namespace ini
         // T as() const
         // {
 	//     T result = static_cast<T>(*this);
-	//     if (failedLastConversion_)
-	//       throw std::invalid_argument("field is no " + typeLastConversion);
+	//     if (failedLastOutConversion_)
+	//       throw std::invalid_argument("field is no " + typeLastOutConversion_);
 
         //     return result;
         // }
@@ -78,9 +121,9 @@ namespace ini
         T as() const
         {
 	    T result = asUnconditional<T>();
-	    if (failedLastConversion_)
+	    if (failedLastOutConversion_)
 	      throw std::invalid_argument
-		("field '" + value_ + "' is no " + typeLastConversion);
+		("field '" + value_ + "' is no " + typeLastOutConversion_);
             return result;
         }
 #endif
@@ -89,14 +132,14 @@ namespace ini
         T orDefault(T defaultValue)
         {
 	    T result = static_cast<T>(*this);
-	    return failedLastConversion_ ? defaultValue : result;
+	    return failedLastOutConversion_ ? defaultValue : result;
  	}
       
         // template<typename T>
         // T &operator ||(T defaultValue)
         // {
 	//     T result = static_cast<T>(*this);
-	//     return failedLastConversion_ ? defaultValue : result;
+	//     return failedLastOutConversion_ ? defaultValue : result;
  	// }
 
         const std::string toString() const
@@ -104,9 +147,66 @@ namespace ini
 	    return value_;
 	}
 
-        bool failedLastConversion()
+        bool failedLastOutConversion()
         {
-	  return failedLastConversion_;
+	  return failedLastOutConversion_;
+	}
+
+        /**
+	 * Returns whether any inwards conversion by #convertNum10(char*, T) 
+	 * failed since creation of this field or reset 
+	 * done by #resetFailedAnyInConversion()
+	 */
+        bool failedAnyInConversion()
+        {
+	  return failedAnyInConversion_;
+	}
+
+      // TBC: this may be done in one with failedAnyInConversion()
+        /**
+	 * Resets #failedAnyInConversion_.
+	 */
+        void resetFailedAnyInConversion()
+        {
+	  failedAnyInConversion_ = false;
+	}
+
+        // TBD: works for decimal only; extend
+      // NOTE: used for converting numbers only, both integers and floats.
+      // Using sprintf is ok except for long int types:
+      // then the trailing l must be removed. 
+      // As in the cases under consideration, l occurs for long types only
+      // and then it is at the end of the string,
+      // it suffices to find pointer on 'l' and set '\0'. 
+      // this works only because l occurs for long types T only.
+      //
+        /**
+	 * Returns \p value as a string using the format string \p formatStr. 
+	 * This must fit the type. 
+	 * Note that for long int types, the result has no trailing 'l'. 
+	 * As a side effect, conversion failures are cumulated 
+	 * in #failedAnyInConversion_, which should not occur. 
+	 *
+	 * @param value
+	 *    a numerical value, either integer or floating point. 
+	 *    For integer both long int and int are avaliable 
+	 *    and both signed and unsigned. 
+	 *    For floating point both float and double are allowed. 
+	 * @param formatStr
+	 *    a format string which must fit the type. 
+	 */
+        template<typename T>
+	std::string convertNum10(const char* formatStr, T value)
+        {
+	    char strVal[std::numeric_limits<T>::digits10];
+	    int succ = sprintf(strVal, formatStr, value);
+	    failedAnyInConversion_ |= succ < 0;
+	    char* lChar = strchr(strVal, 'l');
+	    if (lChar)
+	        *lChar = '\0';
+	    // TBD: evaluate succ: < 0 if sth went wrong.
+	    // else number of variables written. should be 1
+	    return std::string(strVal);
 	}
 
       
@@ -129,49 +229,77 @@ namespace ini
 
         IniField &operator=(const int value)
         {
+#ifdef SSTREAM_PREVENTED
+	    value_ = convertNum10<int>("%d", value);
+#else
             std::stringstream ss;
             ss << value;
             value_ = ss.str();
+#endif
             return *this;
         }
 
         IniField &operator=(const unsigned int value)
         {
-            std::stringstream ss;
+#ifdef SSTREAM_PREVENTED
+	    value_ = convertNum10<unsigned int>("%u", value);
+#else
+           std::stringstream ss;
             ss << value;
             value_ = ss.str();
-            return *this;
+ #endif
+           return *this;
         }
 
         IniField &operator=(const long int value)
         {
-            std::stringstream ss;
+	  
+#ifdef SSTREAM_PREVENTED
+	    value_ = convertNum10<long int>("%dl", value);
+#else
+           std::stringstream ss;
             ss << value;
             value_ = ss.str();
-            return *this;
+#endif
+           return *this;
         }
 
+      // TBD: clarify: this writes always decimal representation
+      // although we can read different ones also (octal and hex)
+      // that way conversions are not inverse to one another. 
         IniField &operator=(const unsigned long int value)
         {
+#ifdef SSTREAM_PREVENTED
+	    value_ = convertNum10<unsigned long int>("%ul", value);
+#else
             std::stringstream ss;
             ss << value;
             value_ = ss.str();
-            return *this;
+#endif
+           return *this;
         }
 
         IniField &operator=(const double value)
         {
+#ifdef SSTREAM_PREVENTED
+	    value_ = convertNum10<double>("%g", value);
+#else
             std::stringstream ss;
             ss << value;
             value_ = ss.str();
+#endif
             return *this;
         }
 
         IniField &operator=(const float value)
         {
+#ifdef SSTREAM_PREVENTED
+	    value_ = convertNum10<float>("%g", value);
+#else
             std::stringstream ss;
             ss << value;
             value_ = ss.str();
+#endif
             return *this;
         }
 
@@ -187,26 +315,26 @@ namespace ini
 
         const char* castToCString() const 
         {
-	    failedLastConversion_ = false;
+	    failedLastOutConversion_ = false;
             return value_.c_str();
 	}
       
         explicit operator const char *() const
         {
-	    typeLastConversion = "char*";
+	    typeLastOutConversion_ = "char*";
 	    const char* result = castToCString();
  	    return result;
         }
 
         const std::string castToString() const 
         {
-	    failedLastConversion_ = false;
+	    failedLastOutConversion_ = false;
             return value_;
 	}
       
         explicit operator std::string() const
         {
-	    typeLastConversion = "std::string";
+	    typeLastOutConversion_ = "std::string";
 	    const std::string result = castToString();
             return result;
         }
@@ -216,25 +344,25 @@ namespace ini
         {
             char *endptr;
             long int result = std::strtol(value_.c_str(), &endptr, 0);
-	    failedLastConversion_ = *endptr != '\0' || value_.empty();
+	    failedLastOutConversion_ = *endptr != '\0' || value_.empty();
 	    return result;
  	}
 
         /**
 	 * Returns the value of this field, i.e. value_ 
 	 * as a long int if possible; else returns 0. 
-	 * As a side effect sets #typeLastConversion. 
+	 * As a side effect sets #typeLastOutConversion_. 
 	 */
         explicit operator long int() const
         {
-	    typeLastConversion = "long int";
+	    typeLastOutConversion_ = "long int";
  	    long int result = castToLongIntCheckFail();
 	    return result;
         }
       
         explicit operator int() const
         {
-	    typeLastConversion = "int";
+	    typeLastOutConversion_ = "int";
 	    long int result = castToLongIntCheckFail();
 
 	    if (result > std::numeric_limits<int>::max())
@@ -250,21 +378,21 @@ namespace ini
  	    char *endptr;
 	    // CAUTION: this delivers a value even if string starts with '-'
 	    unsigned long int result = std::strtoul(value_.c_str(), &endptr, 0);
-	    failedLastConversion_ =
+	    failedLastOutConversion_ =
 	      *endptr != '\0' || value_.empty() || value_[0] == '-';
 	    return result;
  	}
 
         explicit operator unsigned long int() const
         {
-	    typeLastConversion = "unsigned long int";
+	    typeLastOutConversion_ = "unsigned long int";
 	    unsigned long int result = castToUnsignedLongIntCheckFail();
 	    return result;
         }
 
         explicit operator unsigned int() const
         {
-	    typeLastConversion = "unsigned int";
+	    typeLastOutConversion_ = "unsigned int";
 	    unsigned long int result = castToUnsignedLongIntCheckFail();
 
 	    if (result > std::numeric_limits<unsigned int>::max())
@@ -277,20 +405,20 @@ namespace ini
         {
 	    char *endptr;
 	    double result = std::strtod(value_.c_str(), &endptr);
-	    failedLastConversion_ = *endptr != '\0' || value_.empty();
+	    failedLastOutConversion_ = *endptr != '\0' || value_.empty();
 	    return result;
 	}
 
         explicit operator double() const
         {
-	    typeLastConversion = "double";
+	    typeLastOutConversion_ = "double";
 	    double result = castToDoubleCheckFail();
 	    return result;
         }
 
 	explicit operator float() const
         {
-	    typeLastConversion = "float";
+	    typeLastOutConversion_ = "float";
 	    float result = (float)castToDoubleCheckFail();
 	    return result;
 	}
@@ -299,22 +427,16 @@ namespace ini
 
         explicit operator bool() const
         {
-	    typeLastConversion = "bool";
+	    typeLastOutConversion_ = "bool";
             std::string str(value_);
             std::transform(str.begin(), str.end(), str.begin(), ::tolower);
-	    failedLastConversion_ = true;
-	    bool result = false;
             if (str == "true")
 	    {
-	        failedLastConversion_ = false;
-                result = true;
+	        failedLastOutConversion_ = false;
+                return true;
 	    }
-            if (str == "false")
-	    {
- 	        failedLastConversion_ = false;
-	    }
-
-	    return result;
+	    failedLastOutConversion_ = (str != "false");
+	    return false;
         }
     };
 

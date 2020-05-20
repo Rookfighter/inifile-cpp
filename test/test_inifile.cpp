@@ -44,8 +44,9 @@ TEST_CASE("decode empty file", "IniFile")
 {
     std::istringstream ss("");
     INIF
-
-    REQUIRE(inif.size() == 0);
+      // TBD: clarify whether it is ok to set an exception here:
+      // stream has fail bit. 
+      REQUIRE(inif.size() == 0);
 }
 
 
@@ -191,7 +192,7 @@ TEST_CASE("parse field as c-string", "IniFile")
     REQUIRE(strcmp(inif["Foo"]["bar"].as<const char*>(), "blaC") == 0);
 #endif
     REQUIRE(strcmp(inif["Foo"]["bar"].orDefault(nvrOcc), "blaC") == 0);
-    REQUIRE(!inif["Foo"]["bar"].failedLastConversion());
+    REQUIRE(!inif["Foo"]["bar"].failedLastOutConversion());
 }
 
 TEST_CASE("parse field as std::string", "IniFile")
@@ -207,7 +208,7 @@ TEST_CASE("parse field as std::string", "IniFile")
     REQUIRE(inif["Foo"]["bar"].as<std::string>() == std::string("blaS"));
 #endif
     REQUIRE(inif["Foo"]["bar"].orDefault(nvrOcc) == std::string("blaS"));
-    REQUIRE(!inif["Foo"]["bar"].failedLastConversion());
+    REQUIRE(!inif["Foo"]["bar"].failedLastOutConversion());
 }
 
 TEST_CASE("parse field as double", "IniFile")
@@ -294,11 +295,11 @@ TEST_CASE("fail to parse field as double", "IniFile")
 #endif
 
     REQUIRE(sec["bar1"].orDefault(0.1) == 0.1);
-    REQUIRE(sec["bar1"].failedLastConversion());
+    REQUIRE(sec["bar1"].failedLastOutConversion());
     REQUIRE(sec["bar2"].orDefault(0.2) == 0.2);
-    REQUIRE(sec["bar2"].failedLastConversion());
+    REQUIRE(sec["bar2"].failedLastOutConversion());
     REQUIRE(sec["bar3"].orDefault(0.3) == 0.3);
-    REQUIRE(sec["bar3"].failedLastConversion());
+    REQUIRE(sec["bar3"].failedLastOutConversion());
 }
 
 
@@ -374,11 +375,11 @@ TEST_CASE("fail to parse field as float", "IniFile")
 #endif
     
     REQUIRE(sec["bar1"].orDefault(.1f) == 0.1f);
-    REQUIRE(sec["bar1"].failedLastConversion());
+    REQUIRE(sec["bar1"].failedLastOutConversion());
     REQUIRE(sec["bar2"].orDefault(.2f) == 0.2f);
-    REQUIRE(sec["bar2"].failedLastConversion());
+    REQUIRE(sec["bar2"].failedLastOutConversion());
     REQUIRE(sec["bar3"].orDefault(.3f) == 0.3f);
-    REQUIRE(sec["bar3"].failedLastConversion());
+    REQUIRE(sec["bar3"].failedLastOutConversion());
 }
 
 TEST_CASE("parse field as (unsigned) long int, fail if negative unsigned",
@@ -442,29 +443,29 @@ TEST_CASE("parse field as (unsigned) long int, fail if negative unsigned",
     
     REQUIRE( sec["bar0"].orDefault(2l )          == 0);
     REQUIRE( sec["bar0"].orDefault(2lu)          == 0);
-    REQUIRE(!sec["bar0"].failedLastConversion());
+    REQUIRE(!sec["bar0"].failedLastOutConversion());
     REQUIRE( sec["bar1"].orDefault(-2l )         == 1);
     REQUIRE( sec["bar1"].orDefault(-2lu)         == 1);
-    REQUIRE(!sec["bar1"].failedLastConversion());
+    REQUIRE(!sec["bar1"].failedLastOutConversion());
     REQUIRE(sec["bar2"].orDefault(+2l )         == -42);
     REQUIRE(sec["bar2"].orDefault(+2lu)         ==   2);
-    REQUIRE(sec["bar2"].failedLastConversion());
+    REQUIRE(sec["bar2"].failedLastOutConversion());
     REQUIRE( sec["bar80"].orDefault(+2l )         == 0);
     REQUIRE( sec["bar80"].orDefault(+2lu)         == 0);
     REQUIRE( sec["bar81"].orDefault(-2l )         == 2);
     REQUIRE( sec["bar81"].orDefault(-2lu)         == 2);
-    REQUIRE(!sec["bar81"].failedLastConversion());
+    REQUIRE(!sec["bar81"].failedLastOutConversion());
     REQUIRE(sec["bar82"].orDefault(+2l )          == -7);
     REQUIRE(sec["bar82"].orDefault(+2lu)          == +2);
-    REQUIRE(sec["bar82"].failedLastConversion());
+    REQUIRE(sec["bar82"].failedLastOutConversion());
     REQUIRE(sec["barG0"].orDefault(+2l )         == 0);
     REQUIRE(sec["barG0"].orDefault(+2lu)         == 2);
-    REQUIRE(sec["barG0"].failedLastConversion());
+    REQUIRE(sec["barG0"].failedLastOutConversion());
     REQUIRE(sec["barG1"].orDefault(-2l )         == 255);
     REQUIRE(sec["barG1"].orDefault(+2lu)         == 255);
     REQUIRE(sec["barG2"].orDefault(+2l )         == -128);
     REQUIRE(sec["barG2"].orDefault(+2lu)         ==    2);
-    REQUIRE(sec["barG2"].failedLastConversion());
+    REQUIRE(sec["barG2"].failedLastOutConversion());
     REQUIRE(sec["barB1"]       .orDefault(-2l)
 	    == std::numeric_limits<         long int>::max());
     REQUIRE(sec["barB2"]       .orDefault(+2lu)
@@ -533,31 +534,31 @@ TEST_CASE("fail to parse field as (unsigned) long int", "IniFile")
     // read in between some string. 
     REQUIRE(sec["bar1"].orDefault(+1l ) == 1l );
     REQUIRE(sec["bar1"].orDefault(+1lu) == 1lu);
-    REQUIRE(sec["bar1"].failedLastConversion());
+    REQUIRE(sec["bar1"].failedLastOutConversion());
 
     REQUIRE(sec["bar2"].orDefault(+2l ) == 2l );
     REQUIRE(sec["bar2"].orDefault(+2lu) == 2lu);
-    REQUIRE(sec["bar2"].failedLastConversion());
+    REQUIRE(sec["bar2"].failedLastOutConversion());
    
     REQUIRE(sec["bar3"].orDefault(+3l ) == 3l );
     REQUIRE(sec["bar3"].orDefault(+3lu) == 3lu);
-    REQUIRE(sec["bar3"].failedLastConversion());
+    REQUIRE(sec["bar3"].failedLastOutConversion());
    
     REQUIRE(sec["bar4"].orDefault(+4l ) == 4l );
     REQUIRE(sec["bar4"].orDefault(+4lu) == 4lu);
-    REQUIRE(sec["bar4"].failedLastConversion());
+    REQUIRE(sec["bar4"].failedLastOutConversion());
 
     REQUIRE(sec["bar82"].orDefault(+82l ) == 82l );
     REQUIRE(sec["bar82"].orDefault(+82lu) == 82lu);
-    REQUIRE(sec["bar82"].failedLastConversion());
+    REQUIRE(sec["bar82"].failedLastOutConversion());
     
     REQUIRE(sec["barG0"].orDefault(+72l ) == 72l );
     REQUIRE(sec["barG0"].orDefault(+72lu) == 72lu);
-    REQUIRE(sec["barG0"].failedLastConversion());
+    REQUIRE(sec["barG0"].failedLastOutConversion());
 
     REQUIRE(sec["barG1"].orDefault(+73l ) == 73l );
     REQUIRE(sec["barG1"].orDefault(+73lu) == 73lu);
-    REQUIRE(sec["barG1"].failedLastConversion());
+    REQUIRE(sec["barG1"].failedLastOutConversion());
 }
 
 
@@ -623,29 +624,29 @@ TEST_CASE("parse field as (unsigned) int, fail if negative unsigned",
 
     REQUIRE( sec["bar0"].orDefault(2 )      == 0);
     REQUIRE( sec["bar0"].orDefault(2u)      == 0);
-    REQUIRE(!sec["bar0"].failedLastConversion());
+    REQUIRE(!sec["bar0"].failedLastOutConversion());
     REQUIRE( sec["bar1"].orDefault(-2 )     == 1);
     REQUIRE( sec["bar1"].orDefault(-2u)     == 1);
-    REQUIRE(!sec["bar1"].failedLastConversion());
+    REQUIRE(!sec["bar1"].failedLastOutConversion());
     REQUIRE(sec["bar2"].orDefault(+2 )     == -42);
     REQUIRE(sec["bar2"].orDefault(+2u)     ==   2);
-    REQUIRE(sec["bar2"].failedLastConversion());
+    REQUIRE(sec["bar2"].failedLastOutConversion());
     REQUIRE( sec["bar80"].orDefault(+2 )     == 0);
     REQUIRE( sec["bar80"].orDefault(+2u)     == 0);
     REQUIRE( sec["bar81"].orDefault(-2 )     == 2);
     REQUIRE( sec["bar81"].orDefault(-2u)     == 2);
-    REQUIRE(!sec["bar81"].failedLastConversion());
+    REQUIRE(!sec["bar81"].failedLastOutConversion());
     REQUIRE(sec["bar82"].orDefault(+2 )      == -7);
     REQUIRE(sec["bar82"].orDefault(+2u)      == +2);
-    REQUIRE(sec["bar82"].failedLastConversion());
+    REQUIRE(sec["bar82"].failedLastOutConversion());
     REQUIRE(sec["barG0"].orDefault(+2 )      == 0);
     REQUIRE(sec["barG0"].orDefault(+2u)      == 2);
-    REQUIRE(sec["barG0"].failedLastConversion());
+    REQUIRE(sec["barG0"].failedLastOutConversion());
     REQUIRE(sec["barG1"].orDefault(-2 )     == 255);
     REQUIRE(sec["barG1"].orDefault(+2u)     == 255);
     REQUIRE(sec["barG2"].orDefault(+2 )     == -128);
     REQUIRE(sec["barG2"].orDefault(+2u)     ==    2);
-    REQUIRE(sec["barG2"].failedLastConversion());
+    REQUIRE(sec["barG2"].failedLastOutConversion());
     REQUIRE(sec["barB1"]       .orDefault(-2)
 	    == std::numeric_limits<         int>::max());
     REQUIRE(sec["barB2"]       .orDefault(+2u)
@@ -699,31 +700,31 @@ TEST_CASE("fail to parse field as (unsigned) int", "IniFile")
     // read in between some string. 
     REQUIRE(sec["bar1"].orDefault(+1 ) == 1 );
     REQUIRE(sec["bar1"].orDefault(+1u) == 1u);
-    REQUIRE(sec["bar1"].failedLastConversion());
+    REQUIRE(sec["bar1"].failedLastOutConversion());
 
     REQUIRE(sec["bar2"].orDefault(+2 ) == 2 );
     REQUIRE(sec["bar2"].orDefault(+2u) == 2u);
-    REQUIRE(sec["bar2"].failedLastConversion());
+    REQUIRE(sec["bar2"].failedLastOutConversion());
    
     REQUIRE(sec["bar3"].orDefault(+3 ) == 3 );
     REQUIRE(sec["bar3"].orDefault(+3u) == 3u);
-    REQUIRE(sec["bar3"].failedLastConversion());
+    REQUIRE(sec["bar3"].failedLastOutConversion());
    
     REQUIRE(sec["bar4"].orDefault(+4 ) == 4 );
     REQUIRE(sec["bar4"].orDefault(+4u) == 4u);
-    REQUIRE(sec["bar4"].failedLastConversion());
+    REQUIRE(sec["bar4"].failedLastOutConversion());
 
     REQUIRE(sec["bar82"].orDefault(+82 ) == 82 );
     REQUIRE(sec["bar82"].orDefault(+82u) == 82u);
-    REQUIRE(sec["bar82"].failedLastConversion());
+    REQUIRE(sec["bar82"].failedLastOutConversion());
     
     REQUIRE(sec["barG0"].orDefault(+72 ) == 72 );
     REQUIRE(sec["barG0"].orDefault(+72u) == 72u);
-    REQUIRE(sec["barG0"].failedLastConversion());
+    REQUIRE(sec["barG0"].failedLastOutConversion());
 
     REQUIRE(sec["barG1"].orDefault(+73 ) == 73 );
     REQUIRE(sec["barG1"].orDefault(+73u) == 73u);
-    REQUIRE(sec["barG1"].failedLastConversion());
+    REQUIRE(sec["barG1"].failedLastOutConversion());
 }
 
 
@@ -753,9 +754,9 @@ TEST_CASE("parse field as bool", "IniFile")
     REQUIRE(!sec["bar2"].orDefault(true ));
     REQUIRE( sec["bar3"].orDefault(false));
     
-    REQUIRE(!sec["bar1"].failedLastConversion());
-    REQUIRE(!sec["bar2"].failedLastConversion());
-    REQUIRE(!sec["bar3"].failedLastConversion());
+    REQUIRE(!sec["bar1"].failedLastOutConversion());
+    REQUIRE(!sec["bar2"].failedLastOutConversion());
+    REQUIRE(!sec["bar3"].failedLastOutConversion());
 }
 
 TEST_CASE("failed to parse field as bool", "IniFile")
@@ -775,15 +776,15 @@ TEST_CASE("failed to parse field as bool", "IniFile")
 #ifndef THROW_PREVENTED
     REQUIRE_THROWS_AS(sec["bar"].as<bool>(), std::invalid_argument);
     REQUIRE( sec["bar"].as<std::string>() == std::string("yes"));
-    REQUIRE(!sec["bar"].failedLastConversion());
+    REQUIRE(!sec["bar"].failedLastOutConversion());
     REQUIRE( sec["bar"].as<std::string>() == std::string("yes"));
-    REQUIRE(!sec["bar"].failedLastConversion());
+    REQUIRE(!sec["bar"].failedLastOutConversion());
 #endif
    
     REQUIRE(!sec["bar"].orDefault(false));
-    REQUIRE( sec["bar"].failedLastConversion());
+    REQUIRE( sec["bar"].failedLastOutConversion());
     REQUIRE( sec["bar"].orDefault(true ));
-    REQUIRE( sec["bar"].failedLastConversion());
+    REQUIRE( sec["bar"].failedLastOutConversion());
  }
 
 
