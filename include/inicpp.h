@@ -461,6 +461,8 @@ namespace ini
 	SECTION_TEXT_AFTER,
 	ILLEGAL_LINE,
 	FIELD_WITHOUT_SECTION,
+	// occurs for file streams only, not for string streams
+	STREAM_OPEN_FAILED,
 	STREAM_READ_FAILED
     };
 
@@ -587,6 +589,7 @@ namespace ini
         class InStreamInterface
 	{
 	public:
+	  virtual bool isOpen() = 0;
 	  virtual bool getLine(std::string &line) = 0;
 	  virtual bool bad() = 0;
 	  virtual void close() = 0;
@@ -600,7 +603,10 @@ namespace ini
 	    InStream(std::istream &iStream) : iStream_(iStream)
 	    {
 	    }
-	  
+	    bool isOpen()
+	    {
+	      return true;
+	    }
 	    bool getLine(std::string &line)
 	    {
 	      return (bool)std::getline(iStream_, line, '\n');
@@ -617,6 +623,11 @@ namespace ini
 
         DecodeResult tryDecode(InStreamInterface &iStream)
 	{
+	    if (!iStream.isOpen())
+	    {
+	        dResult.set(STREAM_OPEN_FAILED, -1);
+		return dResult;
+	    }
 	    clear();
             int lineNo = 1;
 	    IniSection *currentSection = NULL;

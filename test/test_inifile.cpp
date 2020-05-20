@@ -8,13 +8,10 @@
 
 #include <catch.hpp>
 // TBD: tests whether throws prevented or not. 
-#define THROW_PREVENTED
+//#define THROW_PREVENTED
 #include "inicpp.h"
 
 
-//#include <sstream>
-//#include <cmath>
-//#include <limits>
 #include <string.h>
 
 
@@ -32,7 +29,7 @@
 
 TEST_CASE("decode ini file", "IniFile")
 {
-    std::istringstream ss("[Foo]\nbar=hello world\n[Test]");
+    std::istringstream ss("[Foo]\nbar=hello world\n[Test]\n\n");
     INIF
 
     REQUIRE(inif.size() == 2);
