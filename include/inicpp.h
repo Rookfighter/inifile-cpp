@@ -571,6 +571,23 @@ namespace ini
         {
            decode(is);
          }
+
+      // TBD: the above constructor shall be replaced by the ones below
+      // to get the right exceptions. 
+        IniFile(std::ifstream &is,
+            const char fieldSep = '=',
+            const char comment = '#')
+	  : IniFile(fieldSep, comment)
+        {
+           decode(is);
+	}
+        IniFile(std::istringstream &is,
+            const char fieldSep = '=',
+            const char comment = '#')
+	  : IniFile(fieldSep, comment)
+        {
+           decode(is);
+	}
 #endif
 
 
@@ -595,6 +612,7 @@ namespace ini
 	  virtual void close() = 0;
 	}; // class InStreamInterface
 
+      // T is the kind of stream under consideration: ifstream or istringstream
       template<class T>
       class t_InStream : public InStreamInterface
 	{
@@ -604,6 +622,7 @@ namespace ini
 	    t_InStream(T &iStream) : iStream_(iStream)
 	    {
 	    }
+	  // overwritten for InFileStream
 	    bool isOpen()
 	    {
 	      return true;
@@ -612,22 +631,22 @@ namespace ini
 	    {
 	      return (bool)std::getline(iStream_, line, '\n');
 	    }
+	  // TBC: can this be false for an istringstream??
 	    bool bad()
 	    {
 	        return iStream_.bad();
 	    }
+	  // overwritten for InFileStream
 	    void close()
 	    {
 	        //iStream_.close();
 	    }
 	};  // class t_InStream
 
-      class InStream : public t_InStream<std::istream>
+      class InStringStream : public t_InStream<std::istringstream>
 	{
-	// private:
-	//     std::istream &iStream_;
 	public:
-	    InStream(std::istream &iStream) : t_InStream(iStream)
+	    InStringStream(std::istringstream &iStream) : t_InStream(iStream)
 	    {
 	    }
 	    // bool isOpen()
@@ -638,7 +657,23 @@ namespace ini
 	    // {
 	    //     //iStream_.close();
 	    // }
-	};  // class InStream 
+	};  // class InStringStream
+      
+      class InFileStream : public t_InStream<std::ifstream>
+	{
+	public:
+	    InFileStream(std::ifstream &iStream) : t_InStream(iStream)
+	    {
+	    }
+	    bool isOpen()
+	    {
+	      return iStream_.is_open();
+	    }
+	    void close()
+	    {
+	        iStream_.close();
+	    }
+	};  // class InFileStream 
 
         DecodeResult tryDecode(InStreamInterface &iStream)
 	{
@@ -730,7 +765,7 @@ namespace ini
 
         DecodeResult tryDecode(std::istream &iStream)
 	{
-	  InStream mystream(iStream);
+	  t_InStream<std::istream> mystream(iStream);
 	  return tryDecode(mystream);
 	}
       
@@ -739,14 +774,16 @@ namespace ini
 	DecodeResult tryDecode(const std::string &content)
 	{
             std::istringstream ss(content);
-            return tryDecode(ss);
+	    InStringStream iss(ss);
+            return tryDecode(iss);
  	}
 
 
         DecodeResult tryLoad(const std::string &fileName)
         {
             std::ifstream is(fileName.c_str());
-            return tryDecode(is);
+	    InFileStream ifs(is);
+            return tryDecode(ifs);
         }
 
 //#ifndef SSTREAM_PREVENTED
@@ -835,6 +872,18 @@ namespace ini
         void decode(std::istream &is)
         {
 	    throwIfError(tryDecode(is));
+        }
+      
+        void decode(std::ifstream &is)
+        {
+	    InFileStream ifs(is);
+	    throwIfError(tryDecode(ifs));
+        }
+      
+        void decode(std::istringstream &is)
+        {
+	    InStringStream ifs(is);
+	    throwIfError(tryDecode(ifs));
         }
 
         void decode(const std::string &content)
