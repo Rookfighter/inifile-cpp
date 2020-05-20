@@ -247,13 +247,12 @@ namespace ini
            std::stringstream ss;
             ss << value;
             value_ = ss.str();
- #endif
+#endif
            return *this;
         }
 
         IniField &operator=(const long int value)
         {
-	  
 #ifdef SSTREAM_PREVENTED
 	    value_ = convertNum10<long int>("%dl", value);
 #else
@@ -585,16 +584,47 @@ namespace ini
             comment_ = comment;
         }
 
-        DecodeResult tryDecode(std::istream &iStream)
+        class InStreamInterface
+	{
+	public:
+	  virtual bool getLine(std::string &line) = 0;
+	  virtual bool bad() = 0;
+	  virtual void close() = 0;
+	}; // class InStreamInterface
+
+        class InStream : public InStreamInterface
+	{
+	private:
+	    std::istream &iStream_;
+	public:
+	    InStream(std::istream &iStream) : iStream_(iStream)
+	    {
+	    }
+	  
+	    bool getLine(std::string &line)
+	    {
+	      return (bool)std::getline(iStream_, line, '\n');
+	    }
+	    bool bad()
+	    {
+	        return iStream_.bad();
+	    }
+	    void close()
+	    {
+	        //iStream_.close();
+	    }
+	};  // class InStream 
+
+        DecodeResult tryDecode(InStreamInterface &iStream)
 	{
 	    clear();
             int lineNo = 1;
 	    IniSection *currentSection = NULL;
-	    for (std::string line; std::getline(iStream, line, '\n'); lineNo++)
+	    for (std::string line; iStream.getLine(line); lineNo++)
             {
                 trim(line);
 
-                // skip if line is empty or line is a comment
+                // skip if line is empty or a comment
                 if(line.size() == 0 || line[0] == comment_)
                     continue;
 		
@@ -667,6 +697,14 @@ namespace ini
 	    dResult.reset();
 	    return dResult;
 	}
+
+        DecodeResult tryDecode(std::istream &iStream)
+	{
+	  InStream mystream(iStream);
+	  return tryDecode(mystream);
+	}
+      
+
 
 	DecodeResult tryDecode(const std::string &content)
 	{
