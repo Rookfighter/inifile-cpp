@@ -595,12 +595,13 @@ namespace ini
 	  virtual void close() = 0;
 	}; // class InStreamInterface
 
-        class InStream : public InStreamInterface
+      template<class T>
+      class t_InStream : public InStreamInterface
 	{
-	private:
-	    std::istream &iStream_;
+	protected:
+	    T &iStream_;
 	public:
-	    InStream(std::istream &iStream) : iStream_(iStream)
+	    t_InStream(T &iStream) : iStream_(iStream)
 	    {
 	    }
 	    bool isOpen()
@@ -619,6 +620,24 @@ namespace ini
 	    {
 	        //iStream_.close();
 	    }
+	};  // class t_InStream
+
+      class InStream : public t_InStream<std::istream>
+	{
+	// private:
+	//     std::istream &iStream_;
+	public:
+	    InStream(std::istream &iStream) : t_InStream(iStream)
+	    {
+	    }
+	    // bool isOpen()
+	    // {
+	    //   return true;
+	    // }
+	    // void close()
+	    // {
+	    //     //iStream_.close();
+	    // }
 	};  // class InStream 
 
         DecodeResult tryDecode(InStreamInterface &iStream)
