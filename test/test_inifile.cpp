@@ -8,7 +8,7 @@
 
 #include <catch.hpp>
 // TBD: tests whether throws prevented or not. 
-//#define THROW_PREVENTED
+#define THROW_PREVENTED
 #include "inicpp.h"
 
 
@@ -54,12 +54,13 @@ TEST_CASE("decode empty file", "IniFile")
 TEST_CASE("fail to decode file with section not closed", "IniFile")
 {
     std::istringstream ss("[Foo]\nbar=hello world\n[Test\nfoo=never reached");
+    ini::IniFile inif;
 #ifdef THROW_PREVENTED
-    ini::IniFile inif;
-    REQUIRE(inif.tryDecode(ss).errorCode
+    ini::IniFile::DecodeResult dResult = inif.tryDecode(ss);
+    REQUIRE(dResult.getErrorCode()
 	    == ini::DecodeErrorCode::SECTION_NOT_CLOSED);
+    REQUIRE(dResult.getLineNumber() == 3);
 #else
-    ini::IniFile inif;
     REQUIRE_THROWS_AS(inif.decode(ss),  std::logic_error);
 #endif
 }
@@ -68,12 +69,13 @@ TEST_CASE("fail to decode file with section not closed", "IniFile")
 TEST_CASE("fail to decode file with empty section name", "IniFile")
 {
     std::istringstream ss("[Foo]\nbar=hello world\n[]\nfoo=never reached");
+   ini::IniFile inif;
 #ifdef THROW_PREVENTED
-    ini::IniFile inif;
-    REQUIRE(inif.tryDecode(ss).errorCode
+    ini::IniFile::DecodeResult dResult = inif.tryDecode(ss);
+    REQUIRE(dResult.getErrorCode()
 	    == ini::DecodeErrorCode::SECTION_NAME_EMPTY);
+    REQUIRE(dResult.getLineNumber() == 3);
 #else
-    ini::IniFile inif;
     REQUIRE_THROWS_AS(inif.decode(ss),  std::logic_error);
 #endif
 }
@@ -81,39 +83,42 @@ TEST_CASE("fail to decode file with empty section name", "IniFile")
 TEST_CASE("fail to decode file with text after section", "IniFile")
 {
     std::istringstream ss("[Foo]\nbar=hello world\n[Test]superfluous\nfoo=never reached");
+    ini::IniFile inif;
 #ifdef THROW_PREVENTED
-    ini::IniFile inif;
-    REQUIRE(inif.tryDecode(ss).errorCode
+    ini::IniFile::DecodeResult dResult = inif.tryDecode(ss);
+    REQUIRE(dResult.getErrorCode()
 	    == ini::DecodeErrorCode::SECTION_TEXT_AFTER);
+    REQUIRE(dResult.getLineNumber() == 3);
 #else
-    ini::IniFile inif;
     REQUIRE_THROWS_AS(inif.decode(ss),  std::logic_error);
 #endif
 }
 
 TEST_CASE("fail to decode file with field without section", "IniFile")
 {
-    std::istringstream ss("; comment only\nbar=hello world\n[Test]\nfoo=say goodby");
+    std::istringstream ss("# comment\nbar=hello world\n[Test]\nfoo=say goodby");
+    ini::IniFile inif;
 #ifdef THROW_PREVENTED
-    ini::IniFile inif;
-    REQUIRE(inif.tryDecode(ss).errorCode
+    ini::IniFile::DecodeResult dResult = inif.tryDecode(ss);
+    REQUIRE(dResult.getErrorCode()
 	    == ini::DecodeErrorCode::FIELD_WITHOUT_SECTION);
+    REQUIRE(dResult.getLineNumber() == 2);
 #else
-    ini::IniFile inif;
     REQUIRE_THROWS_AS(inif.decode(ss),  std::logic_error);
 #endif
 }
 
 
-TEST_CASE("fail to decode file with field without separator", "IniFile")
+TEST_CASE("fail to decode file with illegal line", "IniFile")
 {
     std::istringstream ss("[Foo]\nbar no_separator\n[Test]\nfoo=never reached");
+    ini::IniFile inif;
 #ifdef THROW_PREVENTED
-    ini::IniFile inif;
-    REQUIRE(inif.tryDecode(ss).errorCode
-	    == ini::DecodeErrorCode::FIELD_WITHOUT_SEPARATOR);
+    ini::IniFile::DecodeResult dResult = inif.tryDecode(ss);
+    REQUIRE(dResult.getErrorCode()
+	    == ini::DecodeErrorCode::ILLEGAL_LINE);
+    REQUIRE(dResult.getLineNumber() == 2);
 #else
-    ini::IniFile inif;
     REQUIRE_THROWS_AS(inif.decode(ss),  std::logic_error);
 #endif
 }
@@ -121,12 +126,13 @@ TEST_CASE("fail to decode file with field without separator", "IniFile")
 TEST_CASE("fail to decode file with field without custom separator", "IniFile")
 {
     std::istringstream ss("[Foo]\nbar=no_separator\n[Test]\nfoo=never reached");
+   ini::IniFile inif(':', '#');
 #ifdef THROW_PREVENTED
-    ini::IniFile inif(':', '#');
-    REQUIRE(inif.tryDecode(ss).errorCode
-	    == ini::DecodeErrorCode::FIELD_WITHOUT_SEPARATOR);
+     ini::IniFile::DecodeResult dResult = inif.tryDecode(ss);
+    REQUIRE(dResult.getErrorCode()
+	    == ini::DecodeErrorCode::ILLEGAL_LINE);
+    REQUIRE(dResult.getLineNumber() == 2);
 #else
-    ini::IniFile inif(':', '#');
     REQUIRE_THROWS_AS(inif.decode(ss),  std::logic_error);
 #endif
 }

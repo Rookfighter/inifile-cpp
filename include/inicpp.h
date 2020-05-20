@@ -468,9 +468,62 @@ namespace ini
 
     class IniFile : public std::map<std::string, IniSection>
     {
+    public:
+      	class DecodeResult
+	{
+	  friend IniFile;
+	private:
+	    /**
+	     * This is DecodeErrorCode#NO_FAILURE if all ok so far. 
+	     */
+	    DecodeErrorCode errorCode;
+	    /**
+	     * This is -1 if no failure occurred yet. 
+	     */
+	    uint lineNumber;
+	    /*
+	     * This is <c>null</c> if reading from a stream without file. 
+	     */
+	    //std::string fileName;
+	    
+
+	protected:
+	    DecodeResult() 
+	    {
+	      reset();
+	    }
+
+	    void set(DecodeErrorCode errorCode, uint lineNumber)
+	    {
+	     	this->errorCode = errorCode;
+	     	this->lineNumber = lineNumber;
+	    }
+	    void reset()
+	    {
+	      set(NO_FAILURE, -1);
+	    }
+
+	public:
+	    DecodeErrorCode getErrorCode()
+	    {
+	        return errorCode;
+	    }
+	    uint getLineNumber()
+	    {
+	        return lineNumber;
+	    }
+	    bool isOk()
+	    {
+	      return this->errorCode == NO_FAILURE;
+	    }
+
+	}; // class DecodeResult
+
     private:
 	const static char SEC_START = '[';
  	const static char SEC_END   = ']';
+
+        DecodeResult dResult;
      
         char fieldSep_;
         char comment_;
@@ -489,50 +542,6 @@ namespace ini
 
     public:
 
-	class DecodeResult
-	{
-	  
-	    
-	public:
-	    /**
-	     * This is DecodeErrorCode#NO_FAILURE if all ok so far. 
-	     */
-	    DecodeErrorCode errorCode;
-	    /**
-	     * This is -1 if no failure occurred yet. 
-	     */
-	    uint lineNumber;
-	    /*
-	     * This is <c>null</c> if reading from a stream without file. 
-	     */
-	    //std::string fileName;
-
-	    // DecodeResult(DecodeErrorCode errorCode,
-	    // 		 uint lineNumber,
-	    // 		 std::string fileName)
-	    // {
-	    // 	this->errorCode = errorCode;
-	    // 	this->lineNumber = lineNumber;
-	    // 	this->fileName = fileName;
-	    // }
-	    
-	    DecodeResult(DecodeErrorCode errorCode,
-			 uint lineNumber) //:  DecodeResult(errorCode, lineNumber, (const char*)NULL)
-	    {
-	     	this->errorCode = errorCode;
-	     	this->lineNumber = lineNumber;
-	    }
-
-	    DecodeResult() : DecodeResult(NO_FAILURE, -1)//, (const char*)NULL)
-	    {
-	    }
-
-	    bool isOk()
-	    {
-	      return this->errorCode == NO_FAILURE;
-	    }
-
-	};
 	
         IniFile() : IniFile('=', '#')
         {}
@@ -606,32 +615,42 @@ namespace ini
                     // check if the section is also closed on same line
                     std::size_t pos = line.find(SEC_END);
                     if(pos == std::string::npos)
-			return *new DecodeResult(SECTION_NOT_CLOSED, lineNo);
+		    {
+		        dResult.set(SECTION_NOT_CLOSED, lineNo);
+		        return dResult;
+		    }
                     // check if the section name is empty
                     if(pos == 1)
-			return *new DecodeResult(SECTION_NAME_EMPTY, lineNo);
-                    // check if there is a newline following closing bracket
+		    {
+			dResult.set(SECTION_NAME_EMPTY, lineNo);
+		        return dResult;
+		    }
+                     // check if there is a newline following closing bracket
                     if(pos + 1 != line.length())
-			return *new DecodeResult(SECTION_TEXT_AFTER, lineNo);
-
+		    {
+			dResult.set(SECTION_TEXT_AFTER, lineNo);
+		        return dResult;
+		    }
                     // retrieve section name
                     std::string secName = line.substr(1, pos - 1);
                     currentSection = &((*this)[secName]);
                 }
                 else
                 {
-
                     // find key value separator
                     std::size_t pos = line.find(fieldSep_);
                     if(pos == std::string::npos)
-		      return *new DecodeResult(ILLEGAL_LINE, lineNo);
-
+		    {
+		        dResult.set(ILLEGAL_LINE, lineNo);
+		        return dResult;
+		    }
                     // line is a field definition
                     // check if section was already opened
                     if(currentSection == NULL)
-			return *new DecodeResult(FIELD_WITHOUT_SECTION, lineNo);
-
-		    
+		    {
+		        dResult.set(FIELD_WITHOUT_SECTION, lineNo);
+		        return dResult;
+		    }
 
                     // retrieve field name and value
                     std::string name = line.substr(0, pos);
@@ -647,12 +666,14 @@ namespace ini
 	    {
 	      // TBD: still here, it is the question,
 	      // whether the fail bit or the badbit is set. 
-	      return *new DecodeResult(STREAM_READ_FAILED, lineNo);
+	      dResult.set(STREAM_READ_FAILED, lineNo);
+	      return dResult;
 	    }
 	    //iStream.close();
 
 	    // signifies success
-	    return *new DecodeResult();
+	    dResult.reset();
+	    return dResult;
 	}
 
 	DecodeResult tryDecode(const std::string &content)
