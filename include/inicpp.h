@@ -460,14 +460,18 @@ namespace ini
 	SECTION_NOT_CLOSED,
 	SECTION_NAME_EMPTY,
 	SECTION_TEXT_AFTER,
+	ILLEGAL_LINE,
 	FIELD_WITHOUT_SECTION,
-	FIELD_WITHOUT_SEPARATOR
+	STREAM_READ_FAILED
     };
 
 
-  class IniFile : public std::map<std::string, IniSection>
+    class IniFile : public std::map<std::string, IniSection>
     {
-   protected:
+    private:
+	const static char SEC_START = '[';
+ 	const static char SEC_END   = ']';
+     
         char fieldSep_;
         char comment_;
 
@@ -485,9 +489,9 @@ namespace ini
 
     public:
 
-	    
 	class DecodeResult
 	{
+	  
 	    
 	public:
 	    /**
@@ -572,16 +576,20 @@ namespace ini
             comment_ = comment;
         }
 
-        DecodeResult tryDecode(std::istream &is)
+        DecodeResult tryDecode(std::istream &iStream)
 	{
 	    clear();
             int lineNo = 0;
 	    IniSection *currentSection = NULL;
             // iterate file by line
-            while (!is.eof() && !is.fail())
+	    // TBD: take also rdstate into account
+	    // is.rdstate() & std::ifstream::failbit and that like
+	    // allows to find out complete state
+	    // maybe better: go on reading as long as good() 
+            while (!iStream.eof() && !iStream.fail())
             {
-               std::string line;
-                std::getline(is, line, '\n');
+                std::string line;
+                std::getline(iStream, line, '\n');
                 trim(line);
                 ++lineNo;
 
@@ -592,11 +600,11 @@ namespace ini
 		// skip if line is a comment
                 if(line[0] == comment_)
                     continue;
-                if(line[0] == '[')
+                if(line[0] == SEC_START)
                 {
                     // line is a section
                     // check if the section is also closed on same line
-                    std::size_t pos = line.find("]");
+                    std::size_t pos = line.find(SEC_END);
                     if(pos == std::string::npos)
 			return *new DecodeResult(SECTION_NOT_CLOSED, lineNo);
                     // check if the section name is empty
@@ -612,15 +620,18 @@ namespace ini
                 }
                 else
                 {
+
+                    // find key value separator
+                    std::size_t pos = line.find(fieldSep_);
+                    if(pos == std::string::npos)
+		      return *new DecodeResult(ILLEGAL_LINE, lineNo);
+
                     // line is a field definition
                     // check if section was already opened
                     if(currentSection == NULL)
 			return *new DecodeResult(FIELD_WITHOUT_SECTION, lineNo);
 
-                    // find key value separator
-                    std::size_t pos = line.find(fieldSep_);
-                    if(pos == std::string::npos)
-		      return *new DecodeResult(FIELD_WITHOUT_SEPARATOR, lineNo);
+		    
 
                     // retrieve field name and value
                     std::string name = line.substr(0, pos);
@@ -630,10 +641,19 @@ namespace ini
                     (*currentSection)[name] = value;
 		}
 	    }
+	    // TBD: treat case where the stream fails.
+
+	    if (iStream.bad())
+	    {
+	      // TBD: still here, it is the question,
+	      // whether the fail bit or the badbit is set. 
+	      return *new DecodeResult(STREAM_READ_FAILED, lineNo);
+	    }
+	    //iStream.close();
 
 	    // signifies success
 	    return *new DecodeResult();
-	}	
+	}
 
 	DecodeResult tryDecode(const std::string &content)
 	{
@@ -648,18 +668,20 @@ namespace ini
             return tryDecode(is);
         }
 
+//#ifndef SSTREAM_PREVENTED
         void encode(std::ostream &os) const
         {
-            // iterate through all sections in this file
+           // iterate through all sections in this file
             for(const auto &filePair : *this)
             {
-                os << "[" << filePair.first << "]" << std::endl;
+                os << SEC_START << filePair.first << SEC_END << std::endl;
                 // iterate through all fields in the section
                 for(const auto &secPair : filePair.second)
                     os << secPair.first << fieldSep_
                        << secPair.second.toString() << std::endl;
             }
         }
+//#endif
 
         std::string encode() const
         {
@@ -675,7 +697,7 @@ namespace ini
         }
 
 
-      #ifndef THROW_PREVENTED
+#ifndef THROW_PREVENTED
     private:
 
       	    // TBD: close stream?
@@ -698,12 +720,17 @@ namespace ini
 		case SECTION_TEXT_AFTER:
 		    ss << "no end of line after section";
 		    break;
+		case ILLEGAL_LINE:
+		    ss << "found illegal line neither '"
+		       << comment_ << "' comment, nor section nor field with separator '"
+		       << fieldSep_ << "'";
+		    break;
 		case FIELD_WITHOUT_SECTION:
 		    ss << "field has no section";
 		    break;
-		case FIELD_WITHOUT_SEPARATOR:
-		    ss << "field without separator '" << fieldSep_ << 
-			"' found";
+		case STREAM_READ_FAILED:
+		  // TBD: specified whether failbit or badbit is set. 
+		    ss << "because of stream read error found";
 		    break;
 		default:
 		    ss << "unknown failure code " << dRes.errorCode << " found";
