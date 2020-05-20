@@ -588,27 +588,16 @@ namespace ini
         DecodeResult tryDecode(std::istream &iStream)
 	{
 	    clear();
-            int lineNo = 0;
+            int lineNo = 1;
 	    IniSection *currentSection = NULL;
-            // iterate file by line
-	    // TBD: take also rdstate into account
-	    // is.rdstate() & std::ifstream::failbit and that like
-	    // allows to find out complete state
-	    // maybe better: go on reading as long as good() 
-            while (!iStream.eof() && !iStream.fail())
+	    for (std::string line; std::getline(iStream, line, '\n'); lineNo++)
             {
-                std::string line;
-                std::getline(iStream, line, '\n');
                 trim(line);
-                ++lineNo;
 
-                // skip if line is empty
-                if(line.size() == 0)
+                // skip if line is empty or line is a comment
+                if(line.size() == 0 || line[0] == comment_)
                     continue;
-
-		// skip if line is a comment
-                if(line[0] == comment_)
-                    continue;
+		
                 if(line[0] == SEC_START)
                 {
                     // line is a section
@@ -662,13 +651,16 @@ namespace ini
 	    }
 	    // TBD: treat case where the stream fails.
 
+	    // Note that the fail bit is set in conjunction with readline
+	    // in this case always, but this does not indicate a failure,
+	    // unlike the name may suggest and unlike bad bit. 
 	    if (iStream.bad())
 	    {
-	      // TBD: still here, it is the question,
-	      // whether the fail bit or the badbit is set. 
+	      std::cout << "bad  bit is set" << std::endl;
 	      dResult.set(STREAM_READ_FAILED, lineNo);
 	      return dResult;
 	    }
+	    // TBD: clarify 
 	    //iStream.close();
 
 	    // signifies success
