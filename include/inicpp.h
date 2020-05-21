@@ -9,20 +9,20 @@
 #ifndef INICPP_H_
 #define INICPP_H_
 
+#ifndef SSTREAM_PREVENTED
 #include <fstream>
-//#define SSTREAM_PREVENTED
-//#ifndef SSTREAM_PREVENTED
 #include <sstream>
-//#endif
+//#include <iostream>
+#endif
+
+
+
+#include <map>
 
 #include <limits.h>
 #include <string.h>
 // maybe alternative to iostream
 #include <stdio.h>
-
-#include <iostream>
-
-#include <map>
 
 
 // CAUTION: for embedded systems in general it is recommanded
@@ -582,13 +582,14 @@ namespace ini
 	    load(filename);
         }
 
-        IniFile(std::istream &is,
+ # ifndef SSTREAM_PREVENTED
+       IniFile(std::istream &is,
             const char fieldSep = '=',
             const char comment = '#')
 	  : IniFile(fieldSep, comment)
         {
            decode(is);
-         }
+	}
 
       // TBD: the above constructor shall be replaced by the ones below
       // to get the right exceptions. 
@@ -606,6 +607,8 @@ namespace ini
         {
            decode(is);
 	}
+#endif
+
 #endif
 
 
@@ -633,7 +636,9 @@ namespace ini
 	  virtual int close() = 0;
 	}; // class InStreamInterface
 
-        // T is the kind of stream under consideration: ifstream or istringstream
+#ifndef SSTREAM_PREVENTED
+        // T is the kind of stream under consideration:
+        // ifstream or istringstream
         /**
 	 * 
 	 */
@@ -688,6 +693,7 @@ namespace ini
 	    //     //iStream_.close();
 	    // }
 	};  // class InStringStream
+#endif
 
       // TBD: clarify whether here also out of memory may occur
       // TBD: clarify memory leaks 
@@ -752,8 +758,8 @@ namespace ini
 	}; // class InStringStreamNS
 
 
-      
-      
+#ifndef SSTREAM_PREVENTED
+     
         /**
 	 * 
 	 */
@@ -773,6 +779,8 @@ namespace ini
 		return 0;
 	    }
 	};  // class InFileStream
+
+#endif
 
      // TBD: unify InFileStreamNS and OutFileStreamNS
         /**
@@ -913,12 +921,14 @@ namespace ini
 	    return deResult;
 	}
 
+#ifndef SSTREAM_PREVENTED
       // TBC: with streams 
         DecEncResult tryDecode(std::istream &iStream)
 	{
 	  t_InStream<std::istream> mystream(iStream);
 	  return tryDecode(mystream);
 	}
+#endif
 
       // TBD: alternatives: one with and one without streams 
 	DecEncResult tryDecode(const std::string &content)
@@ -1012,6 +1022,7 @@ namespace ini
 	    }
         }; // class OutStream
 
+#ifndef SSTREAM_PREVENTED
         /**
 	 * 
 	 */
@@ -1038,6 +1049,7 @@ namespace ini
 	    //     //oStream_.close();
 	    // }
 	}; // class OutStringStream
+#endif
 
       // TBD: check memory leaks 
         /**
@@ -1101,6 +1113,7 @@ namespace ini
 	    }
 	}; // class OutStringStreamNS
 
+#ifndef SSTREAM_PREVENTED
 
         /**
 	 * 
@@ -1127,6 +1140,7 @@ namespace ini
 	        return 0;
      	    }
         }; // class OutFileStream
+#endif
 
  
       // TBD: unify InFileStreamNS and OutFileStreamNS
@@ -1160,8 +1174,8 @@ namespace ini
 		    if (!feof(file_))
 		      badBit = true;
 		}
-		std::cout << "OutFileStreamNS.append"
-			  << numCharsWritten << std::endl;
+		// std::cout << "OutFileStreamNS.append"
+		// 	  << numCharsWritten << std::endl;
 	        return *this;
 	    }
 	    OutStreamInterface& append(char ch)
@@ -1175,8 +1189,8 @@ namespace ini
 		    if (!feof(file_))
 		      badBit = true;
 		}
-		std::cout << "OutFileStreamNS.append"
-			  << numCharsWritten << std::endl;
+		// std::cout << "OutFileStreamNS.append"
+		// 	  << numCharsWritten << std::endl;
 	        return *this;
 	    }
 	    OutStreamInterface& appendNl()
@@ -1190,8 +1204,8 @@ namespace ini
 		    if (!feof(file_))
 		      badBit = true;
 		}
-		std::cout << "OutFileStreamNS.append"
-			  << numCharsWritten << std::endl;
+		// std::cout << "OutFileStreamNS.append"
+		// 	  << numCharsWritten << std::endl;
 	        return *this;
 	    }
 	  // TBD: eliminate: bad design 
@@ -1251,7 +1265,7 @@ namespace ini
         }
 //#endif
 
-//#ifndef SSTREAM_PREVENTED
+#ifndef SSTREAM_PREVENTED
 
 
      // TBC: with streams 
@@ -1260,7 +1274,8 @@ namespace ini
 	    t_OutStream<std::ostream> mystream(oStream);
 	    return tryEncode(mystream);
 	}
-
+#endif
+      
         uint lengthText()
         {
 	    uint res = 0;
@@ -1308,59 +1323,66 @@ namespace ini
       	    // TBD: close stream?
 	    void throwIfError(DecEncResult dRes)
 	    {
-		std::stringstream ss;
-		ss << "l" << dRes.lineNumber
-		   << ": ini parsing failed, ";
+		std::string str = "l";
+		str += dRes.lineNumber;
+		str += ": ini parsing failed, ";
 		switch (dRes.errorCode)
 		{
 		case NO_FAILURE:
 		    // all ok 
 		    return;
 		case SECTION_NOT_CLOSED:
-		    ss << "section not closed";
+		    str += "section not closed";
 		    break;
 		case SECTION_NAME_EMPTY:
-		    ss << "section name is empty";
+		    str += "section name is empty";
 		    break;
 		case SECTION_TEXT_AFTER:
-		    ss << "no end of line after section";
+		    str += "no end of line after section";
 		    break;
 		case ILLEGAL_LINE:
-		    ss << "found illegal line neither '"
-		       << comment_ << "' comment, nor section nor field with separator '"
-		       << fieldSep_ << "'";
+		  str += "found illegal line neither '";
+		  str += comment_;
+		  str += "' comment, nor section nor field with separator '";
+		  str += fieldSep_;
+		  str += "'";
 		    break;
 		case FIELD_WITHOUT_SECTION:
-		    ss << "field has no section";
+		    str += "field has no section";
 		    break;
 		case STREAM_OPENR_FAILED:
 		  // TBD: specified whether failbit or badbit is set. 
-		    ss << "could not open stream for read";
+		    str += "could not open stream for read";
 		    break;
 		case STREAM_OPENW_FAILED:
 		  // TBD: specified whether failbit or badbit is set. 
-		    ss << "could not open stream for write";
+		    str += "could not open stream for write";
 		    break;
 		case STREAM_READ_FAILED:
 		  // TBD: specified whether failbit or badbit is set. 
-		    ss << "because of stream read error found";
+		    str += "because of stream read error found";
 		    break;
 		case STREAM_WRITE_FAILED:
 		  // TBD: specified whether failbit or badbit is set. 
-		    ss << "because of stream write error found";
+		    str += "because of stream write error found";
 		    break;
 		default:
-		    ss << "unknown failure code " << dRes.errorCode << " found";
-		    throw std::logic_error(ss.str());
+		  str += "unknown failure code ";
+		  str += dRes.errorCode;
+		  str += " found";
+		    throw std::logic_error(str);
 		}
 		// TBD: this shall be a kind of parse error 
-		throw std::logic_error(ss.str());
+		throw std::logic_error(str);
 	    }
+#endif
 
 
     public:
 
-      	/**
+#ifndef   THROW_PREVENTED
+#ifndef SSTREAM_PREVENTED
+      /**
 	 * @throws logic_error if 
 	 *   - section not closed 
 	 *   - section is empty 
@@ -1372,6 +1394,7 @@ namespace ini
         {
 	    throwIfError(tryDecode(is));
         }
+#endif
 
         // void decode(std::ifstream &is)
         // {
@@ -1397,6 +1420,7 @@ namespace ini
 	    throwIfError(tryLoad(fileName));
         }
 
+#ifndef SSTREAM_PREVENTED
         /**
 	 * @throws logic_error if 
 	 * - 
@@ -1409,27 +1433,30 @@ namespace ini
 	    throwIfError(tryEncode(os));
 	}
 
-        void encode(std::ofstream &os)
-        {
-	    OutFileStream ofs(os);
-	    throwIfError(tryEncode(ofs));
-        }
+        // void encode(std::ofstream &os)
+        // {
+	//     OutFileStream ofs(os);
+	//     throwIfError(tryEncode(ofs));
+        // }
       
-        void encode(std::ostringstream &os)
-        {
-	    OutStringStream ofs(os);
-	    throwIfError(tryEncode(ofs));
-        }
+        // void encode(std::ostringstream &os)
+        // {
+	//     OutStringStream ofs(os);
+	//     throwIfError(tryEncode(ofs));
+        // }
 
+#endif
 
       
 
         std::string encode()
         {
-            std::ostringstream ss;
+	  //std::ostringstream ss;
             //encode(ss);
-	    throwIfError(tryEncode(ss));
-            return ss.str();
+	  std::string content;
+	    throwIfError(tryEncode(content));
+            //return ss.str();
+	    return content;
         }
 
         void save(const std::string &fileName)
@@ -1440,7 +1467,6 @@ namespace ini
         }
 
 #endif
-
     };
 }
 
