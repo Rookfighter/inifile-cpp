@@ -449,6 +449,7 @@ namespace ini
         {}
         ~IniSection()
         {}
+#ifdef SSTREAM_PREVENTED
         uint lengthText()
         {
 	    uint res = 0;
@@ -461,6 +462,7 @@ namespace ini
 	    }
 	    return res;
         }
+#endif
     };
 
     /**
@@ -693,6 +695,27 @@ namespace ini
 	    //     //iStream_.close();
 	    // }
 	};  // class InStringStream
+
+              /**
+	 * 
+	 */
+      class InFileStream : public t_InStream<std::ifstream>
+      {
+	public:
+	    InFileStream(std::ifstream &iStream) : t_InStream(iStream)
+	    {
+	    }
+	    bool isOpen()
+	    {
+	      return iStream_.is_open();
+	    }
+	    int close()
+	    {
+	        iStream_.close();
+		return 0;
+	    }
+	};  // class InFileStream
+
 #endif
 
       // TBD: clarify whether here also out of memory may occur
@@ -748,29 +771,6 @@ namespace ini
 	}; // class InStringStreamNS
 
 
-#ifndef SSTREAM_PREVENTED
-     
-        /**
-	 * 
-	 */
-      class InFileStream : public t_InStream<std::ifstream>
-      {
-	public:
-	    InFileStream(std::ifstream &iStream) : t_InStream(iStream)
-	    {
-	    }
-	    bool isOpen()
-	    {
-	      return iStream_.is_open();
-	    }
-	    int close()
-	    {
-	        iStream_.close();
-		return 0;
-	    }
-	};  // class InFileStream
-
-#endif
 
      // TBD: unify InFileStreamNS and OutFileStreamNS
         /**
@@ -1041,6 +1041,33 @@ namespace ini
 	    //     //oStream_.close();
 	    // }
 	}; // class OutStringStream
+
+              /**
+	 * 
+	 */
+        class OutFileStream : public t_OutStream<std::ofstream>
+     	{
+     	public:
+     	    OutFileStream(std::ofstream &oStream) : t_OutStream(oStream)
+     	    {
+     	    }
+     	    // overwritten for OutFileStream
+     	    bool isOpen()
+     	    {
+     	      return oStream_.is_open();
+     	    }
+	  // TBD: eliminate: bad design 
+	    std::string& str()
+	    {
+	        return *new std::string("invalid; dont ask me");
+	    }
+     	    int close()
+     	    {
+     	        oStream_.close();
+	        return 0;
+     	    }
+        }; // class OutFileStream
+
 #endif
 
       // TBD: check memory leaks 
@@ -1105,34 +1132,6 @@ namespace ini
 	    }
 	}; // class OutStringStreamNS
 
-#ifndef SSTREAM_PREVENTED
-
-        /**
-	 * 
-	 */
-        class OutFileStream : public t_OutStream<std::ofstream>
-     	{
-     	public:
-     	    OutFileStream(std::ofstream &oStream) : t_OutStream(oStream)
-     	    {
-     	    }
-     	    // overwritten for OutFileStream
-     	    bool isOpen()
-     	    {
-     	      return oStream_.is_open();
-     	    }
-	  // TBD: eliminate: bad design 
-	    std::string& str()
-	    {
-	        return *new std::string("invalid; dont ask me");
-	    }
-     	    int close()
-     	    {
-     	        oStream_.close();
-	        return 0;
-     	    }
-        }; // class OutFileStream
-#endif
 
  
       // TBD: unify InFileStreamNS and OutFileStreamNS
@@ -1210,7 +1209,9 @@ namespace ini
 		file_ = NULL;
 	        return res;
 	    }
-	}; // class OutFileStreamNS 
+	}; // class OutFileStreamNS
+
+      
      
         DecEncResult tryEncode(OutStreamInterface &oStream)
         {
@@ -1251,6 +1252,7 @@ namespace ini
         }
 //#endif
 
+      // TBD: prefer #ifdef
 #ifndef SSTREAM_PREVENTED
      // TBC: with streams 
         DecEncResult tryEncode(std::ostream &oStream)
@@ -1258,8 +1260,7 @@ namespace ini
 	    t_OutStream<std::ostream> mystream(oStream);
 	    return tryEncode(mystream);
 	}
-#endif
-
+#else
       // TBD: used only if SSTREAM_PREVENTED
         uint lengthText()
         {
@@ -1274,6 +1275,7 @@ namespace ini
 	    }
 	    return res;
 	}
+#endif
       
       // TBD: alternatives: one with and one without streams 
 	DecEncResult tryEncode(std::string &content)
@@ -1360,12 +1362,10 @@ namespace ini
 		// TBD: this shall be a kind of parse error 
 		throw std::logic_error(str);
 	    }
-#endif
 
 
     public:
 
-#ifndef   THROW_PREVENTED
 #ifndef SSTREAM_PREVENTED
       /**
 	 * @throws logic_error if 
