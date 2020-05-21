@@ -824,15 +824,23 @@ namespace ini
 //#ifndef SSTREAM_PREVENTED
         void encode(std::ostream &oStream) const
         {
+	  OutStream os(oStream);
+	  encode(os);
+	}
+      
+        void encode(OutStreamInterface &oStream) const
+        {
            // iterate through all sections in this file
             for(const auto &filePair : *this)
             {
 	      
-                oStream << SEC_START << filePair.first << SEC_END << std::endl;
+	      oStream.append(SEC_START).append(filePair.first).append(SEC_END)
+		.appendNl();
                 // iterate through all fields in the section
                 for(const auto &secPair : filePair.second)
-                    oStream << secPair.first << fieldSep_
-                       << secPair.second.toString() << std::endl;
+		  
+		  oStream.append(secPair.first            ).append(fieldSep_)
+		    .     append(secPair.second.toString()).appendNl();
             }
         }
 //#endif
