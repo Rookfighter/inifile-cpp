@@ -710,8 +710,6 @@ namespace ini
 	      int n = str.length();
 	      str_ = (char*)malloc((n + 1)*sizeof(char)); 
 	      strcpy(str_, str.c_str());
-	      // std::cout << "InStringStreamNS.init\n" << str_
-	      // 		<< "'\n" << std::endl;
 	    }
 	    bool isOpen()
 	    {
@@ -724,7 +722,6 @@ namespace ini
 	        char* loc = strchr(str_, '\n');
 	        if (loc == NULL)
 	        {
-		  //std::cout << "InStringStreamNS.getLine loc is NULL " << std::endl;
 		    // no newline found 
 		    if (*str_ == '\0')
 		        return false;
@@ -734,17 +731,10 @@ namespace ini
 		    str_ = strchr(str_, '\0');
 		    return true;
 		}
-		// std::cout << "InStringStreamNS.getLine loc \n"
-		// 	  << loc 
-		// 	  << "'" << std::endl;
 		(*loc) = '\0';
 		std::string myline(str_);
 		str_=loc+1;
 		line = myline;// TBD: eliminate hack 
-	        // str_ += line;
-	        // str_ += "\n";
-		// std::cout << "InStringStreamNS.getLine out '"
-		// 	  << line << "'" << std::endl;
 	        return true;
 	    }
 	    bool bad()
@@ -969,7 +959,9 @@ namespace ini
 	    virtual int close() = 0;
 	}; // class OutStreamInterface
 
-        // T is the kind of stream under consideration: ofstream or ostringstream
+#ifndef SSTREAM_PREVENTED
+        // T is the kind of stream under consideration:
+        // ofstream or ostringstream
         /**
 	 * 
 	 */
@@ -1020,9 +1012,9 @@ namespace ini
 	        //iStream_.close();
 	        return 0;
 	    }
-        }; // class OutStream
+        }; // class t_OutStream
 
-#ifndef SSTREAM_PREVENTED
+
         /**
 	 * 
 	 */
@@ -1174,8 +1166,6 @@ namespace ini
 		    if (!feof(file_))
 		      badBit = true;
 		}
-		// std::cout << "OutFileStreamNS.append"
-		// 	  << numCharsWritten << std::endl;
 	        return *this;
 	    }
 	    OutStreamInterface& append(char ch)
@@ -1189,8 +1179,6 @@ namespace ini
 		    if (!feof(file_))
 		      badBit = true;
 		}
-		// std::cout << "OutFileStreamNS.append"
-		// 	  << numCharsWritten << std::endl;
 	        return *this;
 	    }
 	    OutStreamInterface& appendNl()
@@ -1204,8 +1192,6 @@ namespace ini
 		    if (!feof(file_))
 		      badBit = true;
 		}
-		// std::cout << "OutFileStreamNS.append"
-		// 	  << numCharsWritten << std::endl;
 	        return *this;
 	    }
 	  // TBD: eliminate: bad design 
@@ -1266,8 +1252,6 @@ namespace ini
 //#endif
 
 #ifndef SSTREAM_PREVENTED
-
-
      // TBC: with streams 
         DecEncResult tryEncode(std::ostream &oStream)
 	{
@@ -1275,7 +1259,8 @@ namespace ini
 	    return tryEncode(mystream);
 	}
 #endif
-      
+
+      // TBD: used only if SSTREAM_PREVENTED
         uint lengthText()
         {
 	    uint res = 0;
@@ -1394,7 +1379,6 @@ namespace ini
         {
 	    throwIfError(tryDecode(is));
         }
-#endif
 
         // void decode(std::ifstream &is)
         // {
@@ -1407,6 +1391,7 @@ namespace ini
 	//     InStringStream iss(is);
 	//     throwIfError(tryDecode(iss));
         // }
+#endif
 
       // TBC: shall be without streams 
         void decode(const std::string &content)
