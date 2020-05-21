@@ -453,7 +453,7 @@ namespace ini
      * Enumeration of error codes which may occur during decoding an ini-file, 
      * whether as a stream, a string or a file. 
      */
-    enum DecodeErrorCode
+    enum DecEncErrorCode
     {
         NO_FAILURE = 0,
 	SECTION_NOT_CLOSED,
@@ -461,40 +461,44 @@ namespace ini
 	SECTION_TEXT_AFTER,
 	ILLEGAL_LINE,
 	FIELD_WITHOUT_SECTION,
-	// occurs for file streams only, not for string streams
-	STREAM_OPEN_FAILED,
-	STREAM_READ_FAILED
+	// TBD: occurs for file streams only, not for string streams
+	STREAM_OPENR_FAILED,
+	// TBD: occurs for file streams only, not for string streams
+	STREAM_OPENW_FAILED,
+	STREAM_READ_FAILED,
+	STREAM_WRITE_FAILED
     };
 
 
     class IniFile : public std::map<std::string, IniSection>
     {
     public:
-      	class DecodeResult
+      	class DecEncResult
 	{
 	  friend IniFile;
 	private:
 	    /**
-	     * This is DecodeErrorCode#NO_FAILURE if all ok so far. 
+	     * This is DecEncErrorCode#NO_FAILURE if all ok so far. 
 	     */
-	    DecodeErrorCode errorCode;
+	    DecEncErrorCode errorCode;
 	    /**
 	     * This is -1 if no failure occurred yet. 
 	     */
 	    uint lineNumber;
 	    /*
-	     * This is <c>null</c> if reading from a stream without file. 
+	     * This is <c>null</c> if reading from/writing to 
+	     * a stream without file. 
 	     */
 	    //std::string fileName;
 	    
 
 	protected:
-	    DecodeResult() 
+	    DecEncResult() 
 	    {
 	      reset();
 	    }
 
-	    void set(DecodeErrorCode errorCode, uint lineNumber)
+	    void set(DecEncErrorCode errorCode, uint lineNumber)
 	    {
 	     	this->errorCode = errorCode;
 	     	this->lineNumber = lineNumber;
@@ -505,7 +509,7 @@ namespace ini
 	    }
 
 	public:
-	    DecodeErrorCode getErrorCode()
+	    DecEncErrorCode getErrorCode()
 	    {
 	        return errorCode;
 	    }
@@ -518,13 +522,13 @@ namespace ini
 	      return this->errorCode == NO_FAILURE;
 	    }
 
-	}; // class DecodeResult
+	}; // class DecEncResult
 
     private:
 	const static char SEC_START = '[';
  	const static char SEC_END   = ']';
 
-        DecodeResult dResult;
+        DecEncResult deResult;
      
         char fieldSep_;
         char comment_;
@@ -622,7 +626,7 @@ namespace ini
 	    t_InStream(T &iStream) : iStream_(iStream)
 	    {
 	    }
-	  // overwritten for InFileStream
+	    // overwritten for InFileStream
 	    bool isOpen()
 	    {
 	      return true;
@@ -631,12 +635,12 @@ namespace ini
 	    {
 	      return (bool)std::getline(iStream_, line, '\n');
 	    }
-	  // TBC: can this be false for an istringstream??
+	    // TBC: can this be false for an istringstream??
 	    bool bad()
 	    {
 	        return iStream_.bad();
 	    }
-	  // overwritten for InFileStream
+	   // overwritten for InFileStream
 	    void close()
 	    {
 	        //iStream_.close();
@@ -675,12 +679,12 @@ namespace ini
 	    }
 	};  // class InFileStream 
 
-        DecodeResult tryDecode(InStreamInterface &iStream)
+        DecEncResult tryDecode(InStreamInterface &iStream)
 	{
 	    if (!iStream.isOpen())
 	    {
-	        dResult.set(STREAM_OPEN_FAILED, -1);
-		return dResult;
+	        deResult.set(STREAM_OPENR_FAILED, -1);
+		return deResult;
 	    }
 	    clear();
             int lineNo = 1;
@@ -700,20 +704,20 @@ namespace ini
                     std::size_t pos = line.find(SEC_END);
                     if(pos == std::string::npos)
 		    {
-		        dResult.set(SECTION_NOT_CLOSED, lineNo);
-		        return dResult;
+		        deResult.set(SECTION_NOT_CLOSED, lineNo);
+		        return deResult;
 		    }
                     // check if the section name is empty
                     if(pos == 1)
 		    {
-			dResult.set(SECTION_NAME_EMPTY, lineNo);
-		        return dResult;
+			deResult.set(SECTION_NAME_EMPTY, lineNo);
+		        return deResult;
 		    }
                      // check if there is a newline following closing bracket
                     if(pos + 1 != line.length())
 		    {
-			dResult.set(SECTION_TEXT_AFTER, lineNo);
-		        return dResult;
+			deResult.set(SECTION_TEXT_AFTER, lineNo);
+		        return deResult;
 		    }
                     // retrieve section name
                     std::string secName = line.substr(1, pos - 1);
@@ -725,15 +729,15 @@ namespace ini
                     std::size_t pos = line.find(fieldSep_);
                     if(pos == std::string::npos)
 		    {
-		        dResult.set(ILLEGAL_LINE, lineNo);
-		        return dResult;
+		        deResult.set(ILLEGAL_LINE, lineNo);
+		        return deResult;
 		    }
                     // line is a field definition
                     // check if section was already opened
                     if(currentSection == NULL)
 		    {
-		        dResult.set(FIELD_WITHOUT_SECTION, lineNo);
-		        return dResult;
+		        deResult.set(FIELD_WITHOUT_SECTION, lineNo);
+		        return deResult;
 		    }
 
                     // retrieve field name and value
@@ -751,19 +755,19 @@ namespace ini
 	    // unlike the name may suggest and unlike bad bit. 
 	    if (iStream.bad())
 	    {
-	      std::cout << "bad  bit is set" << std::endl;
-	      dResult.set(STREAM_READ_FAILED, lineNo);
-	      return dResult;
+	      //std::cout << "bad  bit is set" << std::endl;
+	      deResult.set(STREAM_READ_FAILED, lineNo);
+	      return deResult;
 	    }
 	    // TBD: clarify 
 	    //iStream.close();
 
 	    // signifies success
-	    dResult.reset();
-	    return dResult;
+	    deResult.reset();
+	    return deResult;
 	}
 
-        DecodeResult tryDecode(std::istream &iStream)
+        DecEncResult tryDecode(std::istream &iStream)
 	{
 	  t_InStream<std::istream> mystream(iStream);
 	  return tryDecode(mystream);
@@ -771,7 +775,7 @@ namespace ini
       
 
 
-	DecodeResult tryDecode(const std::string &content)
+	DecEncResult tryDecode(const std::string &content)
 	{
             std::istringstream ss(content);
 	    InStringStream iss(ss);
@@ -779,7 +783,7 @@ namespace ini
  	}
 
 
-        DecodeResult tryLoad(const std::string &fileName)
+        DecEncResult tryLoad(const std::string &fileName)
         {
             std::ifstream is(fileName.c_str());
 	    InFileStream ifs(is);
@@ -789,9 +793,12 @@ namespace ini
         class OutStreamInterface
 	{
 	public:
+	    virtual bool isOpen() = 0;
 	    virtual OutStreamInterface& append(std::string str) = 0;
 	    virtual OutStreamInterface& append(char ch) = 0;
 	    virtual OutStreamInterface& appendNl() = 0;
+	    virtual bool bad() = 0;
+	    virtual void close() = 0;
 	}; // class OutStreamInterface
 
         class OutStream : public OutStreamInterface
@@ -801,6 +808,11 @@ namespace ini
 	public:
 	    OutStream(std::ostream &oStream) : oStream_(oStream)
 	    {
+	    }
+	    // overwritten for OutFileStream
+	    bool isOpen()
+	    {
+	      return true;
 	    }
 	    OutStreamInterface& append(std::string str)
 	    {
@@ -817,42 +829,75 @@ namespace ini
 	        oStream_ << std::endl;// defined in ostream
 	        return *this;
 	    }
+	    // TBC: can this be false for an ostringstream??
+	    bool bad()
+	    {
+	        return oStream_.bad();
+	    }
+	    // overwritten for OutFileStream
+	    void close()
+	    {
+	        //iStream_.close();
+	    }
 	}; // class OutStream
 
       
 
 //#ifndef SSTREAM_PREVENTED
-        void encode(std::ostream &oStream) const
+        void encode(std::ostream &oStream)
         {
 	  OutStream os(oStream);
-	  encode(os);
+	  // TBD: handle failures (return value)
+	  tryEncode(os);
 	}
       
-        void encode(OutStreamInterface &oStream) const
+        DecEncResult tryEncode(OutStreamInterface &oStream)
         {
-           // iterate through all sections in this file
-            for(const auto &filePair : *this)
+	    if (!oStream.isOpen())
+	    {
+	        deResult.set(STREAM_OPENW_FAILED, -1);
+		return deResult;
+	    }
+	    int lineNo = 1;
+            // iterate through all sections in this file
+            for (const auto &filePair : *this)
             {
 	      
-	      oStream.append(SEC_START).append(filePair.first).append(SEC_END)
-		.appendNl();
+	        oStream.append(SEC_START).append(filePair.first).append(SEC_END)
+		  .appendNl();
+		lineNo++;
                 // iterate through all fields in the section
-                for(const auto &secPair : filePair.second)
-		  
-		  oStream.append(secPair.first            ).append(fieldSep_)
-		    .     append(secPair.second.toString()).appendNl();
+                for (const auto &secPair : filePair.second)
+		{
+		    oStream.append(secPair.first            ).append(fieldSep_)
+		      .     append(secPair.second.toString()).appendNl();
+		    lineNo++;
+		}
             }
+	    
+	    if (oStream.bad())
+	    {
+	      //std::cout << "bad  bit is set" << std::endl;
+	      deResult.set(STREAM_WRITE_FAILED, lineNo);
+	      return deResult;
+	    }
+	    // TBD: clarify 
+	    //oStream.close();
+
+	    // signifies success
+	    deResult.reset();
+	    return deResult;
         }
 //#endif
 
-        std::string encode() const
+        std::string encode()
         {
             std::ostringstream ss;
             encode(ss);
             return ss.str();
         }
 
-        void save(const std::string &fileName) const
+        void save(const std::string &fileName)
         {
             std::ofstream os(fileName.c_str());
             encode(os);
@@ -863,7 +908,7 @@ namespace ini
     private:
 
       	    // TBD: close stream?
-	    void throwIfError(DecodeResult dRes)
+	    void throwIfError(DecEncResult dRes)
 	    {
 		std::stringstream ss;
 		ss << "l" << dRes.lineNumber
@@ -890,9 +935,21 @@ namespace ini
 		case FIELD_WITHOUT_SECTION:
 		    ss << "field has no section";
 		    break;
+		case STREAM_OPENR_FAILED:
+		  // TBD: specified whether failbit or badbit is set. 
+		    ss << "could not open stream for read";
+		    break;
+		case STREAM_OPENW_FAILED:
+		  // TBD: specified whether failbit or badbit is set. 
+		    ss << "could not open stream for write";
+		    break;
 		case STREAM_READ_FAILED:
 		  // TBD: specified whether failbit or badbit is set. 
 		    ss << "because of stream read error found";
+		    break;
+		case STREAM_WRITE_FAILED:
+		  // TBD: specified whether failbit or badbit is set. 
+		    ss << "because of stream write error found";
 		    break;
 		default:
 		    ss << "unknown failure code " << dRes.errorCode << " found";
@@ -942,8 +999,6 @@ namespace ini
 #endif
 
     };
-
-
 }
 
 #endif
