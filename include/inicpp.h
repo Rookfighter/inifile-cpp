@@ -10,13 +10,15 @@
 #define INICPP_H_
 
 #include <fstream>
-#define SSTREAM_PREVENTED
+//#define SSTREAM_PREVENTED
 //#ifndef SSTREAM_PREVENTED
 #include <sstream>
 //#endif
 
 #include <limits.h>
 #include <string.h>
+// maybe alternative to iostream
+#include <stdio.h>
 
 #include <iostream>
 
@@ -613,7 +615,7 @@ namespace ini
 	  virtual bool isOpen() = 0;
 	  virtual bool getLine(std::string &line) = 0;
 	  virtual bool bad() = 0;
-	  virtual void close() = 0;
+	  virtual int close() = 0;
 	}; // class InStreamInterface
 
         // T is the kind of stream under consideration: ifstream or istringstream
@@ -641,30 +643,107 @@ namespace ini
 	        return iStream_.bad();
 	    }
 	   // overwritten for InFileStream
-	    void close()
+	    int close()
 	    {
 	        //iStream_.close();
+	        return 0;
 	    }
-      };  // class t_InStream
+	};  // class t_InStream
 
-      class InStringStream : public t_InStream<std::istringstream>
-      {
-      public:
-	InStringStream(std::istringstream &iStream) : t_InStream(iStream)
+        class InStringStream : public t_InStream<std::istringstream>
+        {
+	  // private:
+	  // 	  static const std::istringstream str2str(const std::string str) 
+	  // 	  {
+	  // 	      std::istringstream ss(str);
+	  // 	      return ss;
+	  // 	  }
+	public:
+	
+	    InStringStream(std::istringstream &iStream) : t_InStream(iStream)
 	    {
 	    }
+	    // static InStringStream fromString(const std::string str)
+  	    // {
+	    //   std::istringstream ss(str);
+	    //   InStringStream iss(ss);
+	   //     return iss;
+	    // }
 	    // bool isOpen()
 	    // {
 	    //   return true;
 	    // }
-	    // void close()
+	    // int close()
 	    // {
 	    //     //iStream_.close();
 	    // }
 	};  // class InStringStream
+
+      // TBD: clarify whether here also out of memory may occur
+      // TBD: clarify memory leaks 
+        class InStringStreamNS : public InStreamInterface
+        {
+	private:
+	  char* str_;// TBD: eliminate
+	public:
+	  InStringStreamNS(std::string str)
+	    {
+	      int n = str.length();
+	      str_ = (char*)malloc((n + 1)*sizeof(char)); 
+	      strcpy(str_, str.c_str());
+	      std::cout << "InStringStreamNS.init\n" << str_
+			<< "'\n" << std::endl;
+
+	    }
+	    bool isOpen()
+	    {
+	        return true;
+	    }
+	    bool getLine(std::string &line)
+	    {
+		// std::cout << "InStringStreamNS.getLine str_ \n"
+		// 	  << str_ << "'\n" << std::endl;
+	        char* loc = strchr(str_, '\n');
+	        if (loc == NULL)
+	        {
+		  //std::cout << "InStringStreamNS.getLine loc is NULL " << std::endl;
+		    // no newline found 
+		    if (*str_ == '\0')
+		        return false;
+		    std::string myline(str_);
+		    line = myline;// TBD: eliminate hack 
+		    //line(str_);
+		    str_ = strchr(str_, '\0');
+		    return true;
+		}
+		// std::cout << "InStringStreamNS.getLine loc \n"
+		// 	  << loc 
+		// 	  << "'" << std::endl;
+		(*loc) = '\0';
+		std::string myline(str_);
+		str_=loc+1;
+		line = myline;// TBD: eliminate hack 
+	        // str_ += line;
+	        // str_ += "\n";
+		// std::cout << "InStringStreamNS.getLine out '"
+		// 	  << line << "'" << std::endl;
+	        return true;
+	    }
+	    bool bad()
+	    {
+	        return false;
+	    }
+	    int close()
+	    {
+	        return 0;
+	    }
+	}; // class InStringStreamNS
+
+
+      
       
       class InFileStream : public t_InStream<std::ifstream>
-	{
+      {
 	public:
 	    InFileStream(std::ifstream &iStream) : t_InStream(iStream)
 	    {
@@ -673,11 +752,55 @@ namespace ini
 	    {
 	      return iStream_.is_open();
 	    }
-	    void close()
+	    int close()
 	    {
 	        iStream_.close();
+		return 0;
 	    }
-	};  // class InFileStream 
+	};  // class InFileStream
+
+        class InFileStreamNS : public InStreamInterface
+        {
+	private:
+	      FILE* file;
+	      char buff[255];// TBC: how to get rid of this uggly 255!!!
+	      bool badBit;
+	public:
+	    InFileStreamNS(const std::string fName) //: str_(str)
+	    {
+	        file = fopen(fName.c_str(), "r");
+		badBit = false;
+	    }
+	    bool isOpen()
+	    {
+	        return file != NULL;
+	    }
+	    bool getLine(std::string &line)
+	    {
+	        int numRead = fscanf(file, "%s\n", buff);
+		// numRead can be 0 or 1
+		if (numRead == 0)
+		{
+		    if (feof(file))
+		        return false;
+		    badBit = true;
+		}
+		line = "";// TBD: remove hack
+		line += buff;
+		std::cout << "InFileStreamNS.getLine" << numRead << std::endl;
+	        return true;
+	    }
+	    bool bad()
+	    {
+	        return badBit;
+	    }
+	    int close()
+	    {
+	        return fclose(file);
+	    }
+	}; // class InFileStreamNS
+
+
 
         DecEncResult tryDecode(InStreamInterface &iStream)
 	{
@@ -759,7 +882,8 @@ namespace ini
 	      deResult.set(STREAM_READ_FAILED, lineNo);
 	      return deResult;
 	    }
-	    // TBD: clarify 
+	    // TBD: clarify
+	    // TBD: take return value into account: maybe additional failures 
 	    //iStream.close();
 
 	    // signifies success
