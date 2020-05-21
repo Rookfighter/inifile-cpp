@@ -616,9 +616,9 @@ namespace ini
 	  virtual void close() = 0;
 	}; // class InStreamInterface
 
-      // T is the kind of stream under consideration: ifstream or istringstream
-      template<class T>
-      class t_InStream : public InStreamInterface
+        // T is the kind of stream under consideration: ifstream or istringstream
+        template<class T>
+	class t_InStream : public InStreamInterface
 	{
 	protected:
 	    T &iStream_;
@@ -645,12 +645,12 @@ namespace ini
 	    {
 	        //iStream_.close();
 	    }
-	};  // class t_InStream
+      };  // class t_InStream
 
       class InStringStream : public t_InStream<std::istringstream>
-	{
-	public:
-	    InStringStream(std::istringstream &iStream) : t_InStream(iStream)
+      {
+      public:
+	InStringStream(std::istringstream &iStream) : t_InStream(iStream)
 	    {
 	    }
 	    // bool isOpen()
@@ -773,15 +773,12 @@ namespace ini
 	  return tryDecode(mystream);
 	}
       
-
-
 	DecEncResult tryDecode(const std::string &content)
 	{
             std::istringstream ss(content);
 	    InStringStream iss(ss);
             return tryDecode(iss);
  	}
-
 
         DecEncResult tryLoad(const std::string &fileName)
         {
@@ -801,12 +798,14 @@ namespace ini
 	    virtual void close() = 0;
 	}; // class OutStreamInterface
 
-        class OutStream : public OutStreamInterface
+        // T is the kind of stream under consideration: ofstream or ostringstream
+        template<class T>
+        class t_OutStream : public OutStreamInterface
 	{
 	protected:
-	    std::ostream &oStream_;
+	    T &oStream_;
 	public:
-	    OutStream(std::ostream &oStream) : oStream_(oStream)
+	    t_OutStream(T &oStream) : oStream_(oStream)
 	    {
 	    }
 	    // overwritten for OutFileStream
@@ -839,18 +838,45 @@ namespace ini
 	    {
 	        //iStream_.close();
 	    }
-	}; // class OutStream
+        }; // class OutStream
 
-      
+        class OutStringStream : public t_OutStream<std::ostringstream>
+      	{
+      	public:
+      	    OutStringStream(std::ostringstream &oStream) : t_OutStream(oStream)
+      	    {
+      	    }
+      	    // overwritten for OutFileStream
+      	    // bool isOpen()
+      	    // {
+      	    //   return true;
+      	    // }
+	    // void close()
+	    // {
+	    //     //oStream_.close();
+	    // }
+	}; // class OutStringStream
 
-//#ifndef SSTREAM_PREVENTED
-        void encode(std::ostream &oStream)
-        {
-	  OutStream os(oStream);
-	  // TBD: handle failures (return value)
-	  tryEncode(os);
-	}
-      
+        class OutFileStream : public t_OutStream<std::ofstream>
+     	{
+     	public:
+     	    OutFileStream(std::ofstream &oStream) : t_OutStream(oStream)
+     	    {
+     	    }
+     	    // overwritten for OutFileStream
+     	    bool isOpen()
+     	    {
+     	      return oStream_.is_open();
+     	    }
+     	    void close()
+     	    {
+     	        oStream_.close();
+     	    }
+        }; // class OutFileStream
+
+ 
+
+     
         DecEncResult tryEncode(OutStreamInterface &oStream)
         {
 	    if (!oStream.isOpen())
@@ -890,17 +916,27 @@ namespace ini
         }
 //#endif
 
-        std::string encode()
-        {
-            std::ostringstream ss;
-            encode(ss);
-            return ss.str();
-        }
+//#ifndef SSTREAM_PREVENTED
 
-        void save(const std::string &fileName)
+
+        DecEncResult tryEncode(std::ostream &oStream)
+	{
+	  t_OutStream<std::ostream> mystream(oStream);
+	  return tryEncode(mystream);
+	}
+      
+	DecEncResult tryEncode(const std::string &content)
+	{
+            std::ostringstream ss(content);
+	    OutStringStream oss(ss);
+            return tryEncode(oss);
+ 	}
+
+        DecEncResult trySave(const std::string &fileName)
         {
             std::ofstream os(fileName.c_str());
-            encode(os);
+	    OutFileStream ofs(os);
+            return tryEncode(ofs);
         }
 
 
@@ -996,6 +1032,49 @@ namespace ini
         {
 	    throwIfError(tryLoad(fileName));
         }
+
+        /**
+	 * @throws logic_error if 
+	 * - 
+	 */
+        void encode(std::ostream &os)
+        {
+	  // OutStream os(oStream);
+	  // // TBD: handle failures (return value)
+	  // tryEncode(os);
+	    throwIfError(tryEncode(os));
+	}
+
+        void encode(std::ofstream &os)
+        {
+	    OutFileStream ofs(os);
+	    throwIfError(tryEncode(ofs));
+        }
+      
+        void encode(std::ostringstream &os)
+        {
+	    OutStringStream ofs(os);
+	    throwIfError(tryEncode(ofs));
+        }
+
+
+      
+
+        std::string encode()
+        {
+            std::ostringstream ss;
+            //encode(ss);
+	    throwIfError(tryEncode(ss));
+            return ss.str();
+        }
+
+        void save(const std::string &fileName)
+        {
+            // std::ofstream os(fileName.c_str());
+            // encode(os);
+	    throwIfError(trySave(fileName));
+        }
+
 #endif
 
     };
