@@ -921,15 +921,17 @@ namespace ini
 
         DecEncResult tryEncode(std::ostream &oStream)
 	{
-	  t_OutStream<std::ostream> mystream(oStream);
-	  return tryEncode(mystream);
+	    t_OutStream<std::ostream> mystream(oStream);
+	    return tryEncode(mystream);
 	}
       
-	DecEncResult tryEncode(const std::string &content)
+	DecEncResult tryEncode(std::string &content)
 	{
-            std::ostringstream ss(content);
+	    std::ostringstream ss;
 	    OutStringStream oss(ss);
-            return tryEncode(oss);
+            DecEncResult res = tryEncode(ss);
+	    content = ss.str();
+	    return res;
  	}
 
         DecEncResult trySave(const std::string &fileName)

@@ -852,7 +852,14 @@ TEST_CASE("save with bool fields", "IniFile")
     inif["Foo"]["bar1"] = true;
     inif["Foo"]["bar2"] = false;
 
+#ifdef THROW_PREVENTED
+    std::string result;
+    ini::IniFile::DecEncResult deResult = inif.tryEncode(result);
+    REQUIRE(deResult.getErrorCode()
+	    == ini::DecEncErrorCode::NO_FAILURE);
+#else
     std::string result = inif.encode();
+#endif
     REQUIRE(result == "[Foo]\nbar1=true\nbar2=false\n");
 }
 
@@ -864,7 +871,14 @@ TEST_CASE("save with (unsigned) (long) int fields", "IniFile")
     inif["Foo"]["bar3"] =  3lu;
     inif["Foo"]["bar4"] = -4l;
 
+#ifdef THROW_PREVENTED
+    std::string result;
+    ini::IniFile::DecEncResult deResult = inif.tryEncode(result);
+    REQUIRE(deResult.getErrorCode()
+	    == ini::DecEncErrorCode::NO_FAILURE);
+#else
     std::string result = inif.encode();
+#endif
     REQUIRE(result == "[Foo]\nbar1=1\nbar2=-2\nbar3=3\nbar4=-4\n");
 }
 
@@ -876,7 +890,14 @@ TEST_CASE("save with double/float fields", "IniFile")
     inif["Foo"]["bar2"] = -2.4;
     inif["Foo"]["bar3"] = -2.5f;
 
+#ifdef THROW_PREVENTED
+    std::string result;
+    ini::IniFile::DecEncResult deResult = inif.tryEncode(result);
+    REQUIRE(deResult.getErrorCode()
+	    == ini::DecEncErrorCode::NO_FAILURE);
+#else
     std::string result = inif.encode();
+#endif
     REQUIRE(result == "[Foo]\nbar1=1.2\nbar2=-2.4\nbar3=-2.5\n");
 }
 
@@ -886,7 +907,14 @@ TEST_CASE("save with custom field sep", "IniFile")
     inif["Foo"]["bar1"] = true;
     inif["Foo"]["bar2"] = false;
 
+#ifdef THROW_PREVENTED
+    std::string result;
+    ini::IniFile::DecEncResult deResult = inif.tryEncode(result);
+    REQUIRE(deResult.getErrorCode()
+	    == ini::DecEncErrorCode::NO_FAILURE);
+#else
     std::string result = inif.encode();
+#endif
     REQUIRE(result == "[Foo]\nbar1:true\nbar2:false\n");
 }
 
