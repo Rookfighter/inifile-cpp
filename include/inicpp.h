@@ -786,16 +786,52 @@ namespace ini
             return tryDecode(ifs);
         }
 
+        class OutStreamInterface
+	{
+	public:
+	    virtual OutStreamInterface& append(std::string str) = 0;
+	    virtual OutStreamInterface& append(char ch) = 0;
+	    virtual OutStreamInterface& appendNl() = 0;
+	}; // class OutStreamInterface
+
+        class OutStream : public OutStreamInterface
+	{
+	protected:
+	    std::ostream &oStream_;
+	public:
+	    OutStream(std::ostream &oStream) : oStream_(oStream)
+	    {
+	    }
+	    OutStreamInterface& append(std::string str)
+	    {
+	        oStream_ << str;
+	        return *this;
+	    }
+	    OutStreamInterface& append(char ch)
+	    {
+	        oStream_ << ch;
+	        return *this;
+	    }
+	    OutStreamInterface& appendNl()
+	    {
+	        oStream_ << std::endl;// defined in ostream
+	        return *this;
+	    }
+	}; // class OutStream
+
+      
+
 //#ifndef SSTREAM_PREVENTED
-        void encode(std::ostream &os) const
+        void encode(std::ostream &oStream) const
         {
            // iterate through all sections in this file
             for(const auto &filePair : *this)
             {
-                os << SEC_START << filePair.first << SEC_END << std::endl;
+	      
+                oStream << SEC_START << filePair.first << SEC_END << std::endl;
                 // iterate through all fields in the section
                 for(const auto &secPair : filePair.second)
-                    os << secPair.first << fieldSep_
+                    oStream << secPair.first << fieldSep_
                        << secPair.second.toString() << std::endl;
             }
         }
