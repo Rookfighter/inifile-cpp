@@ -500,7 +500,7 @@ namespace ini
 	    /**
 	     * This is -1 if no failure occurred yet. 
 	     */
-	    uint lineNumber;
+	    int lineNumber;
 	    /*
 	     * This is <c>null</c> if reading from/writing to 
 	     * a stream without file. 
@@ -514,7 +514,7 @@ namespace ini
 	      reset();
 	    }
 
-	    void set(DecEncErrorCode errorCode, uint lineNumber)
+	    void set(DecEncErrorCode errorCode, int lineNumber)
 	    {
 	     	this->errorCode = errorCode;
 	     	this->lineNumber = lineNumber;
@@ -529,7 +529,7 @@ namespace ini
 	    {
 	        return errorCode;
 	    }
-	    uint getLineNumber()
+	    int getLineNumber()
 	    {
 	        return lineNumber;
 	    }
@@ -1310,8 +1310,16 @@ namespace ini
       	    // TBD: close stream?
 	    void throwIfError(DecEncResult dRes)
 	    {
-		std::string str = "l";
-		str += dRes.lineNumber;
+		std::string str = "";
+	        if (dRes.lineNumber == -1)
+		{
+		str += "without stream access";
+		}
+		else
+		{
+		str += "in stream line ";
+		str += std::to_string(dRes.lineNumber);
+		}
 		str += ": ini parsing failed, ";
 		switch (dRes.errorCode)
 		{
@@ -1328,9 +1336,10 @@ namespace ini
 		    str += "no end of line after section";
 		    break;
 		case ILLEGAL_LINE:
-		  str += "found illegal line neither '";
+		  str += "found illegal line ";
+		  str += "neither '";
 		  str += comment_;
-		  str += "' comment, nor section nor field with separator '";
+		  str += "'-comment, nor section nor field with separator '";
 		  str += fieldSep_;
 		  str += "'";
 		    break;
@@ -1347,11 +1356,11 @@ namespace ini
 		    break;
 		case STREAM_READ_FAILED:
 		  // TBD: specified whether failbit or badbit is set. 
-		    str += "because of stream read error found";
+		    str += "because stream read error occurred";
 		    break;
 		case STREAM_WRITE_FAILED:
 		  // TBD: specified whether failbit or badbit is set. 
-		    str += "because of stream write error found";
+		    str += "because stream write error occurred";
 		    break;
 		default:
 		  str += "unknown failure code ";
