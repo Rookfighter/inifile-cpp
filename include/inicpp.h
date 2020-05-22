@@ -478,10 +478,16 @@ namespace ini
 	ILLEGAL_LINE,
 	FIELD_WITHOUT_SECTION,
 	// TBD: occurs for file streams only, not for string streams
+	// if trying to open file which does not exist, or is not readable 
 	STREAM_OPENR_FAILED,
 	// TBD: occurs for file streams only, not for string streams
+	// if trying to open file which does not exist, or is not writable 
 	STREAM_OPENW_FAILED,
+	// if trying to read from a directory which is readable
+	// maybe other cases 
 	STREAM_READ_FAILED,
+	// if trying to read from a directory which is writable 
+	// maybe other cases 
 	STREAM_WRITE_FAILED
     };
 
