@@ -709,13 +709,16 @@ namespace ini
         class InFileStreamNS : public InStreamInterface
         {
 	private:
+	  static const int LEN_LINE = 255;
 	      FILE* file_;
-	      char buff[255];// TBC: how to get rid of this uggly 255!!!
+	      char buff[LEN_LINE];// TBC: how to get rid of this uggly 255!!!
 	      bool badBit;
 	public:
 	    InFileStreamNS(const std::string fName) //: str_(str)
 	    {
 	        file_ = fopen(fName.c_str(), "r");
+		 // std::cout << "InFileStreamNS.open '"
+		 // 	  << fName << "'" << std::endl;
 		badBit = false;
 	    }
 	    bool isOpen()
@@ -724,18 +727,35 @@ namespace ini
 	    }
 	    bool getLine(std::string &line)
 	    {
-	        int numItemsRead = fscanf(file_, "%s\n", buff);
-		// numRead can be 0 or 1
-		if (numItemsRead == 0)
+	        int numItemsRead;
+		// skip empty lines 
+		do
 		{
-		    if (!feof(file_))
-		      badBit = true;
+	            numItemsRead = fscanf(file_, "%[\n]", buff);
+		    if (ferror(file_))
+		    {
+		        badBit = true;
+			return false;
+		    }
+		    if (numItemsRead == EOF)
+		        return false;
+
+		} while (numItemsRead == 1);
+
+		// try to read lines closed by newline or eof (greedy)
+	        numItemsRead = fscanf(file_, "%[^\n]", buff);
+		if (ferror(file_))
+		{
+		    badBit = true;
 		    return false;
 		}
+		if (numItemsRead == EOF)
+		     return false;
+		
 		line = "";// TBD: remove hack
 		line += buff;
-		// std::cout << "InFileStreamNS.getLine"
-		// 	  << numItemsRead << std::endl;
+		  // std::cout << "InFileStreamNS.getLine '"
+		  // 	  << line << "'" << std::endl;
 	        return true;
 	    }
 	    bool bad()
