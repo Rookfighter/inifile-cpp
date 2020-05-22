@@ -647,86 +647,7 @@ namespace ini
 	  virtual int close() = 0;
 	}; // class InStreamInterface
 
-#ifndef SSTREAM_PREVENTED
-        // T is the kind of stream under consideration:
-        // ifstream or istringstream
-        /**
-	 * 
-	 */
-        template<class T>
-	class t_InStream : public InStreamInterface
-	{
-	protected:
-	    T &iStream_;
-	public:
-	    t_InStream(T &iStream) : iStream_(iStream)
-	    {
-	    }
-	    // overwritten for InFileStream
-	    bool isOpen()
-	    {
-	      return true;
-	    }
-	    bool getLine(std::string &line)
-	    {
-	      return (bool)std::getline(iStream_, line, '\n');
-	    }
-	    // TBC: can this be false for an istringstream??
-	    bool bad()
-	    {
-	        return iStream_.bad();
-	    }
-	   // overwritten for InFileStream
-	    int close()
-	    {
-	        //iStream_.close();
-	        return 0;
-	    }
-	};  // class t_InStream
-
-        /**
-	 * 
-	 */
-        class InStringStream : public t_InStream<std::istringstream>
-        {
-	public:
-	
-	    InStringStream(std::istringstream &iStream) : t_InStream(iStream)
-	    {
-	    }
-	    // }
-	    // bool isOpen()
-	    // {
-	    //   return true;
-	    // }
-	    // int close()
-	    // {
-	    //     //iStream_.close();
-	    // }
-	};  // class InStringStream
-
-              /**
-	 * 
-	 */
-      class InFileStream : public t_InStream<std::ifstream>
-      {
-	public:
-	    InFileStream(std::ifstream &iStream) : t_InStream(iStream)
-	    {
-	    }
-	    bool isOpen()
-	    {
-	      return iStream_.is_open();
-	    }
-	    int close()
-	    {
-	        iStream_.close();
-		return 0;
-	    }
-	};  // class InFileStream
-
-#endif
-
+#ifdef SSTREAM_PREVENTED
       // TBD: clarify whether here also out of memory may occur
       // TBD: clarify memory leaks 
         /**
@@ -828,6 +749,92 @@ namespace ini
 	        return res;
 	    }
 	}; // class InFileStreamNS
+
+#else
+      // T is the kind of stream under consideration:
+        // ifstream or istringstream
+        /**
+	 * 
+	 */
+        template<class T>
+	class t_InStream : public InStreamInterface
+	{
+	protected:
+	    T &iStream_;
+	public:
+	    t_InStream(T &iStream) : iStream_(iStream)
+	    {
+	    }
+	    // overwritten for InFileStream
+	    bool isOpen()
+	    {
+	      return true;
+	    }
+	    bool getLine(std::string &line)
+	    {
+	      return (bool)std::getline(iStream_, line, '\n');
+	    }
+	    // TBC: can this be false for an istringstream??
+	    bool bad()
+	    {
+	        return iStream_.bad();
+	    }
+	   // overwritten for InFileStream
+	  // TBD: this shall be eliminated
+	  // just to avoid tryDecode on general streams
+	  // which may not be appropriate 
+	    int close()
+	    {
+	      //iStream_.close();
+	        return 0;
+	    }
+	};  // class t_InStream
+
+        /**
+	 * 
+	 */
+        class InStringStream : public t_InStream<std::istringstream>
+        {
+	public:
+	
+	    InStringStream(std::istringstream &iStream) : t_InStream(iStream)
+	    {
+	    }
+	    // }
+	    // bool isOpen()
+	    // {
+	    //   return true;
+	    // }
+
+	  // TBD: this shall be activated instead of template 
+	    // int close()
+	    // {
+	    //   //iStream_.close();
+	    //     return 0;
+	    // }
+	};  // class InStringStream
+
+              /**
+	 * 
+	 */
+      class InFileStream : public t_InStream<std::ifstream>
+      {
+	public:
+	    InFileStream(std::ifstream &iStream) : t_InStream(iStream)
+	    {
+	    }
+	    bool isOpen()
+	    {
+	      return iStream_.is_open();
+	    }
+	    int close()
+	    {
+	        iStream_.close();
+		return 0;
+	    }
+	};  // class InFileStream
+
+#endif
 
 
 
@@ -968,7 +975,145 @@ namespace ini
 	    virtual int close() = 0;
 	}; // class OutStreamInterface
 
-#ifndef SSTREAM_PREVENTED
+#ifdef SSTREAM_PREVENTED
+      // TBD: check memory leaks 
+        /**
+	 * 
+	 */
+        class OutStringStreamNS : public OutStreamInterface
+	{
+	private:
+	  char* str_;
+	  char* ptr_;
+	public:
+	    OutStringStreamNS(uint len)
+	    {
+	      str_ = (char*)malloc(len*sizeof(char));
+	      ptr_ = str_;
+	    }
+	    bool isOpen()
+	    {
+	        return true;
+	    }
+	    OutStreamInterface& append(std::string str)
+	    {
+	        strcpy(ptr_, str.c_str());
+		ptr_ += str.length();
+	      
+		return *this;
+	    }
+	    OutStreamInterface& append(char ch)
+	    {
+	        (*ptr_) = ch;
+		ptr_++;
+		(*ptr_) = '\0';
+		return *this;
+	    }
+	    OutStreamInterface& appendNl()
+	    {
+	        (*ptr_) = '\n';
+		ptr_++;
+		(*ptr_) = '\0';
+		return *this;
+	    }
+	    std::string& str()
+	    {
+	      //str::string res(str_);
+	      return *new std::string(str_);
+	    }
+	    bool bad()
+	    {
+	        return false;
+	    }
+	    int close()
+	    {
+	      (*ptr_) = '\0';
+	        return 0;
+	    }
+	}; // class OutStringStreamNS
+
+
+ 
+      // TBD: unify InFileStreamNS and OutFileStreamNS
+        /**
+	 * 
+	 */
+        class OutFileStreamNS : public OutStreamInterface
+        {
+	private:
+	      FILE* file_;
+	      char buff[255];// TBC: how to get rid of this uggly 255!!!
+	      bool badBit;
+	public:
+	    OutFileStreamNS(const std::string fName) //: str_(str)
+	    {
+	        file_ = fopen(fName.c_str(), "w");
+		badBit = false;
+	    }
+	    bool isOpen()
+	    {
+	        return file_ != NULL;
+	    }
+	    OutStreamInterface& append(std::string str)
+	    {
+	        int numCharsWritten = fprintf(file_, "%s", str.c_str());
+		// TBD: more research 
+		// numRead can be negative for failure, 0 or positive 
+		if (numCharsWritten <= 0)
+		{
+		    // TBC: maybe this shall be str.length. 
+		    if (!feof(file_))
+		      badBit = true;
+		}
+	        return *this;
+	    }
+	    OutStreamInterface& append(char ch)
+	    {
+	        int numCharsWritten = fprintf(file_, "%c", ch);
+		// TBD: more research 
+		// numRead can be negative for failure, 0 or positive 
+		if (numCharsWritten <= 0)
+		{
+		    // TBC: maybe this shall be str.length. 
+		    if (!feof(file_))
+		      badBit = true;
+		}
+	        return *this;
+	    }
+	  // TBD: interprete in terms oof append(char); not here 
+	    OutStreamInterface& appendNl()
+	    {
+	        int numCharsWritten = fprintf(file_, "%c", '\n');
+		// TBD: more research 
+		// numRead can be negative for failure, 0 or positive 
+		if (numCharsWritten <= 0)
+		{
+		    // TBC: maybe this shall be str.length. 
+		    if (!feof(file_))
+		      badBit = true;
+		}
+	        return *this;
+	    }
+	  // TBD: eliminate: bad design 
+	    std::string& str()
+	    {
+	      //std::string res = "invalid; dont ask me";
+	        return *new std::string("invalid; dont ask me");
+	    }
+	    bool bad()
+	    {
+	        return badBit;
+	    }
+	    int close()
+	    {
+	        int res = fclose(file_);
+		file_ = NULL;
+	        return res;
+	    }
+	}; // class OutFileStreamNS
+
+      
+#else
         // T is the kind of stream under consideration:
         // ofstream or ostringstream
         /**
@@ -1079,146 +1224,6 @@ namespace ini
 
 #endif
 
-      // TBD: check memory leaks 
-        /**
-	 * 
-	 */
-        class OutStringStreamNS : public OutStreamInterface
-	{
-	private:
-	  char* str_;
-	  char* ptr_;
-	public:
-	    OutStringStreamNS(uint len)//:str_[len]
-	    {
-	      str_ = (char*)malloc(len*sizeof(char));
-	      ptr_ = str_;
-	    }
-	    bool isOpen()
-	    {
-	        return true;
-	    }
-	    OutStreamInterface& append(std::string str)
-	    {
-	        strcpy(ptr_, str.c_str());
-		ptr_ += str.length();
-	      // int len = str.length();
-	      // for (int idx = 0; idx < len; idx++)
-	      // {
-	      // 	(*ptr_) = str[idx];
-	      // 	ptr_++;
-	      // }
-	      
-		return *this;
-	    }
-	    OutStreamInterface& append(char ch)
-	    {
-	        (*ptr_) = ch;
-		ptr_++;
-		(*ptr_) = '\0';
-		return *this;
-	    }
-	    OutStreamInterface& appendNl()
-	    {
-	        (*ptr_) = '\n';
-		ptr_++;
-		(*ptr_) = '\0';
-		return *this;
-	    }
-	    std::string& str()
-	    {
-	      //str::string res(str_);
-	      return *new std::string(str_);
-	    }
-	    bool bad()
-	    {
-	        return false;
-	    }
-	    int close()
-	    {
-	      (*ptr_) = '\0';
-	        return 0;
-	    }
-	}; // class OutStringStreamNS
-
-
- 
-      // TBD: unify InFileStreamNS and OutFileStreamNS
-        /**
-	 * 
-	 */
-        class OutFileStreamNS : public OutStreamInterface
-        {
-	private:
-	      FILE* file_;
-	      char buff[255];// TBC: how to get rid of this uggly 255!!!
-	      bool badBit;
-	public:
-	    OutFileStreamNS(const std::string fName) //: str_(str)
-	    {
-	        file_ = fopen(fName.c_str(), "w");
-		badBit = false;
-	    }
-	    bool isOpen()
-	    {
-	        return file_ != NULL;
-	    }
-	    OutStreamInterface& append(std::string str)
-	    {
-	        int numCharsWritten = fprintf(file_, "%s", str.c_str());
-		// TBD: more research 
-		// numRead can be negative for failure, 0 or positive 
-		if (numCharsWritten <= 0)
-		{
-		    // TBC: maybe this shall be str.length. 
-		    if (!feof(file_))
-		      badBit = true;
-		}
-	        return *this;
-	    }
-	    OutStreamInterface& append(char ch)
-	    {
-	        int numCharsWritten = fprintf(file_, "%c", ch);
-		// TBD: more research 
-		// numRead can be negative for failure, 0 or positive 
-		if (numCharsWritten <= 0)
-		{
-		    // TBC: maybe this shall be str.length. 
-		    if (!feof(file_))
-		      badBit = true;
-		}
-	        return *this;
-	    }
-	    OutStreamInterface& appendNl()
-	    {
-	        int numCharsWritten = fprintf(file_, "%c", '\n');
-		// TBD: more research 
-		// numRead can be negative for failure, 0 or positive 
-		if (numCharsWritten <= 0)
-		{
-		    // TBC: maybe this shall be str.length. 
-		    if (!feof(file_))
-		      badBit = true;
-		}
-	        return *this;
-	    }
-	  // TBD: eliminate: bad design 
-	    std::string& str()
-	    {
-	      //std::string res = "invalid; dont ask me";
-	        return *new std::string("invalid; dont ask me");
-	    }
-	    bool bad()
-	    {
-	        return badBit;
-	    }
-	    int close()
-	    {
-	        int res = fclose(file_);
-		file_ = NULL;
-	        return res;
-	    }
-	}; // class OutFileStreamNS
 
       
      
@@ -1234,7 +1239,8 @@ namespace ini
             for (const auto &filePair : *this)
             {
 	      
-	        oStream.append(SEC_START).append(filePair.first).append(SEC_END)
+	        oStream.append(SEC_START)
+		  .append(filePair.first).append(SEC_END)
 		  .appendNl();
 		lineNo++;
                 // iterate through all fields in the section
@@ -1283,6 +1289,13 @@ namespace ini
 		  + 3 +pair.second.lengthText();
 	    }
 	    return res;
+	}
+ #else
+    // TBC: with streams 
+        DecEncResult tryEncode(std::ostream &oStream)
+	{
+	    t_OutStream<std::ostream> mystream(oStream);
+	    return tryEncode(mystream);
 	}
 #endif
       
@@ -1384,6 +1397,38 @@ namespace ini
 
     public:
 
+
+      // TBC: shall be without streams 
+        void decode(const std::string &content)
+        {
+	    throwIfError(tryDecode(content));
+        }
+      
+      // TBC: tshall be without streams 
+        void load(const std::string &fileName)
+        {
+	    throwIfError(tryLoad(fileName));
+        }
+
+              std::string encode()
+        {
+	  //std::ostringstream ss;
+            //encode(ss);
+	  std::string content;
+	    throwIfError(tryEncode(content));
+            //return ss.str();
+	    return content;
+        }
+
+        void save(const std::string &fileName)
+        {
+            // std::ofstream os(fileName.c_str());
+            // encode(os);
+	    throwIfError(trySave(fileName));
+        }
+
+
+      
 #ifndef SSTREAM_PREVENTED
       /**
 	 * @throws logic_error if 
@@ -1409,21 +1454,7 @@ namespace ini
 	//     InStringStream iss(is);
 	//     throwIfError(tryDecode(iss));
         // }
-#endif
-
-      // TBC: shall be without streams 
-        void decode(const std::string &content)
-        {
-	    throwIfError(tryDecode(content));
-        }
       
-      // TBC: tshall be without streams 
-        void load(const std::string &fileName)
-        {
-	    throwIfError(tryLoad(fileName));
-        }
-
-#ifndef SSTREAM_PREVENTED
         /**
 	 * @throws logic_error if 
 	 * - 
@@ -1452,22 +1483,6 @@ namespace ini
 
       
 
-        std::string encode()
-        {
-	  //std::ostringstream ss;
-            //encode(ss);
-	  std::string content;
-	    throwIfError(tryEncode(content));
-            //return ss.str();
-	    return content;
-        }
-
-        void save(const std::string &fileName)
-        {
-            // std::ofstream os(fileName.c_str());
-            // encode(os);
-	    throwIfError(trySave(fileName));
-        }
 
 #endif
     };
