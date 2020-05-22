@@ -871,7 +871,8 @@ namespace ini
 	    for (std::string line; iStream.getLine(line); lineNo++)
             {
                 trim(line);
-
+		//std::cout << "decoding line " << line << std::endl;
+		
                 // skip if line is empty or a comment
                 if(line.size() == 0 || line[0] == comment_)
                     continue;
@@ -901,7 +902,8 @@ namespace ini
                     // retrieve section name
                     std::string secName = line.substr(1, pos - 1);
                     currentSection = &((*this)[secName]);
-                }
+		    //std::cout << " found section " << currentSection << std::endl;
+               }
                 else
                 {
                     // find key value separator
@@ -912,6 +914,7 @@ namespace ini
 		        return deResult;
 		    }
                     // line is a field definition
+		    //std::cout << " iskey-value " << std::endl;
                     // check if section was already opened
                     if(currentSection == NULL)
 		    {
@@ -940,7 +943,7 @@ namespace ini
 	    }
 	    // TBD: clarify
 	    // TBD: take return value into account: maybe additional failures 
-	    //iStream.close();
+	    iStream.close();
 
 	    // signifies success
 	    deResult.reset();
@@ -1278,24 +1281,18 @@ namespace ini
 	      deResult.set(STREAM_WRITE_FAILED, lineNo);
 	      return deResult;
 	    }
-	    // TBD: clarify 
-	    //oStream.close();
+	    // TBD: clarify
+	    // TBD: use return value 
+	    oStream.close();
 
 	    // signifies success
 	    deResult.reset();
 	    return deResult;
         }
-//#endif
 
-      // TBD: prefer #ifdef
-#ifndef SSTREAM_PREVENTED
-     // TBC: with streams 
-        DecEncResult tryEncode(std::ostream &oStream)
-	{
-	    t_OutStream<std::ostream> mystream(oStream);
-	    return tryEncode(mystream);
-	}
-#else
+
+
+#ifdef SSTREAM_PREVENTED
       // TBD: used only if SSTREAM_PREVENTED
         uint lengthText()
         {
