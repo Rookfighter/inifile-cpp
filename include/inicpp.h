@@ -12,23 +12,26 @@
 #ifndef SSTREAM_PREVENTED
 #include <fstream>
 #include <sstream>
-//#include <iostream>
 #endif
 
+// For debugging only 
+//#include <iostream>
 
 
 #include <map>
 
 #include <limits.h>
 #include <string.h>
+
 // maybe alternative to iostream
-#include <stdio.h>
+//#include <stdio.h>
 
 
 // CAUTION: for embedded systems in general it is recommanded
 // to set following switches:
 // - THROW_PREVENTED disallows methods (and constructors) throwing exceptions
-// - SSTREAM_PREVENTED
+// - SSTREAM_PREVENTED activates implementations not using streams
+//   TBD: clarify consequences: above all lengths 
 
 namespace ini
 {
