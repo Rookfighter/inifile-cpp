@@ -12,8 +12,16 @@
 //#define   THROW_PREVENTED
 #include "inicpp.h"
 
-
+#include <filesystem>
+#include <iostream>
 #include <string.h>
+#include <unistd.h>
+
+
+#define TESTFILE(NAME) ((std::filesystem::current_path() / \
+			 ".." / "test" / "iniFiles" / NAME).string())
+// #define PATH_TEST_FILES std::filesystem::current_path() /	
+//  ".." / "test" / "iniFiles" 
 
 
 #ifdef THROW_PREVENTED
@@ -27,25 +35,71 @@
   inif.decode(str);
 #endif
 
-// TBD: tests missing:
-// open files for encoding/decoding where this does not work:
-// cannot open:
-// - not exist
-// - dir
-// - not readable/writable
-// No idea how to test bad bit. 
 
-TEST_CASE("decode ini file", "IniFile")
+
+TEST_CASE("decode and encode ini string", "IniFile")
 {
-    std::string str("[Foo]\nbar=hello world\n[Test]\n\n");
+    std::string str("[Foo]\n"
+		    "bar=hello world\n"
+		    "# a comment\n"
+		    "\n"
+		    "[Test]\n\n");
     INIF
 
     REQUIRE(inif.size() == 2);
     REQUIRE(inif["Foo"]["bar"].toString() == "hello world");
     REQUIRE(inif["Test"].size() == 0);
+
+    
+#ifdef THROW_PREVENTED
+    ini::IniFile::DecEncResult deResult = inif.tryEncode(str);
+    REQUIRE(deResult.getErrorCode()
+	    == ini::DecEncErrorCode::NO_FAILURE);
+#else
+    str = inif.encode();
+#endif
+
+    // empty lines and comment lines are neglegted 
+    REQUIRE(str ==
+	    "[Foo]\n"
+	    "bar=hello world\n"
+	    "[Test]\n");
 }
 
-TEST_CASE("decode empty file", "IniFile")
+TEST_CASE("decode and encode 2nd ini string", "IniFile")
+{
+    std::string str("[git]\n"
+		    "revision=v0.0.1\n"
+		    "dateTime=1968-03-11\n"
+		    "[names]\n"
+		    "nameId=GENERIC");
+    INIF
+
+    REQUIRE(inif.size() == 2);
+    REQUIRE(inif["git"]["revision"].toString() == "v0.0.1");
+    REQUIRE(inif["git"]["dateTime"].toString() == "1968-03-11");
+    REQUIRE(inif["names"]["nameId"].toString() == "GENERIC");
+    REQUIRE(inif["git"].size() == 2);
+    REQUIRE(inif["names"].size() == 1);
+
+    #ifdef THROW_PREVENTED
+    ini::IniFile::DecEncResult deResult = inif.tryEncode(str);
+    REQUIRE(deResult.getErrorCode()
+	    == ini::DecEncErrorCode::NO_FAILURE);
+#else
+    str = inif.encode();
+#endif
+
+    // gets reordered. 
+    REQUIRE(str ==
+	    "[git]\n"
+	    "dateTime=1968-03-11\n"
+	    "revision=v0.0.1\n"
+	    "[names]\n"
+	    "nameId=GENERIC\n");
+}
+
+TEST_CASE("decode empty ini string", "IniFile")
 {
     std::string str("");
     INIF
@@ -56,9 +110,12 @@ TEST_CASE("decode empty file", "IniFile")
 
 
 
-TEST_CASE("fail to decode file with section not closed", "IniFile")
+TEST_CASE("fail to decode ini string with section not closed", "IniFile")
 {
-    std::string str("[Foo]\nbar=hello world\n[Test\nfoo=never reached");
+    std::string str("[Foo]\n"
+		    "bar=hello world\n"
+		    "[Test\n"
+		    "foo=never reached");
     ini::IniFile inif;
 #ifdef THROW_PREVENTED
     ini::IniFile::DecEncResult deResult = inif.tryDecode(str);
@@ -71,9 +128,12 @@ TEST_CASE("fail to decode file with section not closed", "IniFile")
 }
 
 
-TEST_CASE("fail to decode file with empty section name", "IniFile")
+TEST_CASE("fail to decode ini string with empty section name", "IniFile")
 {
-    std::string str("[Foo]\nbar=hello world\n[]\nfoo=never reached");
+    std::string str("[Foo]\n"
+		    "bar=hello world\n"
+		    "[]\n"
+		    "foo=never reached");
     ini::IniFile inif;
 #ifdef THROW_PREVENTED
     ini::IniFile::DecEncResult deResult = inif.tryDecode(str);
@@ -85,9 +145,12 @@ TEST_CASE("fail to decode file with empty section name", "IniFile")
 #endif
 }
 
-TEST_CASE("fail to decode file with text after section", "IniFile")
+TEST_CASE("fail to decode ini string with text after section", "IniFile")
 {
-    std::string str("[Foo]\nbar=hello world\n[Test]superfluous\nfoo=never reached");
+    std::string str("[Foo]\n"
+		    "bar=hello world\n"
+		    "[Test]superfluous\n"
+		    "foo=never reached");
     ini::IniFile inif;
 #ifdef THROW_PREVENTED
     ini::IniFile::DecEncResult deResult = inif.tryDecode(str);
@@ -99,9 +162,12 @@ TEST_CASE("fail to decode file with text after section", "IniFile")
 #endif
 }
 
-TEST_CASE("fail to decode file with field without section", "IniFile")
+TEST_CASE("fail to decode ini string with field without section", "IniFile")
 {
-    std::string str("# comment\nbar=hello world\n[Test]\nfoo=say goodby");
+    std::string str("# comment\n"
+		    "bar=hello world\n"
+		    "[Test]\n"
+		    "foo=say goodby");
     ini::IniFile inif;
 #ifdef THROW_PREVENTED
     ini::IniFile::DecEncResult deResult = inif.tryDecode(str);
@@ -109,14 +175,17 @@ TEST_CASE("fail to decode file with field without section", "IniFile")
 	    == ini::DecEncErrorCode::FIELD_WITHOUT_SECTION);
     REQUIRE(deResult.getLineNumber() == 2);
 #else
-    REQUIRE_THROWS_AS(inif.decode(str),  std::logic_error);
+    REQUIRE_THROWS_AS(inif.decode(str), std::logic_error);
 #endif
 }
 
 
-TEST_CASE("fail to decode file with illegal line", "IniFile")
+TEST_CASE("fail to decode ini string with illegal line", "IniFile")
 {
-    std::string str("[Foo]\nbar no_separator\n[Test]\nfoo=never reached");
+    std::string str("[Foo]\n"
+		    "bar no_separator\n"
+		    "[Test]\n"
+		    "foo=never reached");
     ini::IniFile inif;
 #ifdef THROW_PREVENTED
     ini::IniFile::DecEncResult deResult = inif.tryDecode(str);
@@ -128,9 +197,12 @@ TEST_CASE("fail to decode file with illegal line", "IniFile")
 #endif
 }
 
-TEST_CASE("fail to decode file with field without custom separator", "IniFile")
+TEST_CASE("fail to decode ini string with field without custom separator", "IniFile")
 {
-    std::string str("[Foo]\nbar=no_separator\n[Test]\nfoo=never reached");
+    std::string str("[Foo]\n"
+		    "bar=no_separator\n"
+		    "[Test]\n"
+		    "foo=never reached");
    ini::IniFile inif(':', '#');
 #ifdef THROW_PREVENTED
      ini::IniFile::DecEncResult deResult = inif.tryDecode(str);
@@ -143,7 +215,7 @@ TEST_CASE("fail to decode file with field without custom separator", "IniFile")
 }
 
 
-TEST_CASE("decode file with comment only", "IniFile")
+TEST_CASE("decode ini string with comment only", "IniFile")
 {
     std::string str("# this is a comment");
     INIF
@@ -152,7 +224,7 @@ TEST_CASE("decode file with comment only", "IniFile")
 }
 
 
-TEST_CASE("decode file with empty section", "IniFile")
+TEST_CASE("decode ini string with empty section", "IniFile")
 {
     std::string str("[Foo]");
     INIF
@@ -161,9 +233,262 @@ TEST_CASE("decode file with empty section", "IniFile")
     REQUIRE(inif["Foo"].size() == 0);
 }
 
+
+TEST_CASE("fail load non-existing ini file", "IniFile")
+{
+    const std::string sfName = "doesNotExist.ini";
+    const std::string fName = TESTFILE(sfName);
+    int res = access(fName.c_str(), F_OK);
+    REQUIRE(res == -1);
+
+    ini::IniFile inif;
+#ifdef THROW_PREVENTED
+    ini::IniFile::DecEncResult deResult = inif.tryLoad(fName);
+    REQUIRE(deResult.getErrorCode()
+	    == ini::DecEncErrorCode::STREAM_OPENR_FAILED);
+#else
+    REQUIRE_THROWS_AS(inif.load(fName), std::logic_error);
+#endif
+}
+
+TEST_CASE("fail load/save directory as ini file", "IniFile")
+{
+    const std::string sfName = "dir.ini";
+    const std::string fName = TESTFILE(sfName);
+    int res = access(fName.c_str(), F_OK);
+    REQUIRE(res == 0);
+    std::filesystem::path path = fName;
+    REQUIRE(std::filesystem::is_directory(path));
+
+    ini::IniFile inif;
+#ifdef THROW_PREVENTED
+    ini::IniFile::DecEncResult deResult = inif.tryLoad(fName);
+    REQUIRE(deResult.getErrorCode()
+	    == ini::DecEncErrorCode::STREAM_READ_FAILED);
+#else
+    REQUIRE_THROWS_AS(inif.load(fName), std::logic_error);
+#endif
+
+    
+    inif.clear();
+#ifdef THROW_PREVENTED
+    deResult = inif.trySave(fName);
+    REQUIRE(deResult.getErrorCode()
+	    == ini::DecEncErrorCode::STREAM_OPENW_FAILED);
+#else
+    REQUIRE_THROWS_AS(inif.save(fName), std::logic_error);
+#endif
+}
+
+TEST_CASE("fail load unreadable as ini file", "IniFile")
+{
+    const std::string sfName = "writeOnly.ini";
+    const std::string fName = TESTFILE(sfName);
+    std::filesystem::path fPath = fName;
+    
+    int res = access(fName.c_str(), F_OK);
+    REQUIRE(res == 0);
+    std::filesystem::permissions(fPath, std::filesystem::perms::owner_write);
+    res = access(fName.c_str(), R_OK);
+    REQUIRE(res == -1);
+    res = access(fName.c_str(), W_OK);
+    REQUIRE(res == 0);
+    std::filesystem::path path = fName;
+    REQUIRE(std::filesystem::is_regular_file(path));
+
+    ini::IniFile inif;
+#ifdef THROW_PREVENTED
+    ini::IniFile::DecEncResult deResult = inif.tryLoad(fName);
+    REQUIRE(deResult.getErrorCode()
+	    == ini::DecEncErrorCode::STREAM_OPENR_FAILED);
+#else
+    REQUIRE_THROWS_AS(inif.load(fName), std::logic_error);
+#endif
+
+    std::filesystem::permissions(fPath,
+				 std::filesystem::perms::owner_read|
+				 std::filesystem::perms::owner_write,
+				 std::filesystem::perm_options::add);
+}
+
+TEST_CASE("fail save unwritable as ini file", "IniFile")
+{
+    const std::string sfName = "readOnly.ini";
+    const std::string fName = TESTFILE(sfName);
+    std::filesystem::path fPath = fName;
+    
+    int res = access(fName.c_str(), F_OK);
+    REQUIRE(res == 0);
+    std::filesystem::permissions(fPath, std::filesystem::perms::owner_read);
+    res = access(fName.c_str(), R_OK);
+    REQUIRE(res == 0);
+    res = access(fName.c_str(), W_OK);
+    REQUIRE(res == -1);
+    std::filesystem::path path = fName;
+    REQUIRE(std::filesystem::is_regular_file(path));
+
+    ini::IniFile inif;
+#ifdef THROW_PREVENTED
+    ini::IniFile::DecEncResult deResult = inif.trySave(fName);
+    REQUIRE(deResult.getErrorCode()
+	    == ini::DecEncErrorCode::STREAM_OPENW_FAILED);
+#else
+    REQUIRE_THROWS_AS(inif.save(fName), std::logic_error);
+#endif
+}
+
+
+TEST_CASE("save and reload ini file", "IniFile")
+{
+    const std::string sfName = "example.ini";
+    const std::string fName = TESTFILE(sfName);
+    int res = access(fName.c_str(), F_OK);
+    switch (res)
+    {
+    case 0:
+      // file exists and shall be deleted
+      res = remove(fName.c_str());
+      if (res != 0)
+      {
+	throw std::logic_error("Could not delete file.");
+      }
+      break;
+    case -1:
+      // file does not exist, all ok
+      break;
+    default:
+      throw std::logic_error("Unexpected return value.");
+    }
+    // Here, sfName does not exist
+    REQUIRE(access(fName.c_str(), F_OK) == -1);
+
+    // save example inif as a file 
+    ini::IniFile inif;
+    inif["Foo"]["bar1"] = true;
+    inif["Foo"]["bar2"] = false;
+    inif["Baz"]["bax0"] = 42;
+#ifdef THROW_PREVENTED
+    ini::IniFile::DecEncResult deResult = inif.trySave(fName);
+    REQUIRE(deResult.getErrorCode()
+	    == ini::DecEncErrorCode::NO_FAILURE);
+#else
+    inif.save(fName);
+#endif
+
+    // check that the file exists 
+    res = access(fName.c_str(), F_OK);
+    REQUIRE(res == 0);
+
+    // read back
+    inif.clear();
+#ifdef THROW_PREVENTED
+    deResult = inif.tryLoad(fName);
+    REQUIRE(deResult.getErrorCode()
+	    == ini::DecEncErrorCode::NO_FAILURE);
+#else
+    inif.load(fName);
+#endif
+
+    // check result
+    REQUIRE(inif.size() == 2);
+    REQUIRE(inif["Foo"].size() == 2);
+    REQUIRE(inif["Baz"].size() == 1);
+#ifdef THROW_PREVENTED
+    REQUIRE( inif["Foo"]["bar1"].asUnconditional<bool>() == true);
+    REQUIRE( inif["Foo"]["bar2"].asUnconditional<bool>() == false);
+    REQUIRE( inif["Baz"]["bax0"].asUnconditional<int>() == 42);
+    REQUIRE(!inif["Foo"]["bar1"].failedLastOutConversion());
+    REQUIRE(!inif["Foo"]["bar2"].failedLastOutConversion());
+    REQUIRE(!inif["Baz"]["bax0"].failedLastOutConversion());
+    
+#else
+    REQUIRE(inif["Foo"]["bar1"].as<bool>() == true);
+    REQUIRE(inif["Foo"]["bar2"].as<bool>() == false);
+    REQUIRE(inif["Baz"]["bax0"].as<int>() == 42);
+#endif
+
+
+    res = remove(fName.c_str());
+    if (res != 0)
+    {
+	throw std::logic_error("Could not delete file.");
+    }
+}
+
+
+TEST_CASE("load ini file with trailing newline", "IniFile")
+{
+    const std::string sfName = "exampleNl.ini";
+    const std::string fName = TESTFILE(sfName);
+    int res = access(fName.c_str(), F_OK);
+    REQUIRE(res == 0);
+    
+    ini::IniFile inif;
+#ifdef THROW_PREVENTED
+    ini::IniFile::DecEncResult deResult = inif.tryLoad(fName);
+    REQUIRE(deResult.getErrorCode()
+	    == ini::DecEncErrorCode::NO_FAILURE);
+#else
+    inif.load(fName);
+#endif
+
+    REQUIRE(inif.size() == 2);
+
+#ifdef THROW_PREVENTED
+    std::string result;
+    deResult = inif.tryEncode(result);
+    REQUIRE(deResult.getErrorCode()
+	    == ini::DecEncErrorCode::NO_FAILURE);
+#else
+    std::string result = inif.encode();
+#endif
+      REQUIRE(result ==
+	      "[Bar]\n"
+	      "bar0=0\n"
+	      "[Foo]\n"
+	      "foo1=44\n"
+	      "foo2=true\n");
+}
+
+TEST_CASE("load ini file with no trailing newline", "IniFile")
+{
+    const std::string sfName = "exampleNoNl.ini";
+    const std::string fName = TESTFILE(sfName);
+    int res = access(fName.c_str(), F_OK);
+    REQUIRE(res == 0);
+    
+    ini::IniFile inif;
+#ifdef THROW_PREVENTED
+    ini::IniFile::DecEncResult deResult = inif.tryLoad(fName);
+    REQUIRE(deResult.getErrorCode()
+	    == ini::DecEncErrorCode::NO_FAILURE);
+#else
+    inif.load(fName);
+#endif
+
+    REQUIRE(inif.size() == 2);
+
+#ifdef THROW_PREVENTED
+    std::string result;
+    deResult = inif.tryEncode(result);
+    REQUIRE(deResult.getErrorCode()
+	    == ini::DecEncErrorCode::NO_FAILURE);
+#else
+    std::string result = inif.encode();
+#endif
+      REQUIRE(result ==
+	      "[Bar]\n"
+	      "bar0=0\n"
+	      "[Foo]\n"
+	      "foo1=44\n"
+	      "foo2=true\n");
+}
+
+
 TEST_CASE("parse empty field", "IniFile")
 {
-    std::string str("[Foo]\nbar=");
+    std::string str("[Foo]\n"
+		    "bar=");
     INIF
 
     CHECK(inif.size() == 1);
@@ -174,7 +499,9 @@ TEST_CASE("parse empty field", "IniFile")
 // TBD: this seems to be very crude to me 
 TEST_CASE("parse section with duplicate field", "IniFile")
 {
-    std::string str("[Foo]\nbar=hello\nbar=World");
+    std::string str("[Foo]\n"
+		    "bar=hello\n"
+		    "bar=World");
     INIF
 
     REQUIRE(inif.size() == 1);
@@ -189,7 +516,8 @@ TEST_CASE("parse section with duplicate field", "IniFile")
 
 TEST_CASE("parse field as c-string", "IniFile")
 {
-    std::string str("[Foo]" "\nbar=blaC");
+    std::string str("[Foo]\n"
+		    "bar=blaC");
     INIF
       
     const char* nvrOcc = "never occurs";
@@ -203,7 +531,8 @@ TEST_CASE("parse field as c-string", "IniFile")
 
 TEST_CASE("parse field as std::string", "IniFile")
 {
-    std::string str("[Foo]" "\nbar=blaS");
+    std::string str("[Foo]\n"
+		    "bar=blaS");
     INIF
 
     const char* nvrOcc = "never occurs";
@@ -285,8 +614,7 @@ TEST_CASE("parse field as double", "IniFile")
 TEST_CASE("fail to parse field as double", "IniFile")
 {
    std::string str("[Foo]"
-			 "\nbar1=bla" "\nbar2=-2.5e4x" "\nbar3="
-			 );
+		   "\nbar1=bla" "\nbar2=-2.5e4x" "\nbar3=");
     INIF
 
     REQUIRE(inif.size() == 1);
@@ -309,17 +637,17 @@ TEST_CASE("fail to parse field as double", "IniFile")
 TEST_CASE("parse field as float", "IniFile")
 {
     std::string str("[Foo]"
-			  "\nbar0=-0" "\nbar1=1.2" "\nbar2=1" "\nbar3=-2.4"
-			  "\nbarNF4=-nan" "\nbarNF5=-inF" "\nbarNF6=infinity"
-			  "\nbar7=-2.5e4"
-			  "\nbarL1="
-			  "340282346638528859811704183484516925440.0" // max
-			  //std::numeric_limits<float>::max()
-			  "\nbarL2=" 
-			  "340282346638528859811704183484516925440.0001" // 
-			  "\nbarL3=" 
-			  "340282346638528859811704183484516925440000.1" // 
-			  );
+		    "\nbar0=-0" "\nbar1=1.2" "\nbar2=1" "\nbar3=-2.4"
+		    "\nbarNF4=-nan" "\nbarNF5=-inF" "\nbarNF6=infinity"
+		    "\nbar7=-2.5e4"
+		    "\nbarL1="
+		    "340282346638528859811704183484516925440.0" // max
+		    //std::numeric_limits<float>::max()
+		    "\nbarL2=" 
+		    "340282346638528859811704183484516925440.0001" // 
+		    "\nbarL3=" 
+		    "340282346638528859811704183484516925440000.1" // 
+		    );
     INIF
 
     REQUIRE(inif.size() == 1);
@@ -364,7 +692,7 @@ TEST_CASE("parse field as float", "IniFile")
 TEST_CASE("fail to parse field as float", "IniFile")
 {
     std::string str("[Foo]"
-			 "\nbar1=bla" "\nbar2=-2.5e4x" "\nbar3=");
+		    "\nbar1=bla" "\nbar2=-2.5e4x" "\nbar3=");
     INIF
       
     REQUIRE(inif.size() == 1);
@@ -387,15 +715,15 @@ TEST_CASE("parse field as (unsigned) long int, fail if negative unsigned",
 	  "IniFile")
 {
     std::string str("[Foo]" "\nbar0=0" "\nbar1=1" "\nbar2=-42"
-			  "\nbar80=00" "\nbar81=02" "\nbar82=-07"
-			  "\nbarG0=-0x0" "\nbarG1=0xfF" "\nbarG2=-0x80"
-			  "\nbarB1= 0x7fffffffffffffff" // max          long 
-			  "\nbarB2= 0xffffffffffffffff" // max unsigned long 
-			  "\nbarB3=-0x8000000000000000" // min          long 
-			  "\nbarB4= 0x0"                // min unsigned long
-			  "\nbarO1= 0x8000000000000000" // max          long + 1
-			  "\nbarO2= 0x10000000000000000"// max unsigned long + 1
-			  "\nbarO3=-0x8000000000000001");// min         long - 1
+		    "\nbar80=00" "\nbar81=02" "\nbar82=-07"
+		    "\nbarG0=-0x0" "\nbarG1=0xfF" "\nbarG2=-0x80"
+		    "\nbarB1= 0x7fffffffffffffff" // max          long 
+		    "\nbarB2= 0xffffffffffffffff" // max unsigned long 
+		    "\nbarB3=-0x8000000000000000" // min          long 
+		    "\nbarB4= 0x0"                // min unsigned long
+		    "\nbarO1= 0x8000000000000000" // max          long + 1
+		    "\nbarO2= 0x10000000000000000"// max unsigned long + 1
+		    "\nbarO3=-0x8000000000000001");// min         long - 1
     INIF
 
     REQUIRE(inif.size() == 1);
@@ -486,9 +814,9 @@ TEST_CASE("parse field as (unsigned) long int, fail if negative unsigned",
 TEST_CASE("fail to parse field as (unsigned) long int", "IniFile")
 {
     std::string str("[Foo]"
-			  "\nbar1=bla" "\nbar2=" "\nbar3=2x" "\nbar4=+"
-			  "\nbar82=08" "\nbarG0=0x" "\nbarG1=0xg"
-			  );
+		    "\nbar1=bla" "\nbar2=" "\nbar3=2x" "\nbar4=+"
+		    "\nbar82=08" "\nbarG0=0x" "\nbarG1=0xg"
+		    );
 #ifdef THROW_PREVENTED
     ini::IniFile inif;
     bool isOk = inif.tryDecode(str).isOk();
@@ -566,16 +894,17 @@ TEST_CASE("fail to parse field as (unsigned) long int", "IniFile")
 TEST_CASE("parse field as (unsigned) int, fail if negative unsigned",
 	  "IniFile")
 {
-    std::string str("[Foo]" "\nbar0=0" "\nbar1=1" "\nbar2=-42"
-			  "\nbar80=00" "\nbar81=02" "\nbar82=-07"
-			  "\nbarG0=-0x0" "\nbarG1=0xfF" "\nbarG2=-0x80"
-			  "\nbarB1= 0x7fffffff"  // max          int 
-			  "\nbarB2= 0xffffffff"  // max unsigned int 
-			  "\nbarB3=-0x80000000"  // min          int 
-			  "\nbarB4= 0x0"         // min unsigned int
-			  "\nbarO1= 0x80000000"  // max          int + 1
-			  "\nbarO2= 0x100000000" // max unsigned int + 1
-			  "\nbarO3=-0x80000001");// min          int - 1
+    std::string str("[Foo]"
+		    "\nbar0=0" "\nbar1=1" "\nbar2=-42"
+		    "\nbar80=00" "\nbar81=02" "\nbar82=-07"
+		    "\nbarG0=-0x0" "\nbarG1=0xfF" "\nbarG2=-0x80"
+		    "\nbarB1= 0x7fffffff"  // max          int 
+		    "\nbarB2= 0xffffffff"  // max unsigned int 
+		    "\nbarB3=-0x80000000"  // min          int 
+		    "\nbarB4= 0x0"         // min unsigned int
+		    "\nbarO1= 0x80000000"  // max          int + 1
+		    "\nbarO2= 0x100000000" // max unsigned int + 1
+		    "\nbarO3=-0x80000001");// min          int - 1
 #ifdef THROW_PREVENTED
     ini::IniFile inif;
     bool isOk = inif.tryDecode(str).isOk();
@@ -734,7 +1063,10 @@ TEST_CASE("fail to parse field as (unsigned) int", "IniFile")
 
 TEST_CASE("parse field as bool", "IniFile")
 {
-    std::string str("[Foo]\nbar1=true\nbar2=false\nbar3=tRuE");
+    std::string str("[Foo]\n"
+		    "bar1=true\n"
+		    "bar2=false\n"
+		    "bar3=tRuE");
 INIF
 
     REQUIRE(inif.size() == 1);
@@ -758,7 +1090,8 @@ INIF
 
 TEST_CASE("failed to parse field as bool", "IniFile")
 {
-    std::string str("[Foo]\nbar=yes");
+    std::string str("[Foo]\n"
+		    "bar=yes");
 INIF
   
     REQUIRE(inif.size() == 1);
@@ -782,7 +1115,10 @@ INIF
 
 TEST_CASE("parse field with custom field sep", "IniFile")
 {
-    std::string str("[Foo]\nbar1:true\nbar2:false\nbar3:tRuE");
+    std::string str("[Foo]\n"
+		    "bar1:true\n"
+		    "bar2:false\n"
+		    "bar3:tRuE");
   
     ini::IniFile inif(':', '#');
 #ifdef THROW_PREVENTED
@@ -800,7 +1136,9 @@ TEST_CASE("parse field with custom field sep", "IniFile")
 
 TEST_CASE("parse file with comment", "IniFile")
 {
-    std::string str("[Foo]\n# this is a test\nbar=bla");
+    std::string str("[Foo]\n"
+		    "# this is a test\n"
+		    "bar=bla");
 INIF
 
   REQUIRE(inif.size() == 1);
@@ -811,7 +1149,9 @@ INIF
 TEST_CASE("parse with custom comment char", "IniFile")
 {
     ini::IniFile inif('=', '$');
-    std::string str("[Foo]\n$ this is a test\nbar=bla");
+    std::string str("[Foo]\n"
+		    "$ this is a test\n"
+		    "bar=bla");
     bool isOk = inif.tryDecode(str).isOk();
     REQUIRE(isOk);
     
@@ -834,7 +1174,10 @@ TEST_CASE("save with bool fields", "IniFile")
 #else
     std::string result = inif.encode();
 #endif
-    REQUIRE(result == "[Foo]\nbar1=true\nbar2=false\n");
+    REQUIRE(result ==
+	    "[Foo]\n"
+	    "bar1=true\n"
+	    "bar2=false\n");
 }
 
 TEST_CASE("save with (unsigned) (long) int fields", "IniFile")
@@ -904,7 +1247,8 @@ TEST_CASE("save with custom field sep", "IniFile")
 
 TEST_CASE("spaces are not taken into account in field names", "IniFile")
 {
-    std::string str("[Foo]\n  \t  bar  \t  =hello world");
+    std::string str("[Foo]\n"
+		    "  \t  bar  \t  =hello world");
     INIF
 
     REQUIRE(inif["Foo"].find("bar") != inif["Foo"].end());
@@ -913,7 +1257,8 @@ TEST_CASE("spaces are not taken into account in field names", "IniFile")
 
 TEST_CASE("spaces are not taken into account in field values", "IniFile")
 {
-    std::string str("[Foo]\nbar=  \t  hello world  \t  ");
+    std::string str("[Foo]\n"
+		    "bar=  \t  hello world  \t  ");
     INIF
 
     REQUIRE(inif["Foo"]["bar"].toString() == "hello world");
@@ -921,7 +1266,8 @@ TEST_CASE("spaces are not taken into account in field values", "IniFile")
 
 TEST_CASE("spaces are not taken into account in sections", "IniFile")
 {
-    std::string str("  \t  [Foo]  \t  \nbar=bla");
+    std::string str("  \t  [Foo]  \t  \n"
+		    "bar=bla");
     INIF
 
 // #ifdef THROW_PREVENTED
