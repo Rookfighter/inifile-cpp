@@ -149,22 +149,26 @@ TEST_CASE(TH " " SS " fail to decode ini string with text after section", "IniFi
 #endif
 }
 
-TEST_CASE(TH " " SS " fail to decode ini string with field without section", "IniFile")
+TEST_CASE(TH " " SS " fail to decode ini string with duplicate section",
+	  "IniFile")
 {
-    std::string str("# comment\n"
+    std::string str("[Fox]\n"
 		    "bar=hello world\n"
 		    "[Test]\n"
-		    "foo=say goodby");
+		    "foo=irrelevant\n"
+		    "[Fox]\n"
+		    "foo=never reached");
     ini::IniFile inif;
 #ifdef THROW_PREVENTED
     ini::IniFile::DecEncResult deResult = inif.tryDecode(str);
     REQUIRE(deResult.getErrorCode()
-	    == ini::DecEncErrorCode::FIELD_WITHOUT_SECTION);
-    REQUIRE(deResult.getLineNumber() == 2);
+	    == ini::DecEncErrorCode::SECTION_NOT_UNIQUE);
+    REQUIRE(deResult.getLineNumber() == 5);
 #else
-    REQUIRE_THROWS_AS(inif.decode(str), std::logic_error);
+    REQUIRE_THROWS_AS(inif.decode(str),  std::logic_error);
 #endif
 }
+
 
 
 TEST_CASE(TH " " SS " fail to decode ini string with illegal line", "IniFile")
@@ -196,6 +200,43 @@ TEST_CASE(TH " " SS " fail to decode ini string with field without custom separa
     REQUIRE(deResult.getErrorCode()
 	    == ini::DecEncErrorCode::ILLEGAL_LINE);
     REQUIRE(deResult.getLineNumber() == 2);
+#else
+    REQUIRE_THROWS_AS(inif.decode(str),  std::logic_error);
+#endif
+}
+
+
+
+TEST_CASE(TH " " SS " fail to decode ini string with field without section", "IniFile")
+{
+    std::string str("# comment\n"
+		    "bar=hello world\n"
+		    "[Test]\n"
+		    "foo=say goodby");
+    ini::IniFile inif;
+#ifdef THROW_PREVENTED
+    ini::IniFile::DecEncResult deResult = inif.tryDecode(str);
+    REQUIRE(deResult.getErrorCode()
+	    == ini::DecEncErrorCode::FIELD_WITHOUT_SECTION);
+    REQUIRE(deResult.getLineNumber() == 2);
+#else
+    REQUIRE_THROWS_AS(inif.decode(str), std::logic_error);
+#endif
+}
+
+TEST_CASE(TH " " SS " fail to decode ini string with duplicate field", "IniFile")
+{
+    std::string str("[Foo]\n"
+		    "bar=hello\n"
+		    "bar=World");
+
+
+    ini::IniFile inif;
+#ifdef THROW_PREVENTED
+    ini::IniFile::DecEncResult deResult = inif.tryDecode(str);
+    REQUIRE(deResult.getErrorCode()
+	    == ini::DecEncErrorCode::FIELD_NOT_UNIQUE_IN_SECTION);
+    REQUIRE(deResult.getLineNumber() == 3);
 #else
     REQUIRE_THROWS_AS(inif.decode(str),  std::logic_error);
 #endif
@@ -483,18 +524,6 @@ TEST_CASE(TH " " SS " parse empty field", "IniFile")
     REQUIRE(inif["Foo"]["bar"].toString() == "");
 }
 
-// TBD: this seems to be very crude to me 
-TEST_CASE(TH " " SS " parse section with duplicate field", "IniFile")
-{
-    std::string str("[Foo]\n"
-		    "bar=hello\n"
-		    "bar=World");
-    INIF
-
-    REQUIRE(inif.size() == 1);
-    REQUIRE(inif["Foo"].size() == 1);
-    REQUIRE(inif["Foo"]["bar"].toString() == "World");
-}
 
 /***************************************************
  * get as type

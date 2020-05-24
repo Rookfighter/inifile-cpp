@@ -81,7 +81,7 @@ namespace ini
 
     public:
       // TBC: needed? 
-         IniField()
+        IniField()
 	   : value_(),
 	     typeLastOutConversion_(),
 	     failedLastOutConversion_(false),
@@ -474,22 +474,48 @@ namespace ini
      */
     enum DecEncErrorCode
     {
+        // indicates that encoding/decoding finished without failure 
         NO_FAILURE = 0,
+	// indicates that a section was not closed,
+	// i.e. a line started with '[' but had no according ']'
+	// in the course of decoding. 
 	SECTION_NOT_CLOSED,
+	// indicates that a section name was empty,
+	// i.e. a line started with '[]'
+	// in the course of decoding. 
 	SECTION_NAME_EMPTY,
+	// indicates that in a line defining a section there was text after ']'
+	// i.e. ']' was not immediately followed by '\n' 
+	// in the course of decoding. 
 	SECTION_TEXT_AFTER,
+	// indicates that a section name occurred more than once
+	// in the course of decoding. 
+	SECTION_NOT_UNIQUE,
+	// indicates that during decoding an illegal line was found,
+	// i.e. a line which is neither empty, 
+	// (nor a comment lineby default starting with '#') 
+	// nor a section line (starting with '[')
+	// nor a key-value-line (containing by default '='). 
 	ILLEGAL_LINE,
+	// indicates that during decoding a field was found 
+	// without preceeding section 
 	FIELD_WITHOUT_SECTION,
-	// TBD: occurs for file streams only, not for string streams
+	// indicates that during decoding a field was found 
+	// with a key which is not unique within its section. 
+	FIELD_NOT_UNIQUE_IN_SECTION,
+	
+	// TBD: occurs during decoding
+	// of file streams only, not for string streams
 	// if trying to open file which does not exist, or is not readable 
 	STREAM_OPENR_FAILED,
-	// TBD: occurs for file streams only, not for string streams
+	// TBD: occurs during encoding
+	// for file streams only, not for string streams
 	// if trying to open file which does not exist, or is not writable 
 	STREAM_OPENW_FAILED,
-	// if trying to read from a directory which is readable
+	// during decoding if trying to read from a directory which is readable
 	// maybe other cases 
 	STREAM_READ_FAILED,
-	// if trying to read from a directory which is writable 
+	// during encoding if trying to write to directory which is writable 
 	// maybe other cases 
 	STREAM_WRITE_FAILED
     };
@@ -893,7 +919,8 @@ namespace ini
 			deResult.set(SECTION_NAME_EMPTY, lineNo);
 		        return deResult;
 		    }
-                     // check if there is a newline following closing bracket
+                    // check if there is text
+		    // between closing bracket and newline 
                     if(pos + 1 != line.length())
 		    {
 			deResult.set(SECTION_TEXT_AFTER, lineNo);
@@ -901,6 +928,14 @@ namespace ini
 		    }
                     // retrieve section name
                     std::string secName = line.substr(1, pos - 1);
+		    // std::cout << "section name '"
+		    // 	      << secName << "'" << std::endl;
+		    // check if section name occurred before 
+		    if ((*this).count(secName) == 1)
+		    {
+		        deResult.set(SECTION_NOT_UNIQUE, lineNo);
+		        return deResult;
+		    }
                     currentSection = &((*this)[secName]);
 		    //std::cout << " found section " << currentSection << std::endl;
                }
@@ -922,12 +957,20 @@ namespace ini
 		        return deResult;
 		    }
 
-                    // retrieve field name and value
-                    std::string name = line.substr(0, pos);
-                    trim(name);
+                    // retrieve field key and value
+                    std::string key = line.substr(0, pos);
+                    trim(key);
                     std::string value = line.substr(pos + 1, std::string::npos);
                     trim(value);
-                    (*currentSection)[name] = value;
+
+		    // check if key name is  occurred before within the section
+		    if ((*currentSection).count(key) == 1)
+		    {
+		        deResult.set(FIELD_NOT_UNIQUE_IN_SECTION, lineNo);
+		        return deResult;
+		    }
+ 
+                    (*currentSection)[key] = value;
 		}
 	    }
 	    // TBD: treat case where the stream fails.
