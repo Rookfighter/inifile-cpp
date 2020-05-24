@@ -21,7 +21,7 @@ include_directories(
     ${CATCH2_INCLUDE_DIR}
 )
 
-set(TEST_SRC "test/main.cpp" "test/test_inifile.cpp")
+set(TEST_SRC "test/main.cpp")# "test/test_inifile.cpp")
 add_executable(run_tests ${TEST_SRC})
 
 install(

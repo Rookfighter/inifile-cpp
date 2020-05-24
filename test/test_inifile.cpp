@@ -6,38 +6,25 @@
  *    License: MIT
  */
 
-#include <catch.hpp>
+//#include <catch.hpp>
 // TBD: tests whether throws prevented or not. 
-//#define SSTREAM_PREVENTED
-//#define   THROW_PREVENTED
 #include "inicpp.h"
-
-#include <filesystem>
 #include <iostream>
-#include <string.h>
-#include <unistd.h>
 
-
-#define TESTFILE(NAME) ((std::filesystem::current_path() / \
-			 ".." / "test" / "iniFiles" / NAME).string())
-// #define PATH_TEST_FILES std::filesystem::current_path() /	
-//  ".." / "test" / "iniFiles" 
-
-
-#ifdef THROW_PREVENTED
-#define INIF \
-  ini::IniFile inif;				\
-  bool isOk = inif.tryDecode(str).isOk();	\
-  REQUIRE(isOk);				
+#ifdef SSTREAM_PREVENTED
+#define SS "SSY"
 #else
-#define INIF \
-  ini::IniFile inif;   \
-  inif.decode(str);
+#define SS "SSN"
+#endif
+
+#ifdef   THROW_PREVENTED
+#define TH "THY"
+#else
+#define TH "THN"
 #endif
 
 
-
-TEST_CASE("decode and encode ini string", "IniFile")
+TEST_CASE(TH " " SS " decode and encode ini string", "IniFile")
 {
     std::string str("[Foo]\n"
 		    "bar=hello world\n"
@@ -66,7 +53,7 @@ TEST_CASE("decode and encode ini string", "IniFile")
 	    "[Test]\n");
 }
 
-TEST_CASE("decode and encode 2nd ini string", "IniFile")
+TEST_CASE(TH " " SS " decode and encode 2nd ini string", "IniFile")
 {
     std::string str("[git]\n"
 		    "revision=v0.0.1\n"
@@ -99,7 +86,7 @@ TEST_CASE("decode and encode 2nd ini string", "IniFile")
 	    "nameId=GENERIC\n");
 }
 
-TEST_CASE("decode empty ini string", "IniFile")
+TEST_CASE(TH " " SS " decode empty ini string", "IniFile")
 {
     std::string str("");
     INIF
@@ -110,7 +97,7 @@ TEST_CASE("decode empty ini string", "IniFile")
 
 
 
-TEST_CASE("fail to decode ini string with section not closed", "IniFile")
+TEST_CASE(TH " " SS " fail to decode ini string with section not closed", "IniFile")
 {
     std::string str("[Foo]\n"
 		    "bar=hello world\n"
@@ -128,7 +115,7 @@ TEST_CASE("fail to decode ini string with section not closed", "IniFile")
 }
 
 
-TEST_CASE("fail to decode ini string with empty section name", "IniFile")
+TEST_CASE(TH " " SS " fail to decode ini string with empty section name", "IniFile")
 {
     std::string str("[Foo]\n"
 		    "bar=hello world\n"
@@ -145,7 +132,7 @@ TEST_CASE("fail to decode ini string with empty section name", "IniFile")
 #endif
 }
 
-TEST_CASE("fail to decode ini string with text after section", "IniFile")
+TEST_CASE(TH " " SS " fail to decode ini string with text after section", "IniFile")
 {
     std::string str("[Foo]\n"
 		    "bar=hello world\n"
@@ -162,7 +149,7 @@ TEST_CASE("fail to decode ini string with text after section", "IniFile")
 #endif
 }
 
-TEST_CASE("fail to decode ini string with field without section", "IniFile")
+TEST_CASE(TH " " SS " fail to decode ini string with field without section", "IniFile")
 {
     std::string str("# comment\n"
 		    "bar=hello world\n"
@@ -180,7 +167,7 @@ TEST_CASE("fail to decode ini string with field without section", "IniFile")
 }
 
 
-TEST_CASE("fail to decode ini string with illegal line", "IniFile")
+TEST_CASE(TH " " SS " fail to decode ini string with illegal line", "IniFile")
 {
     std::string str("[Foo]\n"
 		    "bar no_separator\n"
@@ -197,7 +184,7 @@ TEST_CASE("fail to decode ini string with illegal line", "IniFile")
 #endif
 }
 
-TEST_CASE("fail to decode ini string with field without custom separator", "IniFile")
+TEST_CASE(TH " " SS " fail to decode ini string with field without custom separator", "IniFile")
 {
     std::string str("[Foo]\n"
 		    "bar=no_separator\n"
@@ -215,7 +202,7 @@ TEST_CASE("fail to decode ini string with field without custom separator", "IniF
 }
 
 
-TEST_CASE("decode ini string with comment only", "IniFile")
+TEST_CASE(TH " " SS " decode ini string with comment only", "IniFile")
 {
     std::string str("# this is a comment");
     INIF
@@ -224,7 +211,7 @@ TEST_CASE("decode ini string with comment only", "IniFile")
 }
 
 
-TEST_CASE("decode ini string with empty section", "IniFile")
+TEST_CASE(TH " " SS " decode ini string with empty section", "IniFile")
 {
     std::string str("[Foo]");
     INIF
@@ -234,7 +221,7 @@ TEST_CASE("decode ini string with empty section", "IniFile")
 }
 
 
-TEST_CASE("fail load non-existing ini file", "IniFile")
+TEST_CASE(TH " " SS " fail load non-existing ini file", "IniFile")
 {
     const std::string sfName = "doesNotExist.ini";
     const std::string fName = TESTFILE(sfName);
@@ -251,7 +238,7 @@ TEST_CASE("fail load non-existing ini file", "IniFile")
 #endif
 }
 
-TEST_CASE("fail load/save directory as ini file", "IniFile")
+TEST_CASE(TH " " SS " fail load/save directory as ini file", "IniFile")
 {
     const std::string sfName = "dir.ini";
     const std::string fName = TESTFILE(sfName);
@@ -280,7 +267,7 @@ TEST_CASE("fail load/save directory as ini file", "IniFile")
 #endif
 }
 
-TEST_CASE("fail load unreadable as ini file", "IniFile")
+TEST_CASE(TH " " SS " fail load unreadable as ini file", "IniFile")
 {
     const std::string sfName = "writeOnly.ini";
     const std::string fName = TESTFILE(sfName);
@@ -311,7 +298,7 @@ TEST_CASE("fail load unreadable as ini file", "IniFile")
 				 std::filesystem::perm_options::add);
 }
 
-TEST_CASE("fail save unwritable as ini file", "IniFile")
+TEST_CASE(TH " " SS " fail save unwritable as ini file", "IniFile")
 {
     const std::string sfName = "readOnly.ini";
     const std::string fName = TESTFILE(sfName);
@@ -338,7 +325,7 @@ TEST_CASE("fail save unwritable as ini file", "IniFile")
 }
 
 
-TEST_CASE("save and reload ini file", "IniFile")
+TEST_CASE(TH " " SS " save and reload ini file", "IniFile")
 {
     const std::string sfName = "example.ini";
     const std::string fName = TESTFILE(sfName);
@@ -416,7 +403,7 @@ TEST_CASE("save and reload ini file", "IniFile")
 }
 
 
-TEST_CASE("load ini file with trailing newline", "IniFile")
+TEST_CASE(TH " " SS " load ini file with trailing newline", "IniFile")
 {
     const std::string sfName = "exampleNl.ini";
     const std::string fName = TESTFILE(sfName);
@@ -450,7 +437,7 @@ TEST_CASE("load ini file with trailing newline", "IniFile")
 	      "foo2=true\n");
 }
 
-TEST_CASE("load ini file with no trailing newline", "IniFile")
+TEST_CASE(TH " " SS " load ini file with no trailing newline", "IniFile")
 {
     const std::string sfName = "exampleNoNl.ini";
     const std::string fName = TESTFILE(sfName);
@@ -485,7 +472,7 @@ TEST_CASE("load ini file with no trailing newline", "IniFile")
 }
 
 
-TEST_CASE("parse empty field", "IniFile")
+TEST_CASE(TH " " SS " parse empty field", "IniFile")
 {
     std::string str("[Foo]\n"
 		    "bar=");
@@ -497,7 +484,7 @@ TEST_CASE("parse empty field", "IniFile")
 }
 
 // TBD: this seems to be very crude to me 
-TEST_CASE("parse section with duplicate field", "IniFile")
+TEST_CASE(TH " " SS " parse section with duplicate field", "IniFile")
 {
     std::string str("[Foo]\n"
 		    "bar=hello\n"
@@ -514,7 +501,7 @@ TEST_CASE("parse section with duplicate field", "IniFile")
  ***************************************************/
 
 
-TEST_CASE("parse field as c-string", "IniFile")
+TEST_CASE(TH " " SS " parse field as c-string", "IniFile")
 {
     std::string str("[Foo]\n"
 		    "bar=blaC");
@@ -529,7 +516,7 @@ TEST_CASE("parse field as c-string", "IniFile")
     REQUIRE(!inif["Foo"]["bar"].failedLastOutConversion());
 }
 
-TEST_CASE("parse field as std::string", "IniFile")
+TEST_CASE(TH " " SS " parse field as std::string", "IniFile")
 {
     std::string str("[Foo]\n"
 		    "bar=blaS");
@@ -545,7 +532,7 @@ TEST_CASE("parse field as std::string", "IniFile")
     REQUIRE(!inif["Foo"]["bar"].failedLastOutConversion());
 }
 
-TEST_CASE("parse field as double", "IniFile")
+TEST_CASE(TH " " SS " parse field as double", "IniFile")
 {
     std::string str("[Foo]"
 			  "\nbar0=-0" "\nbar1=1.2" "\nbar2=1" "\nbar3=-2.4"
@@ -611,7 +598,7 @@ TEST_CASE("parse field as double", "IniFile")
     REQUIRE(sec["barL3"].orDefault(0.0) == INFINITY);
 }
 
-TEST_CASE("fail to parse field as double", "IniFile")
+TEST_CASE(TH " " SS " fail to parse field as double", "IniFile")
 {
    std::string str("[Foo]"
 		   "\nbar1=bla" "\nbar2=-2.5e4x" "\nbar3=");
@@ -634,7 +621,7 @@ TEST_CASE("fail to parse field as double", "IniFile")
 }
 
 
-TEST_CASE("parse field as float", "IniFile")
+TEST_CASE(TH " " SS " parse field as float", "IniFile")
 {
     std::string str("[Foo]"
 		    "\nbar0=-0" "\nbar1=1.2" "\nbar2=1" "\nbar3=-2.4"
@@ -689,7 +676,7 @@ TEST_CASE("parse field as float", "IniFile")
     REQUIRE(sec["barL3"].orDefault(0.f) == INFINITY);
 }
 
-TEST_CASE("fail to parse field as float", "IniFile")
+TEST_CASE(TH " " SS " fail to parse field as float", "IniFile")
 {
     std::string str("[Foo]"
 		    "\nbar1=bla" "\nbar2=-2.5e4x" "\nbar3=");
@@ -711,7 +698,7 @@ TEST_CASE("fail to parse field as float", "IniFile")
     REQUIRE(sec["bar3"].failedLastOutConversion());
 }
 
-TEST_CASE("parse field as (unsigned) long int, fail if negative unsigned",
+TEST_CASE(TH " " SS " parse field as (unsigned) long int, fail if negative unsigned",
 	  "IniFile")
 {
     std::string str("[Foo]" "\nbar0=0" "\nbar1=1" "\nbar2=-42"
@@ -811,7 +798,7 @@ TEST_CASE("parse field as (unsigned) long int, fail if negative unsigned",
 }
 
 
-TEST_CASE("fail to parse field as (unsigned) long int", "IniFile")
+TEST_CASE(TH " " SS " fail to parse field as (unsigned) long int", "IniFile")
 {
     std::string str("[Foo]"
 		    "\nbar1=bla" "\nbar2=" "\nbar3=2x" "\nbar4=+"
@@ -891,7 +878,7 @@ TEST_CASE("fail to parse field as (unsigned) long int", "IniFile")
 }
 
 
-TEST_CASE("parse field as (unsigned) int, fail if negative unsigned",
+TEST_CASE(TH " " SS " parse field as (unsigned) int, fail if negative unsigned",
 	  "IniFile")
 {
     std::string str("[Foo]"
@@ -995,7 +982,7 @@ TEST_CASE("parse field as (unsigned) int, fail if negative unsigned",
 }
 
 
-TEST_CASE("fail to parse field as (unsigned) int", "IniFile")
+TEST_CASE(TH " " SS " fail to parse field as (unsigned) int", "IniFile")
 {
     std::string str("[Foo]"
 		    "\nbar1=bla" "\nbar2=" "\nbar3=2x" "\nbar4=+"
@@ -1061,7 +1048,7 @@ TEST_CASE("fail to parse field as (unsigned) int", "IniFile")
 
 
 
-TEST_CASE("parse field as bool", "IniFile")
+TEST_CASE(TH " " SS " parse field as bool", "IniFile")
 {
     std::string str("[Foo]\n"
 		    "bar1=true\n"
@@ -1088,7 +1075,7 @@ INIF
     REQUIRE(!sec["bar3"].failedLastOutConversion());
 }
 
-TEST_CASE("failed to parse field as bool", "IniFile")
+TEST_CASE(TH " " SS " failed to parse field as bool", "IniFile")
 {
     std::string str("[Foo]\n"
 		    "bar=yes");
@@ -1113,7 +1100,7 @@ INIF
 
 
 
-TEST_CASE("parse field with custom field sep", "IniFile")
+TEST_CASE(TH " " SS " parse field with custom field sep", "IniFile")
 {
     std::string str("[Foo]\n"
 		    "bar1:true\n"
@@ -1134,7 +1121,7 @@ TEST_CASE("parse field with custom field sep", "IniFile")
     REQUIRE( inif["Foo"]["bar3"].asUnconditional<bool>());
 }
 
-TEST_CASE("parse file with comment", "IniFile")
+TEST_CASE(TH " " SS " parse file with comment", "IniFile")
 {
     std::string str("[Foo]\n"
 		    "# this is a test\n"
@@ -1146,7 +1133,7 @@ INIF
     REQUIRE(inif["Foo"]["bar"].asUnconditional<std::string>() == "bla");
 }
 
-TEST_CASE("parse with custom comment char", "IniFile")
+TEST_CASE(TH " " SS " parse with custom comment char", "IniFile")
 {
     ini::IniFile inif('=', '$');
     std::string str("[Foo]\n"
@@ -1160,7 +1147,7 @@ TEST_CASE("parse with custom comment char", "IniFile")
     REQUIRE(inif["Foo"]["bar"].asUnconditional<std::string>() == "bla");
 }
 
-TEST_CASE("save with bool fields", "IniFile")
+TEST_CASE(TH " " SS " save with bool fields", "IniFile")
 {
     ini::IniFile inif;
     inif["Foo"]["bar1"] = true;
@@ -1180,7 +1167,7 @@ TEST_CASE("save with bool fields", "IniFile")
 	    "bar2=false\n");
 }
 
-TEST_CASE("save with (unsigned) (long) int fields", "IniFile")
+TEST_CASE(TH " " SS " save with (unsigned) (long) int fields", "IniFile")
 {
     ini::IniFile inif;
     inif["Foo"]["bar1"] =  1u;
@@ -1200,7 +1187,7 @@ TEST_CASE("save with (unsigned) (long) int fields", "IniFile")
 }
 
 // TBD: infinite and NaN
-TEST_CASE("save with double/float fields", "IniFile")
+TEST_CASE(TH " " SS " save with double/float fields", "IniFile")
 {
     ini::IniFile inif;
     inif["Foo"]["bar1"] = 1.2;
@@ -1218,7 +1205,7 @@ TEST_CASE("save with double/float fields", "IniFile")
     REQUIRE(result == "[Foo]\nbar1=1.2\nbar2=-2.4\nbar3=-2.5\n");
 }
 
-TEST_CASE("save with custom field sep", "IniFile")
+TEST_CASE(TH " " SS " save with custom field sep", "IniFile")
 {
     ini::IniFile inif(':', '#');
     inif["Foo"]["bar1"] = true;
@@ -1245,7 +1232,7 @@ TEST_CASE("save with custom field sep", "IniFile")
 
 
 
-TEST_CASE("spaces are not taken into account in field names", "IniFile")
+TEST_CASE(TH " " SS " spaces are not taken into account in field names", "IniFile")
 {
     std::string str("[Foo]\n"
 		    "  \t  bar  \t  =hello world");
@@ -1255,7 +1242,7 @@ TEST_CASE("spaces are not taken into account in field names", "IniFile")
     REQUIRE(inif["Foo"]["bar"].toString() == "hello world");
 }
 
-TEST_CASE("spaces are not taken into account in field values", "IniFile")
+TEST_CASE(TH " " SS " spaces are not taken into account in field values", "IniFile")
 {
     std::string str("[Foo]\n"
 		    "bar=  \t  hello world  \t  ");
@@ -1264,7 +1251,7 @@ TEST_CASE("spaces are not taken into account in field values", "IniFile")
     REQUIRE(inif["Foo"]["bar"].toString() == "hello world");
 }
 
-TEST_CASE("spaces are not taken into account in sections", "IniFile")
+TEST_CASE(TH " " SS " spaces are not taken into account in sections", "IniFile")
 {
     std::string str("  \t  [Foo]  \t  \n"
 		    "bar=bla");
@@ -1280,3 +1267,15 @@ TEST_CASE("spaces are not taken into account in sections", "IniFile")
 
     REQUIRE(inif.find("Foo") != inif.end());
 }
+
+
+#undef SS
+#undef TH
+
+#ifdef SSTREAM_PREVENTED
+#undef SSTREAM_PREVENTED
+#endif
+
+#ifdef   THROW_PREVENTED
+#undef   THROW_PREVENTED
+#endif
