@@ -538,11 +538,15 @@ namespace ini
 	     */
 	    DecEncErrorCode errorCode;
 	    /**
-	     * This is immaterial if no failure occurred yet. 
+	     * The line number where a failure occurs 
+	     * during decode/encode, 
+	     * line numbers starting with 1. 
+	     * This is immaterial if no failure occurred (yet). 
+	     * At the end of successful encode/decode 
+	     * it is the last line enumber. 
 	     * It is set to 0 if the failure does not correspond 
 	     * with a line number, 
 	     * e.g. if open file fails. 
-	     * Else it is the line number where the failure occurred. 
 	     */
 	    uint lineNumber;
 	    /*
@@ -558,18 +562,14 @@ namespace ini
 	      reset();
 	    }
 
-	    void set(DecEncErrorCode errorCode, uint lineNumber)
+	    void set(DecEncErrorCode errorCode)
 	    {
 	     	this->errorCode  = errorCode;
-		assert(this->lineNumber == lineNumber
-		       && "line number out of sync");
-	     	this->lineNumber = lineNumber;
 	    }
 	    void reset()
 	    {
 	      this->errorCode  = NO_FAILURE;
 	      this->lineNumber = 0;
-	      //set(NO_FAILURE, 0);
 	    }
 	    void incLineNo()
 	    {
@@ -902,20 +902,16 @@ namespace ini
 
         DecEncResult tryDecode(InStreamInterface &iStream)
 	{
-            int lineNo = 0;
 	    deResult.reset();
 	    if (!iStream.isOpen())
 	    {
-	        deResult.set(STREAM_OPENR_FAILED, lineNo);
+	        deResult.set(STREAM_OPENR_FAILED);
 		return deResult;
 	    }
-	    lineNo++;
 	    deResult.incLineNo();
 	    clear();
 	    IniSection *currentSection = NULL;
-	    for (std::string line;
-		 iStream.getLine(line);
-		 lineNo++,deResult.incLineNo())
+	    for (std::string line; iStream.getLine(line); deResult.incLineNo())
             {
                 trim(line);
 		//std::cout << "decoding line " << line << std::endl;
@@ -931,20 +927,20 @@ namespace ini
                     std::size_t pos = line.find(SEC_END);
                     if(pos == std::string::npos)
 		    {
-		        deResult.set(SECTION_NOT_CLOSED, lineNo);
+		        deResult.set(SECTION_NOT_CLOSED);
 		        return deResult;
 		    }
                     // check if the section name is empty
                     if(pos == 1)
 		    {
-			deResult.set(SECTION_NAME_EMPTY, lineNo);
+			deResult.set(SECTION_NAME_EMPTY);
 		        return deResult;
 		    }
                     // check if there is text
 		    // between closing bracket and newline 
                     if(pos + 1 != line.length())
 		    {
-			deResult.set(SECTION_TEXT_AFTER, lineNo);
+			deResult.set(SECTION_TEXT_AFTER);
 		        return deResult;
 		    }
                     // retrieve section name
@@ -954,7 +950,7 @@ namespace ini
 		    // check if section name occurred before 
 		    if ((*this).count(secName) == 1)
 		    {
-		        deResult.set(SECTION_NOT_UNIQUE, lineNo);
+		        deResult.set(SECTION_NOT_UNIQUE);
 		        return deResult;
 		    }
                     currentSection = &((*this)[secName]);
@@ -966,7 +962,7 @@ namespace ini
                     std::size_t pos = line.find(fieldSep_);
                     if(pos == std::string::npos)
 		    {
-		        deResult.set(ILLEGAL_LINE, lineNo);
+		        deResult.set(ILLEGAL_LINE);
 		        return deResult;
 		    }
                     // line is a field definition
@@ -974,7 +970,7 @@ namespace ini
                     // check if section was already opened
                     if(currentSection == NULL)
 		    {
-		        deResult.set(FIELD_WITHOUT_SECTION, lineNo);
+		        deResult.set(FIELD_WITHOUT_SECTION);
 		        return deResult;
 		    }
 
@@ -987,7 +983,7 @@ namespace ini
 		    // check if key name is  occurred before within the section
 		    if ((*currentSection).count(key) == 1)
 		    {
-		        deResult.set(FIELD_NOT_UNIQUE_IN_SECTION, lineNo);
+		        deResult.set(FIELD_NOT_UNIQUE_IN_SECTION);
 		        return deResult;
 		    }
  
@@ -1002,7 +998,7 @@ namespace ini
 	    if (iStream.bad())
 	    {
 	      //std::cout << "bad  bit is set" << std::endl;
-	      deResult.set(STREAM_READ_FAILED, lineNo);
+	      deResult.set(STREAM_READ_FAILED);
 	      return deResult;
 	    }
 	    // TBD: clarify
@@ -1010,7 +1006,7 @@ namespace ini
 	    iStream.close();
 
 	    // signifies success
-	    deResult.reset();
+	    //deResult.reset();// for line number only, well... 
 	    return deResult;
 	}
 
@@ -1316,38 +1312,33 @@ namespace ini
      
         DecEncResult tryEncode(OutStreamInterface &oStream)
         {
-            int lineNo = 0;
 	    deResult.reset();
 	    if (!oStream.isOpen())
 	    {
-	        deResult.set(STREAM_OPENW_FAILED, lineNo);
+	        deResult.set(STREAM_OPENW_FAILED);
 		return deResult;
 	    }
-	    lineNo++;
 	    deResult.incLineNo();
             // iterate through all sections in this file
             for (const auto &filePair : *this)
             {
-	      
 	        oStream.append(SEC_START)
 		  .append(filePair.first).append(SEC_END)
 		  .appendNl();
 		deResult.incLineNo();
-		lineNo++;
                 // iterate through all fields in the section
                 for (const auto &secPair : filePair.second)
 		{
 		    oStream.append(secPair.first            ).append(fieldSep_)
 		      .     append(secPair.second.toString()).appendNl();
 		    deResult.incLineNo();
-		    lineNo++;
 		}
             }
 	    
 	    if (oStream.bad())
 	    {
 	      //std::cout << "bad  bit is set" << std::endl;
-	      deResult.set(STREAM_WRITE_FAILED, lineNo);
+	      deResult.set(STREAM_WRITE_FAILED);
 	      return deResult;
 	    }
 	    // TBD: clarify
@@ -1355,7 +1346,6 @@ namespace ini
 	    oStream.close();
 
 	    // signifies success
-	    deResult.reset();
 	    return deResult;
         }
 
