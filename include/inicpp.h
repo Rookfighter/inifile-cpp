@@ -446,13 +446,47 @@ namespace ini
     };
 
 
-    class IniSection : public std::map<std::string, IniField>
+    class IniSection
     {
+    private:
+        std::map<std::string, IniField> map;
     public:
         IniSection()
         {}
         ~IniSection()
         {}
+
+        IniField & operator[](std::string key)
+        {
+	    return map[key];
+	}
+
+        uint size() const
+        {
+	    return map.size();
+        }
+
+        uint count(std::string key)
+        {
+	    return map.count(key);
+        }
+
+        std::map<std::string, IniField>::iterator begin()
+        {
+	    return map.begin();
+	}
+
+        std::map<std::string, IniField>::iterator end()
+        {
+	    return map.end();
+	}
+
+        std::map<std::string, IniField>::iterator find(std::string key)
+        {
+	    return map.find(key);
+	}
+
+
 #ifdef SSTREAM_PREVENTED
         uint lengthText()
         {
@@ -526,7 +560,7 @@ namespace ini
     // };
 
 
-    class IniFile : public std::map<std::string, IniSection>
+    class IniFile
     {
     public:
       	class DecEncResult
@@ -597,6 +631,7 @@ namespace ini
  	const static char SEC_END   = ']';
 
         DecEncResult deResult;
+        std::map<std::string, IniSection> map;
      
         char fieldSep_;
         char comment_;
@@ -625,6 +660,43 @@ namespace ini
 
         ~IniFile()
         {}
+
+
+
+        IniSection & operator[](std::string key)
+        {
+	    return map[key];
+	}
+
+        uint size() const
+        {
+	    return map.size();
+        }
+
+        uint count(std::string key)
+        {
+	    return map.count(key);
+        }
+
+        std::map<std::string, IniSection>::iterator begin()
+        {
+	    return map.begin();
+	}
+
+        std::map<std::string, IniSection>::iterator end()
+        {
+	    return map.end();
+	}
+
+        std::map<std::string, IniSection>::iterator find(std::string key)
+        {
+	    return map.find(key);
+	}
+
+        void clear()
+        {
+	    return map.clear();
+        }
 
 
 # ifndef THROW_PREVENTED
@@ -1290,14 +1362,14 @@ namespace ini
 	        return deResult.set(STREAM_OPENW_FAILED);
 	    deResult.incLineNo();
             // iterate through all sections in this file
-            for (const auto &filePair : *this)
+            for (auto &filePair : *this)
             {
 	        oStream.append(SEC_START)
 		  .append(filePair.first).append(SEC_END)
 		  .appendNl();
 		deResult.incLineNo();
                 // iterate through all fields in the section
-                for (const auto &secPair : filePair.second)
+                for (auto &secPair : filePair.second)
 		{
 		    oStream.append(secPair.first            ).append(fieldSep_)
 		      .     append(secPair.second.toString()).appendNl();
