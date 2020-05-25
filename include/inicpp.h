@@ -14,7 +14,8 @@
 #include <sstream>
 #endif
 
-// For debugging only 
+// For debugging only
+// but included from tests 
 //#include <iostream>
 
 
@@ -27,7 +28,7 @@
 //#include <stdio.h>
 
 
-// CAUTION: for embedded systems in general it is recommanded
+// CAUTION: for embedded systems in general it is recommended
 // to set following switches:
 // - THROW_PREVENTED disallows methods (and constructors) throwing exceptions
 // - SSTREAM_PREVENTED activates implementations not using streams
@@ -520,6 +521,10 @@ namespace ini
 	STREAM_WRITE_FAILED
     };
 
+    // class LightweightMap
+    // {
+    // };
+
 
     class IniFile : public std::map<std::string, IniSection>
     {
@@ -533,7 +538,11 @@ namespace ini
 	     */
 	    DecEncErrorCode errorCode;
 	    /**
-	     * This is -1 if no failure occurred yet. 
+	     * This is immaterial if no failure occurred yet. 
+	     * It is set to 0 if the failure does not correspond 
+	     * with a line number, 
+	     * e.g. if open file fails. 
+	     * Else it is the line number where the failure occurred. 
 	     */
 	    int lineNumber;
 	    /*
@@ -556,7 +565,7 @@ namespace ini
 	    }
 	    void reset()
 	    {
-	      set(NO_FAILURE, -1);
+	      set(NO_FAILURE, 0);
 	    }
 
 	public:
@@ -886,13 +895,14 @@ namespace ini
 
         DecEncResult tryDecode(InStreamInterface &iStream)
 	{
+            int lineNo = 0;
 	    if (!iStream.isOpen())
 	    {
-	        deResult.set(STREAM_OPENR_FAILED, -1);
+	        deResult.set(STREAM_OPENR_FAILED, lineNo);
 		return deResult;
 	    }
+	    lineNo++;
 	    clear();
-            int lineNo = 1;
 	    IniSection *currentSection = NULL;
 	    for (std::string line; iStream.getLine(line); lineNo++)
             {
@@ -1295,12 +1305,13 @@ namespace ini
      
         DecEncResult tryEncode(OutStreamInterface &oStream)
         {
+            int lineNo = 0;
 	    if (!oStream.isOpen())
 	    {
-	        deResult.set(STREAM_OPENW_FAILED, -1);
+	        deResult.set(STREAM_OPENW_FAILED, lineNo);
 		return deResult;
 	    }
-	    int lineNo = 1;
+	    lineNo++;
             // iterate through all sections in this file
             for (const auto &filePair : *this)
             {

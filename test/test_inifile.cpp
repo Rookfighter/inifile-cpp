@@ -24,6 +24,12 @@
 #endif
 
 
+/*
+ * General tests of default strings: 
+ * Failure code ini::DecEncErrorCode::NO_FAILURE
+ */
+
+
 TEST_CASE(TH " " SS " decode and encode ini string", "IniFile")
 {
     std::string str("[Foo]\n"
@@ -95,6 +101,11 @@ TEST_CASE(TH " " SS " decode empty ini string", "IniFile")
       REQUIRE(inif.size() == 0);
 }
 
+
+
+/*
+ * Test of failing running through all failure codes 
+ */
 
 
 TEST_CASE(TH " " SS " fail to decode ini string with section not closed", "IniFile")
@@ -243,23 +254,9 @@ TEST_CASE(TH " " SS " fail to decode ini string with duplicate field", "IniFile"
 }
 
 
-TEST_CASE(TH " " SS " decode ini string with comment only", "IniFile")
-{
-    std::string str("# this is a comment");
-    INIF
-
-    REQUIRE(inif.size() == 0);
-}
-
-
-TEST_CASE(TH " " SS " decode ini string with empty section", "IniFile")
-{
-    std::string str("[Foo]");
-    INIF
-
-    REQUIRE(inif.size() == 1);
-    REQUIRE(inif["Foo"].size() == 0);
-}
+/*
+ * Test failing with files 
+ */
 
 
 TEST_CASE(TH " " SS " fail load non-existing ini file", "IniFile")
@@ -364,6 +361,33 @@ TEST_CASE(TH " " SS " fail save unwritable as ini file", "IniFile")
     REQUIRE_THROWS_AS(inif.save(fName), std::logic_error);
 #endif
 }
+
+/*
+ * Test of degenerate ini strings 
+ */
+
+
+TEST_CASE(TH " " SS " decode ini string with comment only", "IniFile")
+{
+    std::string str("# this is a comment");
+    INIF
+
+    REQUIRE(inif.size() == 0);
+}
+
+
+TEST_CASE(TH " " SS " decode ini string with empty section", "IniFile")
+{
+    std::string str("[Foo]");
+    INIF
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 0);
+}
+
+/*
+ * Test of successfully loading/saving files 
+ */
 
 
 TEST_CASE(TH " " SS " save and reload ini file", "IniFile")
@@ -513,6 +537,11 @@ TEST_CASE(TH " " SS " load ini file with no trailing newline", "IniFile")
 }
 
 
+/*
+ * Test again degenerate ini strings 
+ */
+
+
 TEST_CASE(TH " " SS " parse empty field", "IniFile")
 {
     std::string str("[Foo]\n"
@@ -523,6 +552,17 @@ TEST_CASE(TH " " SS " parse empty field", "IniFile")
     REQUIRE(inif["Foo"].size() == 1);
     REQUIRE(inif["Foo"]["bar"].toString() == "");
 }
+
+// TEST_CASE(TH " " SS " parse empty field", "IniFile")
+// {
+//     std::string str("[Foo]\n"
+// 		    "bar=");
+//     INIF
+
+//     CHECK(inif.size() == 1);
+//     REQUIRE(inif["Foo"].size() == 1);
+//     REQUIRE(inif["Foo"]["bar"].toString() == "");
+// }
 
 
 /***************************************************
