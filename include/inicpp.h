@@ -544,7 +544,7 @@ namespace ini
 	     * e.g. if open file fails. 
 	     * Else it is the line number where the failure occurred. 
 	     */
-	    int lineNumber;
+	    uint lineNumber;
 	    /*
 	     * This is <c>null</c> if reading from/writing to 
 	     * a stream without file. 
@@ -558,16 +558,23 @@ namespace ini
 	      reset();
 	    }
 
-	    void set(DecEncErrorCode errorCode, int lineNumber)
+	    void set(DecEncErrorCode errorCode, uint lineNumber)
 	    {
-	     	this->errorCode = errorCode;
+	     	this->errorCode  = errorCode;
+		assert(this->lineNumber == lineNumber
+		       && "line number out of sync");
 	     	this->lineNumber = lineNumber;
 	    }
 	    void reset()
 	    {
-	      set(NO_FAILURE, 0);
+	      this->errorCode  = NO_FAILURE;
+	      this->lineNumber = 0;
+	      //set(NO_FAILURE, 0);
 	    }
-
+	    void incLineNo()
+	    {
+	        lineNumber++;
+	    }
 	public:
 	    DecEncErrorCode getErrorCode()
 	    {
@@ -896,15 +903,19 @@ namespace ini
         DecEncResult tryDecode(InStreamInterface &iStream)
 	{
             int lineNo = 0;
+	    deResult.reset();
 	    if (!iStream.isOpen())
 	    {
 	        deResult.set(STREAM_OPENR_FAILED, lineNo);
 		return deResult;
 	    }
 	    lineNo++;
+	    deResult.incLineNo();
 	    clear();
 	    IniSection *currentSection = NULL;
-	    for (std::string line; iStream.getLine(line); lineNo++)
+	    for (std::string line;
+		 iStream.getLine(line);
+		 lineNo++,deResult.incLineNo())
             {
                 trim(line);
 		//std::cout << "decoding line " << line << std::endl;
@@ -1306,12 +1317,14 @@ namespace ini
         DecEncResult tryEncode(OutStreamInterface &oStream)
         {
             int lineNo = 0;
+	    deResult.reset();
 	    if (!oStream.isOpen())
 	    {
 	        deResult.set(STREAM_OPENW_FAILED, lineNo);
 		return deResult;
 	    }
 	    lineNo++;
+	    deResult.incLineNo();
             // iterate through all sections in this file
             for (const auto &filePair : *this)
             {
@@ -1319,12 +1332,14 @@ namespace ini
 	        oStream.append(SEC_START)
 		  .append(filePair.first).append(SEC_END)
 		  .appendNl();
+		deResult.incLineNo();
 		lineNo++;
                 // iterate through all fields in the section
                 for (const auto &secPair : filePair.second)
 		{
 		    oStream.append(secPair.first            ).append(fieldSep_)
 		      .     append(secPair.second.toString()).appendNl();
+		    deResult.incLineNo();
 		    lineNo++;
 		}
             }
@@ -1404,14 +1419,14 @@ namespace ini
 	    void throwIfError(DecEncResult dRes)
 	    {
 		std::string str = "";
-	        if (dRes.lineNumber == -1)
+	        if (dRes.lineNumber == 0)
 		{
-		str += "without stream access";
+		    str += "without stream access";
 		}
 		else
 		{
-		str += "in stream line ";
-		str += std::to_string(dRes.lineNumber);
+		    str += "in stream line ";
+		    str += std::to_string(dRes.lineNumber);
 		}
 		str += ": ini parsing failed, ";
 		switch (dRes.errorCode)
