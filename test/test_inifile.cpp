@@ -553,7 +553,7 @@ TEST_CASE(TH " " SS " parse empty field", "IniFile")
     REQUIRE(inif["Foo"]["bar"].toString() == "");
 }
 
-// TEST_CASE(TH " " SS " parse empty field", "IniFile")
+// TEST_CASE(TH " " SS " parse non-existing field", "IniFile")
 // {
 //     std::string str("[Foo]\n"
 // 		    "bar=");
@@ -561,7 +561,8 @@ TEST_CASE(TH " " SS " parse empty field", "IniFile")
 
 //     CHECK(inif.size() == 1);
 //     REQUIRE(inif["Foo"].size() == 1);
-//     REQUIRE(inif["Foo"]["bar"].toString() == "");
+// should throw an exception 
+//     REQUIRE(inif["Foo"]["bug"].toString() == "xx");
 // }
 
 

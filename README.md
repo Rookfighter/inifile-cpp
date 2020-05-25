@@ -1,7 +1,7 @@
 # Inifile-cpp
 ![License](https://img.shields.io/packagist/l/doctrine/orm.svg)
-![Travis Status](https://travis-ci.org/Rookfighter/inifile-cpp.svg?branch=master)
-![Appveyor Status](https://ci.appveyor.com/api/projects/status/xog92hd7x7t7ea2k?svg=true)
+<!-- ![Travis Status](https://travis-ci.org/Rookfighter/inifile-cpp.svg?branch=master) -->
+!-- ![Appveyor Status](https://ci.appveyor.com/api/projects/status/xog92hd7x7t7ea2k?svg=true) -->
 
 Inifile-cpp is a simple and easy to use header-only ini file en- and decoder for C++.
 
