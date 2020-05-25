@@ -562,9 +562,10 @@ namespace ini
 	      reset();
 	    }
 
-	    void set(DecEncErrorCode errorCode)
+	    DecEncResult set(DecEncErrorCode errorCode)
 	    {
 	     	this->errorCode  = errorCode;
+		return *this;
 	    }
 	    void reset()
 	    {
@@ -904,10 +905,7 @@ namespace ini
 	{
 	    deResult.reset();
 	    if (!iStream.isOpen())
-	    {
-	        deResult.set(STREAM_OPENR_FAILED);
-		return deResult;
-	    }
+	        return deResult.set(STREAM_OPENR_FAILED);
 	    deResult.incLineNo();
 	    clear();
 	    IniSection *currentSection = NULL;
@@ -926,33 +924,21 @@ namespace ini
                     // check if the section is also closed on same line
                     std::size_t pos = line.find(SEC_END);
                     if(pos == std::string::npos)
-		    {
-		        deResult.set(SECTION_NOT_CLOSED);
-		        return deResult;
-		    }
+		        return deResult.set(SECTION_NOT_CLOSED);
                     // check if the section name is empty
                     if(pos == 1)
-		    {
-			deResult.set(SECTION_NAME_EMPTY);
-		        return deResult;
-		    }
+			return deResult.set(SECTION_NAME_EMPTY);
                     // check if there is text
 		    // between closing bracket and newline 
                     if(pos + 1 != line.length())
-		    {
-			deResult.set(SECTION_TEXT_AFTER);
-		        return deResult;
-		    }
+			return deResult.set(SECTION_TEXT_AFTER);
                     // retrieve section name
                     std::string secName = line.substr(1, pos - 1);
 		    // std::cout << "section name '"
 		    // 	      << secName << "'" << std::endl;
 		    // check if section name occurred before 
 		    if ((*this).count(secName) == 1)
-		    {
-		        deResult.set(SECTION_NOT_UNIQUE);
-		        return deResult;
-		    }
+		        return deResult.set(SECTION_NOT_UNIQUE);
                     currentSection = &((*this)[secName]);
 		    //std::cout << " found section " << currentSection << std::endl;
                }
@@ -961,18 +947,12 @@ namespace ini
                     // find key value separator
                     std::size_t pos = line.find(fieldSep_);
                     if(pos == std::string::npos)
-		    {
-		        deResult.set(ILLEGAL_LINE);
-		        return deResult;
-		    }
+		        return deResult.set(ILLEGAL_LINE);
                     // line is a field definition
 		    //std::cout << " iskey-value " << std::endl;
                     // check if section was already opened
                     if(currentSection == NULL)
-		    {
-		        deResult.set(FIELD_WITHOUT_SECTION);
-		        return deResult;
-		    }
+		        return deResult.set(FIELD_WITHOUT_SECTION);
 
                     // retrieve field key and value
                     std::string key = line.substr(0, pos);
@@ -982,10 +962,7 @@ namespace ini
 
 		    // check if key name is  occurred before within the section
 		    if ((*currentSection).count(key) == 1)
-		    {
-		        deResult.set(FIELD_NOT_UNIQUE_IN_SECTION);
-		        return deResult;
-		    }
+		        return deResult.set(FIELD_NOT_UNIQUE_IN_SECTION);
  
                     (*currentSection)[key] = value;
 		}
@@ -996,11 +973,7 @@ namespace ini
 	    // in this case always, but this does not indicate a failure,
 	    // unlike the name may suggest and unlike bad bit. 
 	    if (iStream.bad())
-	    {
-	      //std::cout << "bad  bit is set" << std::endl;
-	      deResult.set(STREAM_READ_FAILED);
-	      return deResult;
-	    }
+	      return deResult.set(STREAM_READ_FAILED);
 	    // TBD: clarify
 	    // TBD: take return value into account: maybe additional failures 
 	    iStream.close();
@@ -1314,10 +1287,7 @@ namespace ini
         {
 	    deResult.reset();
 	    if (!oStream.isOpen())
-	    {
-	        deResult.set(STREAM_OPENW_FAILED);
-		return deResult;
-	    }
+	        return deResult.set(STREAM_OPENW_FAILED);
 	    deResult.incLineNo();
             // iterate through all sections in this file
             for (const auto &filePair : *this)
@@ -1336,11 +1306,7 @@ namespace ini
             }
 	    
 	    if (oStream.bad())
-	    {
-	      //std::cout << "bad  bit is set" << std::endl;
-	      deResult.set(STREAM_WRITE_FAILED);
-	      return deResult;
-	    }
+	      return deResult.set(STREAM_WRITE_FAILED);
 	    // TBD: clarify
 	    // TBD: use return value 
 	    oStream.close();
