@@ -315,8 +315,13 @@ TEST_CASE(TH " " SS " fail load/save directory as ini file", "IniFile")
     ini::IniFile inif;
 #ifdef THROW_PREVENTED
     ini::IniFile::DecEncResult deResult = inif.tryLoad(fName);
+#ifdef _WIN32
+    REQUIRE(deResult.getErrorCode()
+	    == ini::DecEncErrorCode::STREAM_OPENR_FAILED);
+#else
     REQUIRE(deResult.getErrorCode()
 	    == ini::DecEncErrorCode::STREAM_READ_FAILED);
+#endif
 #else
     REQUIRE_THROWS_AS(inif.load(fName), std::logic_error);
 #endif
@@ -338,26 +343,17 @@ TEST_CASE(TH " " SS " fail load unreadable as ini file", "IniFile")
     const std::string fName = TESTFILE(sfName);
     std::filesystem::path fPath = fName;
     
-#ifdef _WIN32
-    int res = _access(fName.c_str(), 00);
-#else
+#ifndef _WIN32
     int res =  access(fName.c_str(), F_OK);
-#endif
     REQUIRE(res == 0);
-    
-    std::filesystem::permissions(fPath, std::filesystem::perms::owner_write);
-#ifdef _WIN32
-    res = _access(fName.c_str(), 04);
-#else
+
+    // TBC: for windows the permissions of the file could not be set 
+    std::filesystem::permissions(fPath,
+				 std::filesystem::perms::owner_write);
     res =  access(fName.c_str(), R_OK);
-#endif
-     REQUIRE(res == -1);
+    REQUIRE(res == -1);
      
-#ifdef _WIN32
-    res = _access(fName.c_str(), 02);
-#else
     res =  access(fName.c_str(), W_OK);
-#endif
     REQUIRE(res == 0);
     
     std::filesystem::path path = fName;
@@ -376,6 +372,8 @@ TEST_CASE(TH " " SS " fail load unreadable as ini file", "IniFile")
 				 std::filesystem::perms::owner_read|
 				 std::filesystem::perms::owner_write,
 				 std::filesystem::perm_options::add);
+    
+#endif
 }
 
 TEST_CASE(TH " " SS " fail save unwritable as ini file", "IniFile")
@@ -907,7 +905,7 @@ TEST_CASE(TH " " SS " parse field as (unsigned) long int, fail if negative unsig
     REQUIRE( sec["bar0"].orDefault(2lu)          == 0);
     REQUIRE(!sec["bar0"].failedLastOutConversion());
     REQUIRE( sec["bar1"].orDefault(-2l )         == 1);
-    REQUIRE( sec["bar1"].orDefault(-2lu)         == 1);
+    REQUIRE( sec["bar1"].orDefault( 2lu)         == 1);
     REQUIRE(!sec["bar1"].failedLastOutConversion());
     REQUIRE(sec["bar2"].orDefault(+2l )         == -42);
     REQUIRE(sec["bar2"].orDefault(+2lu)         ==   2);
@@ -915,7 +913,7 @@ TEST_CASE(TH " " SS " parse field as (unsigned) long int, fail if negative unsig
     REQUIRE( sec["bar80"].orDefault(+2l )         == 0);
     REQUIRE( sec["bar80"].orDefault(+2lu)         == 0);
     REQUIRE( sec["bar81"].orDefault(-2l )         == 2);
-    REQUIRE( sec["bar81"].orDefault(-2lu)         == 2);
+    REQUIRE( sec["bar81"].orDefault(+2lu)         == 2);
     REQUIRE(!sec["bar81"].failedLastOutConversion());
     REQUIRE(sec["bar82"].orDefault(+2l )          == -7);
     REQUIRE(sec["bar82"].orDefault(+2lu)          == +2);
@@ -1091,7 +1089,7 @@ TEST_CASE(TH " " SS " parse field as (unsigned) int, fail if negative unsigned",
     REQUIRE( sec["bar0"].orDefault(2u)      == 0);
     REQUIRE(!sec["bar0"].failedLastOutConversion());
     REQUIRE( sec["bar1"].orDefault(-2 )     == 1);
-    REQUIRE( sec["bar1"].orDefault(-2u)     == 1);
+    REQUIRE( sec["bar1"].orDefault(+2u)     == 1);
     REQUIRE(!sec["bar1"].failedLastOutConversion());
     REQUIRE(sec["bar2"].orDefault(+2 )     == -42);
     REQUIRE(sec["bar2"].orDefault(+2u)     ==   2);
@@ -1099,7 +1097,7 @@ TEST_CASE(TH " " SS " parse field as (unsigned) int, fail if negative unsigned",
     REQUIRE( sec["bar80"].orDefault(+2 )     == 0);
     REQUIRE( sec["bar80"].orDefault(+2u)     == 0);
     REQUIRE( sec["bar81"].orDefault(-2 )     == 2);
-    REQUIRE( sec["bar81"].orDefault(-2u)     == 2);
+    REQUIRE( sec["bar81"].orDefault(+1u)     == 2);
     REQUIRE(!sec["bar81"].failedLastOutConversion());
     REQUIRE(sec["bar82"].orDefault(+2 )      == -7);
     REQUIRE(sec["bar82"].orDefault(+2u)      == +2);

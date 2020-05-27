@@ -42,12 +42,12 @@ namespace ini
     class IniField
     {
     private:
-        /**
+    /**
 	 * Represents the value as a string which may be empty. 
 	 */
         std::string value_;
 
-        /**
+    /**
 	 * The type of the last outgoing cast conversion from value_. 
 	 * This is insignificant and NULL if there was no out conversion yet. 
 	 * This is used only to create an appropriate message 
@@ -55,7 +55,7 @@ namespace ini
 	 */
         mutable std::string typeLastOutConversion_;
 
-        /**
+    /**
 	 * Whether the last outgoing cast conversion from value_ 
 	 * e.g. into <c>int</> failed. 
 	 * This is insignificant but false if there was no out conversion yet. 
@@ -65,8 +65,8 @@ namespace ini
 	 * @see failedLastOutConversion()
 	 */
         mutable bool failedLastOutConversion_;
-
-        /**
+      
+    /**
 	 * Whether any ingoing cast conversion to value_ 
 	 * e.g. from <c>int</> failed 
 	 * since creation of this IniField 
@@ -461,12 +461,43 @@ namespace ini
 	    return map[key];
 	}
 
-        uint size() const
+        unsigned int size() const
         {
 	    return map.size();
         }
 
-        uint count(std::string key)
+        /**
+	 * Add the value \p value under key \p key 
+	 * if that key does not exist yet; 
+	 * else do nothing. 
+	 *
+	 * @param key
+	 *    a key under which the value shall be added. 
+	 * @param value 
+	 *    the value to be added under the given string. 
+	 * @return
+	 *    whether the key value pair has been added. 
+	 *    This is the case except the key is already present. 
+	 */
+      bool add(std::string key, IniField value)
+        {
+	    unsigned int numEntries = map.count(key);
+	    switch (numEntries)
+	    {
+	    case 0:
+	      //key not yet added: add 
+	      map[key] = value;
+	      return true;
+	    case 1:
+	      // key already in map
+	      return false;
+	    default:
+	      // This cannot occur TBD: add interface to notify about that
+	      return false;
+	    }
+        }
+
+        unsigned int count(std::string key)
         {
 	    return map.count(key);
         }
@@ -488,9 +519,9 @@ namespace ini
 
 
 #ifdef SSTREAM_PREVENTED
-        uint lengthText()
+        unsigned int lengthText()
         {
-	    uint res = 0;
+	    unsigned int res = 0;
 	    for (const auto &pair : *this)
 	    {
 	        // for each entry length of key and of value
@@ -541,13 +572,15 @@ namespace ini
 	
 	// TBD: occurs during decoding
 	// of file streams only, not for string streams
-	// if trying to open file which does not exist, or is not readable 
+	// if trying to open file which does not exist, or is not readable
+	// or if a directory in windows, even if readable flag set. 
 	STREAM_OPENR_FAILED,
 	// TBD: occurs during encoding
 	// for file streams only, not for string streams
 	// if trying to open file which does not exist, or is not writable 
 	STREAM_OPENW_FAILED,
-	// during decoding if trying to read from a directory which is readable
+	// during decoding if
+	// trying to read from a directory which is readable on linux
 	// maybe other cases 
 	STREAM_READ_FAILED,
 	// during encoding if trying to write to directory which is writable 
@@ -582,7 +615,7 @@ namespace ini
 	     * with a line number, 
 	     * e.g. if open file fails. 
 	     */
-	    uint lineNumber;
+	    unsigned int lineNumber;
 	    /*
 	     * This is <c>null</c> if reading from/writing to 
 	     * a stream without file. 
@@ -668,12 +701,12 @@ namespace ini
 	    return map[key];
 	}
 
-        uint size() const
+        unsigned int size() const
         {
 	    return map.size();
         }
 
-        uint count(std::string key)
+        unsigned int count(std::string key)
         {
 	    return map.count(key);
         }
@@ -1114,7 +1147,7 @@ namespace ini
 	  char* str_;
 	  char* ptr_;
 	public:
-	    OutStringStreamNS(uint len)
+	    OutStringStreamNS(unsigned int len)
 	    {
 	      str_ = (char*)malloc(len*sizeof(char));
 	      ptr_ = str_;
@@ -1391,9 +1424,9 @@ namespace ini
 
 #ifdef SSTREAM_PREVENTED
       // TBD: used only if SSTREAM_PREVENTED
-        uint lengthText()
+        unsigned int lengthText()
         {
-	    uint res = 0;
+	    unsigned int res = 0;
 	    for (auto &pair : *this)
 	    {
 	        // for each section length of name of section
