@@ -23,9 +23,25 @@
 #define TH "THN"
 #endif
 
+#ifdef THROW_PREVENTED
+#define INIF \
+  ini::IniFile inif;				\
+  bool isOk = inif.tryDecode(str).isOk();	\
+  REQUIRE(isOk);
+#else
+#define INIF \
+  ini::IniFile inif;   \
+  inif.decode(str);
+#endif
 
-/*
- * General tests of default strings: 
+#ifdef _WIN32
+#include <io.h>
+#else
+// Here we assume that it is linux, else it does not work 
+#include <unistd.h>
+#endif
+
+/* General tests of default strings: 
  * Failure code ini::DecEncErrorCode::NO_FAILURE
  */
 
@@ -259,11 +275,18 @@ TEST_CASE(TH " " SS " fail to decode ini string with duplicate field", "IniFile"
  */
 
 
+
+
 TEST_CASE(TH " " SS " fail load non-existing ini file", "IniFile")
 {
     const std::string sfName = "doesNotExist.ini";
     const std::string fName = TESTFILE(sfName);
-    int res = access(fName.c_str(), F_OK);
+#ifdef _WIN32
+    int res = _access(fName.c_str(), 00);
+#else
+    int res =  access(fName.c_str(), F_OK);
+#endif
+    
     REQUIRE(res == -1);
 
     ini::IniFile inif;
@@ -280,7 +303,11 @@ TEST_CASE(TH " " SS " fail load/save directory as ini file", "IniFile")
 {
     const std::string sfName = "dir.ini";
     const std::string fName = TESTFILE(sfName);
-    int res = access(fName.c_str(), F_OK);
+#ifdef _WIN32
+    int res = _access(fName.c_str(), 00);
+#else
+    int res =  access(fName.c_str(), F_OK);
+#endif
     REQUIRE(res == 0);
     std::filesystem::path path = fName;
     REQUIRE(std::filesystem::is_directory(path));
@@ -311,13 +338,28 @@ TEST_CASE(TH " " SS " fail load unreadable as ini file", "IniFile")
     const std::string fName = TESTFILE(sfName);
     std::filesystem::path fPath = fName;
     
-    int res = access(fName.c_str(), F_OK);
+#ifdef _WIN32
+    int res = _access(fName.c_str(), 00);
+#else
+    int res =  access(fName.c_str(), F_OK);
+#endif
     REQUIRE(res == 0);
+    
     std::filesystem::permissions(fPath, std::filesystem::perms::owner_write);
-    res = access(fName.c_str(), R_OK);
-    REQUIRE(res == -1);
-    res = access(fName.c_str(), W_OK);
+#ifdef _WIN32
+    res = _access(fName.c_str(), 04);
+#else
+    res =  access(fName.c_str(), R_OK);
+#endif
+     REQUIRE(res == -1);
+     
+#ifdef _WIN32
+    res = _access(fName.c_str(), 02);
+#else
+    res =  access(fName.c_str(), W_OK);
+#endif
     REQUIRE(res == 0);
+    
     std::filesystem::path path = fName;
     REQUIRE(std::filesystem::is_regular_file(path));
 
@@ -342,12 +384,24 @@ TEST_CASE(TH " " SS " fail save unwritable as ini file", "IniFile")
     const std::string fName = TESTFILE(sfName);
     std::filesystem::path fPath = fName;
     
-    int res = access(fName.c_str(), F_OK);
+#ifdef _WIN32
+    int res = _access(fName.c_str(), 00);
+#else
+    int res =  access(fName.c_str(), F_OK);
+#endif
     REQUIRE(res == 0);
     std::filesystem::permissions(fPath, std::filesystem::perms::owner_read);
-    res = access(fName.c_str(), R_OK);
+#ifdef _WIN32
+    res = _access(fName.c_str(), 04);
+#else
+    res =  access(fName.c_str(), R_OK);
+#endif
     REQUIRE(res == 0);
-    res = access(fName.c_str(), W_OK);
+#ifdef _WIN32
+    res = _access(fName.c_str(), 02);
+#else
+    res =  access(fName.c_str(), W_OK);
+#endif
     REQUIRE(res == -1);
     std::filesystem::path path = fName;
     REQUIRE(std::filesystem::is_regular_file(path));
@@ -394,7 +448,11 @@ TEST_CASE(TH " " SS " save and reload ini file", "IniFile")
 {
     const std::string sfName = "example.ini";
     const std::string fName = TESTFILE(sfName);
-    int res = access(fName.c_str(), F_OK);
+#ifdef _WIN32
+    int res = _access(fName.c_str(), 00);
+#else
+    int res =  access(fName.c_str(), F_OK);
+#endif
     switch (res)
     {
     case 0:
@@ -412,7 +470,14 @@ TEST_CASE(TH " " SS " save and reload ini file", "IniFile")
       throw std::logic_error("Unexpected return value.");
     }
     // Here, sfName does not exist
-    REQUIRE(access(fName.c_str(), F_OK) == -1);
+
+
+#ifdef _WIN32
+    res = _access(fName.c_str(), 00);
+#else
+    res =  access(fName.c_str(), F_OK);
+#endif
+    REQUIRE(res == -1);
 
     // save example inif as a file 
     ini::IniFile inif;
@@ -427,8 +492,12 @@ TEST_CASE(TH " " SS " save and reload ini file", "IniFile")
     inif.save(fName);
 #endif
 
-    // check that the file exists 
-    res = access(fName.c_str(), F_OK);
+    // check that the file exists
+#ifdef _WIN32
+    res = _access(fName.c_str(), 00);
+#else
+    res =  access(fName.c_str(), F_OK);
+#endif
     REQUIRE(res == 0);
 
     // read back
@@ -472,7 +541,11 @@ TEST_CASE(TH " " SS " load ini file with trailing newline", "IniFile")
 {
     const std::string sfName = "exampleNl.ini";
     const std::string fName = TESTFILE(sfName);
-    int res = access(fName.c_str(), F_OK);
+#ifdef _WIN32
+    int res = _access(fName.c_str(), 00);
+#else
+    int res =  access(fName.c_str(), F_OK);
+#endif
     REQUIRE(res == 0);
     
     ini::IniFile inif;
@@ -506,7 +579,11 @@ TEST_CASE(TH " " SS " load ini file with no trailing newline", "IniFile")
 {
     const std::string sfName = "exampleNoNl.ini";
     const std::string fName = TESTFILE(sfName);
-    int res = access(fName.c_str(), F_OK);
+#ifdef _WIN32
+    int res = _access(fName.c_str(), 00);
+#else
+    int res =  access(fName.c_str(), F_OK);
+#endif
     REQUIRE(res == 0);
     
     ini::IniFile inif;
@@ -1349,3 +1426,5 @@ TEST_CASE(TH " " SS " spaces are not taken into account in sections", "IniFile")
 #ifdef   THROW_PREVENTED
 #undef   THROW_PREVENTED
 #endif
+
+#undef INIF
