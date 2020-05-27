@@ -502,11 +502,6 @@ namespace ini
 	    return map.count(key) != 0;
         }
 
-        unsigned int count(std::string key)
-        {
-	    return map.count(key);
-        }
-
         std::map<std::string, IniField>::iterator begin()
         {
 	    return map.begin();
@@ -705,11 +700,6 @@ namespace ini
         unsigned int size() const
         {
 	    return map.size();
-        }
-
-        unsigned int count(std::string key)
-        {
-	    return map.count(key);
         }
 
         bool contains(std::string key)
@@ -1043,7 +1033,7 @@ namespace ini
 		    // std::cout << "section name '"
 		    // 	      << secName << "'" << std::endl;
 		    // check if section name occurred before 
-		    if ((*this).count(secName) == 1)
+		    if ((*this).contains(secName))
 		        return deResult.set(SECTION_NOT_UNIQUE);
                     currentSection = &((*this)[secName]);
 		    //std::cout << " found section " << currentSection << std::endl;
@@ -1067,7 +1057,7 @@ namespace ini
                     trim(value);
 
 		    // check if key name is  occurred before within the section
-		    if ((*currentSection).count(key) == 1)
+		    if ((*currentSection).contains(key))
 		        return deResult.set(FIELD_NOT_UNIQUE_IN_SECTION);
  
                     (*currentSection)[key] = value;
