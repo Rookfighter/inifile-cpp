@@ -1386,17 +1386,23 @@ namespace ini
 	        return deResult.set(STREAM_OPENW_FAILED);
 	    deResult.incLineNo();
             // iterate through all sections in this file
-            for (auto &filePair : *this)
+            //for (auto &filePair : *this)
+            for (std::map<std::string, IniSection>::iterator filePair=this->begin();
+		 filePair!=this->end();
+		 filePair++)
             {
 	        oStream.append(SEC_START)
-		  .append(filePair.first).append(SEC_END)
+		  .append(filePair->first).append(SEC_END)
 		  .appendNl();
 		deResult.incLineNo();
                 // iterate through all fields in the section
-                for (auto &secPair : filePair.second)
+                //for (auto &secPair : filePair->second)
+                for (std::map<std::string, IniField>::iterator secPair=filePair->second.begin();
+		      secPair!=filePair->second.end();
+		      secPair++)
 		{
-		    oStream.append(secPair.first            ).append(fieldSep_)
-		      .     append(secPair.second.toString()).appendNl();
+		    oStream.append(secPair->first            ).append(fieldSep_)
+		      .     append(secPair->second.toString()).appendNl();
 		    deResult.incLineNo();
 		}
             }
