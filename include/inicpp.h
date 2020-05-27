@@ -42,12 +42,12 @@ namespace ini
     class IniField
     {
     private:
-    /**
+        /**
 	 * Represents the value as a string which may be empty. 
 	 */
         std::string value_;
 
-    /**
+        /**
 	 * The type of the last outgoing cast conversion from value_. 
 	 * This is insignificant and NULL if there was no out conversion yet. 
 	 * This is used only to create an appropriate message 
@@ -497,6 +497,11 @@ namespace ini
 	    }
         }
 
+        bool contains(std::string key)
+        {
+	    return map.count(key) != 0;
+        }
+
         unsigned int count(std::string key)
         {
 	    return map.count(key);
@@ -512,10 +517,6 @@ namespace ini
 	    return map.end();
 	}
 
-        std::map<std::string, IniField>::iterator find(std::string key)
-        {
-	    return map.find(key);
-	}
 
 
 #ifdef SSTREAM_PREVENTED
@@ -711,6 +712,11 @@ namespace ini
 	    return map.count(key);
         }
 
+        bool contains(std::string key)
+        {
+	    return map.count(key) != 0;
+        }
+
         std::map<std::string, IniSection>::iterator begin()
         {
 	    return map.begin();
@@ -719,11 +725,6 @@ namespace ini
         std::map<std::string, IniSection>::iterator end()
         {
 	    return map.end();
-	}
-
-        std::map<std::string, IniSection>::iterator find(std::string key)
-        {
-	    return map.find(key);
 	}
 
         void clear()

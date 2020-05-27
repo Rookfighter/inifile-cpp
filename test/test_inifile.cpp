@@ -1383,7 +1383,7 @@ TEST_CASE(TH " " SS " spaces are not taken into account in field names", "IniFil
 		    "  \t  bar  \t  =hello world");
     INIF
 
-    REQUIRE(inif["Foo"].find("bar") != inif["Foo"].end());
+    REQUIRE(inif["Foo"].contains("bar"));
     REQUIRE(inif["Foo"]["bar"].toString() == "hello world");
 }
 
@@ -1410,7 +1410,7 @@ TEST_CASE(TH " " SS " spaces are not taken into account in sections", "IniFile")
 //     ini::IniFile inif(str);
 // #endif
 
-    REQUIRE(inif.find("Foo") != inif.end());
+    REQUIRE(inif.contains("Foo"));
 }
 
 
