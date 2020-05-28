@@ -446,10 +446,71 @@ namespace ini
     };
 
 
+  // template<class T>
+  // class t_ResMapIterator
+  // {
+  //   typename std::map<std::string, T>::iterator iterMap;
+    
+  //   std::string key()
+  //   {
+  //     return "";
+  //   }
+  //   // T value()
+  //   // {
+  //   //   return 
+  //   // }
+  //   bool hasNext()
+  //   {
+  //     return false;
+  //   }
+  // }; // class t_ResMapIterator
+
+    template<class T>
+    class t_ResMap
+    {
+    private:
+      std::map<std::string, T> map;
+    public:
+        t_ResMap()
+        {
+        }
+        T & operator[](std::string key)
+        {
+	    return map[key];
+	}
+
+        unsigned int size() const
+        {
+	    return map.size();
+        }
+
+        bool contains(std::string key)
+        {
+	    return map.count(key) != 0;
+        }
+
+        typename std::map<std::string,T>::iterator begin()
+        {
+	 return map.begin();
+	}
+
+        typename std::map<std::string,T>::iterator end()
+        {
+	    return map.end();
+	}
+
+        void clear()
+        {
+	    return map.clear();
+        }
+
+    }; // class t_ResMap
+
+
     class IniSection
     {
     private:
-        std::map<std::string, IniField> map;
+        t_ResMap<IniField> map;
     public:
         IniSection()
         {}
@@ -466,40 +527,10 @@ namespace ini
 	    return map.size();
         }
 
-        /**
-	 * Add the value \p value under key \p key 
-	 * if that key does not exist yet; 
-	 * else do nothing. 
-	 *
-	 * @param key
-	 *    a key under which the value shall be added. 
-	 * @param value 
-	 *    the value to be added under the given string. 
-	 * @return
-	 *    whether the key value pair has been added. 
-	 *    This is the case except the key is already present. 
-	 */
-      bool add(std::string key, IniField value)
-        {
-	    unsigned int numEntries = map.count(key);
-	    switch (numEntries)
-	    {
-	    case 0:
-	      //key not yet added: add 
-	      map[key] = value;
-	      return true;
-	    case 1:
-	      // key already in map
-	      return false;
-	    default:
-	      // This cannot occur TBD: add interface to notify about that
-	      return false;
-	    }
-        }
 
         bool contains(std::string key)
         {
-	    return map.count(key) != 0;
+	    return map.contains(key);
         }
 
         std::map<std::string, IniField>::iterator begin()
@@ -660,7 +691,7 @@ namespace ini
  	const static char SEC_END   = ']';
 
         DecEncResult deResult;
-        std::map<std::string, IniSection> map;
+        t_ResMap<IniSection> map;
      
         char fieldSep_;
         char comment_;
@@ -704,7 +735,7 @@ namespace ini
 
         bool contains(std::string key)
         {
-	    return map.count(key) != 0;
+	  return map.contains(key);
         }
 
         std::map<std::string, IniSection>::iterator begin()
