@@ -509,7 +509,7 @@ namespace ini
 
     class IniSection
     {
-    private:
+    public:// TBD: later make private again 
         t_ResMap<IniField> map;
     public:
         IniSection()
@@ -522,26 +522,13 @@ namespace ini
 	    return map[key];
 	}
 
+        // TBD: in the long run this shall be removed:
+        // this method is not used in application, but for testing. 
+        // In a validating parser, only a bool valued check is necessary. 
         unsigned int size() const
         {
 	    return map.size();
         }
-
-
-        bool contains(std::string key)
-        {
-	    return map.contains(key);
-        }
-
-        std::map<std::string, IniField>::iterator begin()
-        {
-	    return map.begin();
-	}
-
-        std::map<std::string, IniField>::iterator end()
-        {
-	    return map.end();
-	}
 
 
 
@@ -728,30 +715,14 @@ namespace ini
 	    return map[key];
 	}
 
+        // TBD: in the long run this shall be removed:
+        // this method is not used in application, but for testing. 
+        // In a validating parser, only a bool valued check is necessary. 
         unsigned int size() const
         {
 	    return map.size();
         }
 
-        bool contains(std::string key)
-        {
-	  return map.contains(key);
-        }
-
-        std::map<std::string, IniSection>::iterator begin()
-        {
-	    return map.begin();
-	}
-
-        std::map<std::string, IniSection>::iterator end()
-        {
-	    return map.end();
-	}
-
-        void clear()
-        {
-	    return map.clear();
-        }
 
 
 # ifndef THROW_PREVENTED
@@ -1034,7 +1005,7 @@ namespace ini
 	    if (!iStream.isOpen())
 	        return deResult.set(STREAM_OPENR_FAILED);
 	    deResult.incLineNo();
-	    clear();
+	    map.clear();
 	    IniSection *currentSection = NULL;
 	    for (std::string line; iStream.getLine(line); deResult.incLineNo())
             {
@@ -1064,9 +1035,9 @@ namespace ini
 		    // std::cout << "section name '"
 		    // 	      << secName << "'" << std::endl;
 		    // check if section name occurred before 
-		    if ((*this).contains(secName))
+		    if (this->map.contains(secName))
 		        return deResult.set(SECTION_NOT_UNIQUE);
-                    currentSection = &((*this)[secName]);
+                    currentSection = &(this->map[secName]);
 		    //std::cout << " found section " << currentSection << std::endl;
                }
                 else
@@ -1088,10 +1059,10 @@ namespace ini
                     trim(value);
 
 		    // check if key name is  occurred before within the section
-		    if ((*currentSection).contains(key))
+		    if (currentSection->map.contains(key))
 		        return deResult.set(FIELD_NOT_UNIQUE_IN_SECTION);
  
-                    (*currentSection)[key] = value;
+                    (currentSection->map)[key] = value;
 		}
 	    }
 	    // TBD: treat case where the stream fails.
@@ -1418,8 +1389,8 @@ namespace ini
 	    deResult.incLineNo();
             // iterate through all sections in this file
             //for (auto &filePair : *this)
-            for (std::map<std::string, IniSection>::iterator filePair=this->begin();
-		 filePair!=this->end();
+            for (std::map<std::string, IniSection>::iterator filePair=this->map.begin();
+		 filePair!=this->map.end();
 		 filePair++)
             {
 	        oStream.append(SEC_START)
@@ -1428,8 +1399,8 @@ namespace ini
 		deResult.incLineNo();
                 // iterate through all fields in the section
                 //for (auto &secPair : filePair->second)
-                for (std::map<std::string, IniField>::iterator secPair=filePair->second.begin();
-		      secPair!=filePair->second.end();
+                for (std::map<std::string, IniField>::iterator secPair=filePair->second.map.begin();
+		      secPair!=filePair->second.map.end();
 		      secPair++)
 		{
 		    oStream.append(secPair->first            ).append(fieldSep_)

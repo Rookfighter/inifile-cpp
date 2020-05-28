@@ -327,7 +327,7 @@ TEST_CASE(TH " " SS " fail load/save directory as ini file", "IniFile")
 #endif
 
     
-    inif.clear();
+    //inif.clear();
 #ifdef THROW_PREVENTED
     deResult = inif.trySave(fName);
     REQUIRE(deResult.getErrorCode()
@@ -499,13 +499,13 @@ TEST_CASE(TH " " SS " save and reload ini file", "IniFile")
     REQUIRE(res == 0);
 
     // read back
-    inif.clear();
+    ini::IniFile inif2;
 #ifdef THROW_PREVENTED
-    deResult = inif.tryLoad(fName);
+    deResult = inif2.tryLoad(fName);
     REQUIRE(deResult.getErrorCode()
 	    == ini::DecEncErrorCode::NO_FAILURE);
 #else
-    inif.load(fName);
+    inif2.load(fName);
 #endif
 
     // check result
@@ -1383,7 +1383,6 @@ TEST_CASE(TH " " SS " spaces are not taken into account in field names", "IniFil
 		    "  \t  bar  \t  =hello world");
     INIF
 
-    REQUIRE(inif["Foo"].contains("bar"));
     REQUIRE(inif["Foo"]["bar"].toString() == "hello world");
 }
 
@@ -1410,7 +1409,8 @@ TEST_CASE(TH " " SS " spaces are not taken into account in sections", "IniFile")
 //     ini::IniFile inif(str);
 // #endif
 
-    REQUIRE(inif.contains("Foo"));
+      // implicitly test REQUIRE(inif.contains("Foo"));
+    REQUIRE(inif["Foo"]["bar"].toString() == "bla");
 }
 
 
