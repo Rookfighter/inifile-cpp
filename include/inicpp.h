@@ -445,28 +445,6 @@ namespace ini
         }
     };
 
-
-  // template<class T>
-  // class t_ResMapIterator
-  // {
-  //   typename std::map<std::string, T>::iterator iterMap;
-    
-  //   std::string key()
-  //   {
-  //     return "";
-  //   }
-  //   // T value()
-  //   // {
-  //   //   return 
-  //   // }
-  //   bool hasNext()
-  //   {
-  //     return false;
-  //   }
-  // }; // class t_ResMapIterator
-
-  
-
     template<class T>
     class NamedObj
     {
@@ -480,24 +458,15 @@ namespace ini
       
     }; // class NamedObj
 
+ 
     template<class T>
-    class t_ResMapInterface
-    {
-    public:
-      virtual T & operator[](std::string key) = 0;
-      virtual unsigned int size() const = 0;
-      virtual bool contains(std::string key) = 0;
-      virtual void clear() = 0;
-    }; // class t_ResMapInterface
-
-
-    template<class T>
-    class t_ResVMap : public t_ResMapInterface<T>
+    class t_ResVMap
     {
     private:
         std::vector<NamedObj<T>> vec_;
     public:
-        typedef typename std::vector<NamedObj<T>>::iterator       iterator;
+        typedef typename std::vector<NamedObj<T>>::iterator iterator;
+      
         t_ResVMap()
         {
         }
@@ -511,9 +480,7 @@ namespace ini
 	 */
         T & operator[](std::string key)
         {
-	   for (typename std::vector<NamedObj<T>>::iterator it = vec_.begin();
-		it != vec_.end();
-		it++)
+	   for (iterator it = vec_.begin(); it != vec_.end(); it++)
 	   {
 	       if (it->first == key)
 	       {
@@ -533,11 +500,9 @@ namespace ini
 
         bool contains(std::string key)
         {
-	   for (typename std::vector<NamedObj<T>>::iterator it = vec_.begin();
-		it != vec_.end();
-		it++)
+	   for (iterator it = vec_.begin(); it != vec_.end(); it++)
 	   {
-	     if ((*it).first == key)
+	     if (it->first == key)
 	     {
 	       return true;
 	     }
@@ -560,49 +525,6 @@ namespace ini
 	    return vec_.clear();
         }
     }; // class t_ResVMap
-
-
-    // template<class T>
-    // class t_ResMap : public t_ResMapInterface<T>
-    // {
-    // private:
-    //   std::map<std::string, T> map;
-    // public:
-    //     typedef typename std::map<std::string, T>::iterator       iterator;
-    //     t_ResMap()
-    //     {
-    //     }
-    //     T & operator[](std::string key)
-    //     {
-    // 	    return map[key];
-    // 	}
-
-    //     unsigned int size() const
-    //     {
-    // 	    return map.size();
-    //     }
-
-    //     bool contains(std::string key)
-    //     {
-    // 	    return map.count(key) != 0;
-    //     }
-
-    //     iterator begin()
-    //     {
-    // 	 return map.begin();
-    // 	}
-
-    //     iterator end()
-    //     {
-    // 	    return map.end();
-    // 	}
-
-    //     void clear()
-    //     {
-    // 	    return map.clear();
-    //     }
-
-    // }; // class t_ResMap
 
 
     class IniSection
