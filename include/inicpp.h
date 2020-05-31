@@ -19,7 +19,7 @@
 //#include <iostream>
 
 
-#include <map>
+#include <vector>
 
 #include <limits.h>
 #include <string.h>
@@ -465,52 +465,150 @@ namespace ini
   //   }
   // }; // class t_ResMapIterator
 
+  
+
     template<class T>
-    class t_ResMap
+    class NamedObj
+    {
+      // TBD: change
+    public:
+      std::string first;//key_;
+      T second;//value_;
+      NamedObj(std::string key, T value) : first(key), second(value)
+      {
+      }
+      
+    }; // class NamedObj
+
+    template<class T>
+    class t_ResMapInterface
+    {
+    public:
+      virtual T & operator[](std::string key) = 0;
+      virtual unsigned int size() const = 0;
+      virtual bool contains(std::string key) = 0;
+      virtual void clear() = 0;
+    }; // class t_ResMapInterface
+
+
+    template<class T>
+    class t_ResVMap : public t_ResMapInterface<T>
     {
     private:
-      std::map<std::string, T> map;
+        std::vector<NamedObj<T>> vec_;
     public:
-        t_ResMap()
+        typedef typename std::vector<NamedObj<T>>::iterator       iterator;
+        t_ResVMap()
         {
         }
+
+        /**
+	 * Returns the value corresponding with \p key if there is one, 
+	 * else appends a new T created with default constructor before.
+	 *
+	 * @param key
+	 *    a key in this map. 
+	 */
         T & operator[](std::string key)
         {
-	    return map[key];
+	   for (typename std::vector<NamedObj<T>>::iterator it = vec_.begin();
+		it != vec_.end();
+		it++)
+	   {
+	       if (it->first == key)
+	       {
+		 return it->second;
+	       }
+	   }
+	   T second;
+	   NamedObj obj(key, second);
+	   vec_.push_back(obj);
+	   return vec_[vec_.size()-1].second;
 	}
 
         unsigned int size() const
         {
-	    return map.size();
+	    return vec_.size();
         }
 
         bool contains(std::string key)
         {
-	    return map.count(key) != 0;
-        }
-
-        typename std::map<std::string,T>::iterator begin()
-        {
-	 return map.begin();
+	   for (typename std::vector<NamedObj<T>>::iterator it = vec_.begin();
+		it != vec_.end();
+		it++)
+	   {
+	     if ((*it).first == key)
+	     {
+	       return true;
+	     }
+	   }
+	   return false;
 	}
 
-        typename std::map<std::string,T>::iterator end()
+       iterator begin()
         {
-	    return map.end();
+	 return vec_.begin();
+	}
+
+        iterator end()
+        {
+	    return vec_.end();
 	}
 
         void clear()
         {
-	    return map.clear();
+	    return vec_.clear();
         }
+    }; // class t_ResVMap
 
-    }; // class t_ResMap
+
+    // template<class T>
+    // class t_ResMap : public t_ResMapInterface<T>
+    // {
+    // private:
+    //   std::map<std::string, T> map;
+    // public:
+    //     typedef typename std::map<std::string, T>::iterator       iterator;
+    //     t_ResMap()
+    //     {
+    //     }
+    //     T & operator[](std::string key)
+    //     {
+    // 	    return map[key];
+    // 	}
+
+    //     unsigned int size() const
+    //     {
+    // 	    return map.size();
+    //     }
+
+    //     bool contains(std::string key)
+    //     {
+    // 	    return map.count(key) != 0;
+    //     }
+
+    //     iterator begin()
+    //     {
+    // 	 return map.begin();
+    // 	}
+
+    //     iterator end()
+    //     {
+    // 	    return map.end();
+    // 	}
+
+    //     void clear()
+    //     {
+    // 	    return map.clear();
+    //     }
+
+    // }; // class t_ResMap
 
 
     class IniSection
     {
     public:// TBD: later make private again 
-        t_ResMap<IniField> map;
+        t_ResVMap<IniField> map;
     public:
         IniSection()
         {}
@@ -678,7 +776,7 @@ namespace ini
  	const static char SEC_END   = ']';
 
         DecEncResult deResult;
-        t_ResMap<IniSection> map;
+        t_ResVMap<IniSection> map;
      
         char fieldSep_;
         char comment_;
@@ -1389,7 +1487,7 @@ namespace ini
 	    deResult.incLineNo();
             // iterate through all sections in this file
             //for (auto &filePair : *this)
-            for (std::map<std::string, IniSection>::iterator filePair=this->map.begin();
+            for (decltype(this->map)::iterator filePair=this->map.begin();
 		 filePair!=this->map.end();
 		 filePair++)
             {
@@ -1399,7 +1497,7 @@ namespace ini
 		deResult.incLineNo();
                 // iterate through all fields in the section
                 //for (auto &secPair : filePair->second)
-                for (std::map<std::string, IniField>::iterator secPair=filePair->second.map.begin();
+                for (decltype(filePair->second.map)::iterator secPair=filePair->second.map.begin();
 		      secPair!=filePair->second.map.end();
 		      secPair++)
 		{

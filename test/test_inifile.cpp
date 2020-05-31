@@ -77,19 +77,19 @@ TEST_CASE(TH " " SS " decode and encode ini string", "IniFile")
 
 TEST_CASE(TH " " SS " decode and encode 2nd ini string", "IniFile")
 {
-    std::string str("[git]\n"
+    std::string str("[names]\n"
+		    "nameId=GENERIC\n"
+		    "[git]\n"
 		    "revision=v0.0.1\n"
-		    "dateTime=1968-03-11\n"
-		    "[names]\n"
-		    "nameId=GENERIC");
+		    "dateTime=1968-03-11\n");
     INIF
 
     REQUIRE(inif.size() == 2);
-    REQUIRE(inif["git"]["revision"].toString() == "v0.0.1");
-    REQUIRE(inif["git"]["dateTime"].toString() == "1968-03-11");
+    REQUIRE(inif["names"].size() == 1);
     REQUIRE(inif["names"]["nameId"].toString() == "GENERIC");
     REQUIRE(inif["git"].size() == 2);
-    REQUIRE(inif["names"].size() == 1);
+    REQUIRE(inif["git"]["revision"].toString() == "v0.0.1");
+    REQUIRE(inif["git"]["dateTime"].toString() == "1968-03-11");
 
     #ifdef THROW_PREVENTED
     ini::IniFile::DecEncResult deResult = inif.tryEncode(str);
@@ -99,13 +99,14 @@ TEST_CASE(TH " " SS " decode and encode 2nd ini string", "IniFile")
     str = inif.encode();
 #endif
 
-    // gets reordered. 
+    // TBC: keys don't get reordered.
+    // but sections do 
     REQUIRE(str ==
-	    "[git]\n"
-	    "dateTime=1968-03-11\n"
-	    "revision=v0.0.1\n"
 	    "[names]\n"
-	    "nameId=GENERIC\n");
+	    "nameId=GENERIC\n"
+	    "[git]\n"
+	    "revision=v0.0.1\n"
+	    "dateTime=1968-03-11\n");
 }
 
 TEST_CASE(TH " " SS " decode empty ini string", "IniFile")
@@ -566,11 +567,11 @@ TEST_CASE(TH " " SS " load ini file with trailing newline", "IniFile")
     std::string result = inif.encode();
 #endif
       REQUIRE(result ==
-	      "[Bar]\n"
-	      "bar0=0\n"
 	      "[Foo]\n"
+	      "foo2=true\n"
 	      "foo1=44\n"
-	      "foo2=true\n");
+	      "[Bar]\n"
+	      "bar0=0\n");
 }
 
 TEST_CASE(TH " " SS " load ini file with no trailing newline", "IniFile")
@@ -604,11 +605,11 @@ TEST_CASE(TH " " SS " load ini file with no trailing newline", "IniFile")
     std::string result = inif.encode();
 #endif
       REQUIRE(result ==
-	      "[Bar]\n"
-	      "bar0=0\n"
 	      "[Foo]\n"
+	      "foo2=true\n"
 	      "foo1=44\n"
-	      "foo2=true\n");
+	      "[Bar]\n"
+	      "bar0=0\n");
 }
 
 
