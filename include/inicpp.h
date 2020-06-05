@@ -489,7 +489,7 @@ namespace ini
 	       }
 	   }
 	   T second;
-	   NamedObj obj(key, second);
+	   NamedObj<T> obj(key, second);
 	   vec_.push_back(obj);
 	   return vec_[vec_.size()-1].second;
 	}
