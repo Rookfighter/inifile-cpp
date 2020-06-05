@@ -20,6 +20,7 @@
 
 
 #include <vector>
+//#include <array>
 
 #include <limits.h>
 #include <string.h>
@@ -591,11 +592,16 @@ namespace ini
 	// indicates that a section name occurred more than once
 	// in the course of decoding. 
 	SECTION_NOT_UNIQUE,
+	// Indicates at the moment
+	// that one more section is found than specified.
+	// TBD: In the long run, this can also indicate
+	// that the name of the section does not fit the grammar. 
+	SECTION_UNEXPECTED,
 	// indicates that during decoding an illegal line was found,
 	// i.e. a line which is neither empty, 
 	// (nor a comment lineby default starting with '#') 
 	// nor a section line (starting with '[')
-	// nor a key-value-line (containing by default '='). 
+	// nor a key-value-line (containing by default '=').
 	ILLEGAL_LINE,
 	// indicates that during decoding a field was found 
 	// without preceeding section 
@@ -603,6 +609,11 @@ namespace ini
 	// indicates that during decoding a field was found 
 	// with a key which is not unique within its section. 
 	FIELD_NOT_UNIQUE_IN_SECTION,
+	// Indicates at the moment,
+	// that one more field is found in the section as specified.
+	// TBD: In the long run, this can also indicate,
+	// that the name of the field does not fit the grammar. 
+	FIELD_UNEXPECTED_IN_SECTION,
 	
 	// TBD: occurs during decoding
 	// of file streams only, not for string streams
@@ -700,6 +711,15 @@ namespace ini
         DecEncResult deResult;
         t_ResVMap<IniSection> map;
      
+      
+      // TBD: rework
+      // This is preliminary:
+      // an array with one entry per section
+      // specifying the number of keys in a section.
+      // This is the first step towards a validating parser
+      // but also to elimination of the vector class. 
+      std::vector<unsigned int> lenSections_;
+
         char fieldSep_;
         char comment_;
 
@@ -718,11 +738,14 @@ namespace ini
     public:
 
 	
-        IniFile() : IniFile('=', '#')
+      IniFile(std::vector<unsigned int> lenSections)
+	: IniFile(lenSections, '=', '#')
         {}
 
-        IniFile(const char fieldSep, const char comment)
-            : fieldSep_(fieldSep), comment_(comment)
+      IniFile(std::vector<unsigned int> lenSections,
+	      const char fieldSep,
+	      const char comment)
+	: lenSections_(lenSections), fieldSep_(fieldSep), comment_(comment)
         {}
 
         ~IniFile()
@@ -730,35 +753,25 @@ namespace ini
 
 
 
-        IniSection & operator[](std::string key)
-        {
-	    return map[key];
-	}
-
-        // TBD: in the long run this shall be removed:
-        // this method is not used in application, but for testing. 
-        // In a validating parser, only a bool valued check is necessary. 
-        unsigned int size() const
-        {
-	    return map.size();
-        }
-
+ 
 
 
 # ifndef THROW_PREVENTED
         IniFile(const std::string &filename,
-            const char fieldSep = '=',
-            const char comment = '#')
-	  : IniFile(fieldSep, comment)
+		std::vector<unsigned int> lenSections,
+		const char fieldSep,
+		const char comment)
+	  : IniFile(lenSections, fieldSep, comment)
         {
 	    load(filename);
         }
 
  # ifndef SSTREAM_PREVENTED
        IniFile(std::istream &is,
-            const char fieldSep = '=',
-            const char comment = '#')
-	  : IniFile(fieldSep, comment)
+	       std::vector<unsigned int> lenSections,
+	       const char fieldSep,
+	       const char comment)
+	  : IniFile(lenSections, fieldSep, comment)
         {
            decode(is);
 	}
@@ -766,16 +779,19 @@ namespace ini
       // TBD: the above constructor shall be replaced by the ones below
       // to get the right exceptions. 
         IniFile(std::ifstream &is,
-            const char fieldSep = '=',
-            const char comment = '#')
-	  : IniFile(fieldSep, comment)
+		std::vector<unsigned int> lenSections,
+		const char fieldSep,
+		const char comment)
+	  : IniFile(lenSections, fieldSep, comment)
         {
            decode(is);
 	}
+      
         IniFile(std::istringstream &is,
-            const char fieldSep = '=',
-            const char comment = '#')
-	  : IniFile(fieldSep, comment)
+		std::vector<unsigned int> lenSections,
+		const char fieldSep,
+		const char comment)
+	  : IniFile(lenSections, fieldSep, comment)
         {
            decode(is);
 	}
@@ -795,6 +811,21 @@ namespace ini
         {
             comment_ = comment;
         }
+
+
+             IniSection & operator[](std::string key)
+        {
+	    return map[key];
+	}
+
+        // TBD: in the long run this shall be removed:
+        // this method is not used in application, but for testing. 
+        // In a validating parser, only a bool valued check is necessary. 
+        unsigned int size() const
+        {
+	    return map.size();
+        }
+
 
         /**
 	 * 
@@ -870,10 +901,10 @@ namespace ini
         class InFileStreamNS : public InStreamInterface
         {
 	private:
-	  static const int LEN_LINE = 255;
-	      FILE* file_;
-	      char buff[LEN_LINE];// TBC: how to get rid of this uggly 255!!!
-	      bool badBit;
+	    static const int LEN_LINE = 255;
+	    FILE* file_;
+	    char buff[LEN_LINE];// TBC: how to get rid of this uggly 255!!!
+	    bool badBit;
 	public:
 	    InFileStreamNS(const std::string fName) //: str_(str)
 	    {
@@ -1026,6 +1057,8 @@ namespace ini
 	        return deResult.set(STREAM_OPENR_FAILED);
 	    deResult.incLineNo();
 	    map.clear();
+	    unsigned int idxSec = -1;
+	    unsigned int idxFieldInSec;
 	    IniSection *currentSection = NULL;
 	    for (std::string line; iStream.getLine(line); deResult.incLineNo())
             {
@@ -1033,12 +1066,12 @@ namespace ini
 		//std::cout << "decoding line " << line << std::endl;
 		
                 // skip if line is empty or a comment
-                if(line.size() == 0 || line[0] == comment_)
+                if (line.size() == 0 || line[0] == comment_)
                     continue;
 		
-                if(line[0] == SEC_START)
+                if (line[0] == SEC_START)
                 {
-                    // line is a section
+                    // line defines a section
                     // check if the section is also closed on same line
                     std::size_t pos = line.find(SEC_END);
                     if(pos == std::string::npos)
@@ -1057,11 +1090,18 @@ namespace ini
 		    // check if section name occurred before 
 		    if (this->map.contains(secName))
 		        return deResult.set(SECTION_NOT_UNIQUE);
+		    
+		    idxSec++;
+		    if (idxSec >= std::size(lenSections_))
+		    {
+		        return deResult.set(SECTION_UNEXPECTED);
+		    }
+		    idxFieldInSec = 0;
                     currentSection = &(this->map[secName]);
 		    //std::cout << " found section " << currentSection << std::endl;
-               }
+		}
                 else
-                {
+		{
                     // find key value separator
                     std::size_t pos = line.find(fieldSep_);
                     if(pos == std::string::npos)
@@ -1081,7 +1121,15 @@ namespace ini
 		    // check if key name is  occurred before within the section
 		    if (currentSection->map.contains(key))
 		        return deResult.set(FIELD_NOT_UNIQUE_IN_SECTION);
- 
+
+		    
+		    if (idxFieldInSec >= lenSections_[idxSec])
+		    {
+ 		      return deResult.set(FIELD_UNEXPECTED_IN_SECTION);
+		    }
+		    idxFieldInSec++;
+
+		    
                     (currentSection->map)[key] = value;
 		}
 	    }
@@ -1508,7 +1556,7 @@ namespace ini
 		    str += "in stream line ";
 		    str += std::to_string(dRes.lineNumber);
 		}
-		str += ": ini parsing failed, ";
+		str += ": ini parsing failed, found ";
 		switch (dRes.errorCode)
 		{
 		case NO_FAILURE:
@@ -1518,21 +1566,29 @@ namespace ini
 		    str += "section not closed";
 		    break;
 		case SECTION_NAME_EMPTY:
-		    str += "section name is empty";
+		    str += "empty section name";
 		    break;
 		case SECTION_TEXT_AFTER:
 		    str += "no end of line after section";
 		    break;
+		case SECTION_UNEXPECTED:
+		    str += "unexpected section";
+		    break;
 		case ILLEGAL_LINE:
-		  str += "found illegal line ";
-		  str += "neither '";
+		  str += "illegal line neither '";
 		  str += comment_;
 		  str += "'-comment, nor section nor field with separator '";
 		  str += fieldSep_;
 		  str += "'";
 		    break;
 		case FIELD_WITHOUT_SECTION:
-		    str += "field has no section";
+		    str += "field without section";
+		    break;
+		case FIELD_NOT_UNIQUE_IN_SECTION:
+		    str += "field not unique in its section";
+		    break;
+		case FIELD_UNEXPECTED_IN_SECTION:
+		    str += "unexpected field in section";
 		    break;
 		case STREAM_OPENR_FAILED:
 		  // TBD: specified whether failbit or badbit is set. 

@@ -25,12 +25,10 @@
 
 #ifdef THROW_PREVENTED
 #define INIF \
-  ini::IniFile inif;				\
   bool isOk = inif.tryDecode(str).isOk();	\
   REQUIRE(isOk);
 #else
 #define INIF \
-  ini::IniFile inif;   \
   inif.decode(str);
 #endif
 
@@ -53,6 +51,8 @@ TEST_CASE(TH " " SS " decode and encode ini string", "IniFile")
 		    "# a comment\n"
 		    "\n"
 		    "[Test]\n\n");
+    std::vector<unsigned int> mult = {1u, 0u};
+    ini::IniFile inif(mult);
     INIF
 
     REQUIRE(inif.size() == 2);
@@ -82,6 +82,8 @@ TEST_CASE(TH " " SS " decode and encode 2nd ini string", "IniFile")
 		    "[git]\n"
 		    "revision=v0.0.1\n"
 		    "dateTime=1968-03-11\n");
+    std::vector<unsigned int> mult = {1u, 2u};
+    ini::IniFile inif(mult);
     INIF
 
     REQUIRE(inif.size() == 2);
@@ -112,6 +114,8 @@ TEST_CASE(TH " " SS " decode and encode 2nd ini string", "IniFile")
 TEST_CASE(TH " " SS " decode empty ini string", "IniFile")
 {
     std::string str("");
+    std::vector<unsigned int> mult = {};
+    ini::IniFile inif(mult);
     INIF
       // TBD: clarify whether it is ok to set an exception here:
       // stream has fail bit. 
@@ -131,7 +135,8 @@ TEST_CASE(TH " " SS " fail to decode ini string with section not closed", "IniFi
 		    "bar=hello world\n"
 		    "[Test\n"
 		    "foo=never reached");
-    ini::IniFile inif;
+    std::vector<unsigned int> mult = {1u, 1u};
+    ini::IniFile inif(mult);
 #ifdef THROW_PREVENTED
     ini::IniFile::DecEncResult deResult = inif.tryDecode(str);
     CHECK(deResult.getErrorCode()
@@ -149,7 +154,8 @@ TEST_CASE(TH " " SS " fail to decode ini string with empty section name", "IniFi
 		    "bar=hello world\n"
 		    "[]\n"
 		    "foo=never reached");
-    ini::IniFile inif;
+    std::vector<unsigned int> mult = {1u, 1u};
+    ini::IniFile inif(mult);
 #ifdef THROW_PREVENTED
     ini::IniFile::DecEncResult deResult = inif.tryDecode(str);
     REQUIRE(deResult.getErrorCode()
@@ -166,7 +172,8 @@ TEST_CASE(TH " " SS " fail to decode ini string with text after section", "IniFi
 		    "bar=hello world\n"
 		    "[Test]superfluous\n"
 		    "foo=never reached");
-    ini::IniFile inif;
+    std::vector<unsigned int> mult = {1u, 1u};
+    ini::IniFile inif(mult);
 #ifdef THROW_PREVENTED
     ini::IniFile::DecEncResult deResult = inif.tryDecode(str);
     REQUIRE(deResult.getErrorCode()
@@ -186,7 +193,8 @@ TEST_CASE(TH " " SS " fail to decode ini string with duplicate section",
 		    "foo=irrelevant\n"
 		    "[Fox]\n"
 		    "foo=never reached");
-    ini::IniFile inif;
+    std::vector<unsigned int> mult = {1u, 1u, 1u};
+    ini::IniFile inif(mult);
 #ifdef THROW_PREVENTED
     ini::IniFile::DecEncResult deResult = inif.tryDecode(str);
     REQUIRE(deResult.getErrorCode()
@@ -205,7 +213,8 @@ TEST_CASE(TH " " SS " fail to decode ini string with illegal line", "IniFile")
 		    "bar no_separator\n"
 		    "[Test]\n"
 		    "foo=never reached");
-    ini::IniFile inif;
+    std::vector<unsigned int> mult = {1u, 1u};
+    ini::IniFile inif(mult);
 #ifdef THROW_PREVENTED
     ini::IniFile::DecEncResult deResult = inif.tryDecode(str);
     REQUIRE(deResult.getErrorCode()
@@ -216,13 +225,16 @@ TEST_CASE(TH " " SS " fail to decode ini string with illegal line", "IniFile")
 #endif
 }
 
+// TBD: add tests for FIELD_UNEXPECTED_IN_SECTION and SECTION_UNEXPECTED
+
 TEST_CASE(TH " " SS " fail to decode ini string with field without custom separator", "IniFile")
 {
     std::string str("[Foo]\n"
 		    "bar=no_separator\n"
 		    "[Test]\n"
 		    "foo=never reached");
-   ini::IniFile inif(':', '#');
+    std::vector<unsigned int> mult = {1u, 1u};
+    ini::IniFile inif(mult, ':', '#');
 #ifdef THROW_PREVENTED
      ini::IniFile::DecEncResult deResult = inif.tryDecode(str);
     REQUIRE(deResult.getErrorCode()
@@ -241,7 +253,8 @@ TEST_CASE(TH " " SS " fail to decode ini string with field without section", "In
 		    "bar=hello world\n"
 		    "[Test]\n"
 		    "foo=say goodby");
-    ini::IniFile inif;
+    std::vector<unsigned int> mult = {3u};
+    ini::IniFile inif(mult);
 #ifdef THROW_PREVENTED
     ini::IniFile::DecEncResult deResult = inif.tryDecode(str);
     REQUIRE(deResult.getErrorCode()
@@ -259,7 +272,8 @@ TEST_CASE(TH " " SS " fail to decode ini string with duplicate field", "IniFile"
 		    "bar=World");
 
 
-    ini::IniFile inif;
+    std::vector<unsigned int> mult = {2u};
+    ini::IniFile inif(mult);
 #ifdef THROW_PREVENTED
     ini::IniFile::DecEncResult deResult = inif.tryDecode(str);
     REQUIRE(deResult.getErrorCode()
@@ -290,7 +304,8 @@ TEST_CASE(TH " " SS " fail load non-existing ini file", "IniFile")
     
     REQUIRE(res == -1);
 
-    ini::IniFile inif;
+    std::vector<unsigned int> mult = {1u};
+    ini::IniFile inif(mult);
 #ifdef THROW_PREVENTED
     ini::IniFile::DecEncResult deResult = inif.tryLoad(fName);
     REQUIRE(deResult.getErrorCode()
@@ -313,7 +328,8 @@ TEST_CASE(TH " " SS " fail load/save directory as ini file", "IniFile")
     std::filesystem::path path = fName;
     REQUIRE(std::filesystem::is_directory(path));
 
-    ini::IniFile inif;
+    std::vector<unsigned int> mult = {1u};
+    ini::IniFile inif(mult);
 #ifdef THROW_PREVENTED
     ini::IniFile::DecEncResult deResult = inif.tryLoad(fName);
 #ifdef _WIN32
@@ -360,7 +376,8 @@ TEST_CASE(TH " " SS " fail load unreadable as ini file", "IniFile")
     std::filesystem::path path = fName;
     REQUIRE(std::filesystem::is_regular_file(path));
 
-    ini::IniFile inif;
+    std::vector<unsigned int> mult = {1u};
+    ini::IniFile inif(mult);
 #ifdef THROW_PREVENTED
     ini::IniFile::DecEncResult deResult = inif.tryLoad(fName);
     REQUIRE(deResult.getErrorCode()
@@ -405,7 +422,8 @@ TEST_CASE(TH " " SS " fail save unwritable as ini file", "IniFile")
     std::filesystem::path path = fName;
     REQUIRE(std::filesystem::is_regular_file(path));
 
-    ini::IniFile inif;
+    std::vector<unsigned int> mult = {};
+    ini::IniFile inif(mult);
 #ifdef THROW_PREVENTED
     ini::IniFile::DecEncResult deResult = inif.trySave(fName);
     REQUIRE(deResult.getErrorCode()
@@ -423,7 +441,9 @@ TEST_CASE(TH " " SS " fail save unwritable as ini file", "IniFile")
 TEST_CASE(TH " " SS " decode ini string with comment only", "IniFile")
 {
     std::string str("# this is a comment");
-    INIF
+    std::vector<unsigned int> mult = {};
+    ini::IniFile inif(mult);
+INIF
 
     REQUIRE(inif.size() == 0);
 }
@@ -432,7 +452,9 @@ TEST_CASE(TH " " SS " decode ini string with comment only", "IniFile")
 TEST_CASE(TH " " SS " decode ini string with empty section", "IniFile")
 {
     std::string str("[Foo]");
-    INIF
+    std::vector<unsigned int> mult = {0u};
+    ini::IniFile inif(mult);
+INIF
 
     REQUIRE(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 0);
@@ -479,7 +501,8 @@ TEST_CASE(TH " " SS " save and reload ini file", "IniFile")
     REQUIRE(res == -1);
 
     // save example inif as a file 
-    ini::IniFile inif;
+    std::vector<unsigned int> mult = {2u, 1u};
+    ini::IniFile inif(mult);
     inif["Foo"]["bar1"] = true;
     inif["Foo"]["bar2"] = false;
     inif["Baz"]["bax0"] = 42;
@@ -500,7 +523,8 @@ TEST_CASE(TH " " SS " save and reload ini file", "IniFile")
     REQUIRE(res == 0);
 
     // read back
-    ini::IniFile inif2;
+    //unsigned int mult[2] = {2u, 1u};
+    ini::IniFile inif2(mult);
 #ifdef THROW_PREVENTED
     deResult = inif2.tryLoad(fName);
     REQUIRE(deResult.getErrorCode()
@@ -547,7 +571,8 @@ TEST_CASE(TH " " SS " load ini file with trailing newline", "IniFile")
 #endif
     REQUIRE(res == 0);
     
-    ini::IniFile inif;
+    std::vector<unsigned int> mult = {2u, 1u};
+    ini::IniFile inif(mult);
 #ifdef THROW_PREVENTED
     ini::IniFile::DecEncResult deResult = inif.tryLoad(fName);
     REQUIRE(deResult.getErrorCode()
@@ -585,7 +610,8 @@ TEST_CASE(TH " " SS " load ini file with no trailing newline", "IniFile")
 #endif
     REQUIRE(res == 0);
     
-    ini::IniFile inif;
+    std::vector<unsigned int> mult = {2u, 1u};
+    ini::IniFile inif(mult);
 #ifdef THROW_PREVENTED
     ini::IniFile::DecEncResult deResult = inif.tryLoad(fName);
     REQUIRE(deResult.getErrorCode()
@@ -622,7 +648,9 @@ TEST_CASE(TH " " SS " parse empty field", "IniFile")
 {
     std::string str("[Foo]\n"
 		    "bar=");
-    INIF
+    std::vector<unsigned int> mult = {1u};
+    ini::IniFile inif(mult);
+INIF
 
     CHECK(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 1);
@@ -651,7 +679,9 @@ TEST_CASE(TH " " SS " parse field as c-string", "IniFile")
 {
     std::string str("[Foo]\n"
 		    "bar=blaC");
-    INIF
+    std::vector<unsigned int> mult = {1u};
+    ini::IniFile inif(mult);
+INIF
       
     const char* nvrOcc = "never occurs";
     REQUIRE(inif.size() == 1);
@@ -666,7 +696,9 @@ TEST_CASE(TH " " SS " parse field as std::string", "IniFile")
 {
     std::string str("[Foo]\n"
 		    "bar=blaS");
-    INIF
+    std::vector<unsigned int> mult = {1u};
+    ini::IniFile inif(mult);
+INIF
 
     const char* nvrOcc = "never occurs";
 
@@ -706,7 +738,9 @@ TEST_CASE(TH " " SS " parse field as double", "IniFile")
 "9481658085593321233482747978262041447231687381771809192998812504040261841248"
 			 "5836800.01" // with 68.0 this is max 
 			  );
-    INIF
+    std::vector<unsigned int> mult = {11u};
+    ini::IniFile inif(mult);
+INIF
 
     REQUIRE(inif.size() == 1);
     ini::IniSection sec = inif["Foo"];
@@ -748,7 +782,9 @@ TEST_CASE(TH " " SS " fail to parse field as double", "IniFile")
 {
    std::string str("[Foo]"
 		   "\nbar1=bla" "\nbar2=-2.5e4x" "\nbar3=");
-    INIF
+    std::vector<unsigned int> mult = {3u};
+    ini::IniFile inif(mult);
+INIF
 
     REQUIRE(inif.size() == 1);
     ini::IniSection sec = inif["Foo"];
@@ -781,7 +817,9 @@ TEST_CASE(TH " " SS " parse field as float", "IniFile")
 		    "\nbarL3=" 
 		    "340282346638528859811704183484516925440000.1" // 
 		    );
-    INIF
+    std::vector<unsigned int> mult = {11u};
+    ini::IniFile inif(mult);
+INIF
 
     REQUIRE(inif.size() == 1);
     ini::IniSection sec = inif["Foo"];
@@ -805,8 +843,6 @@ TEST_CASE(TH " " SS " parse field as float", "IniFile")
 #endif
 
 
-
-    
     REQUIRE(sec["bar0"].orDefault(-.1f) == 0.0f);
     REQUIRE(std::signbit(sec["bar0"].orDefault(-1.1f)));
     REQUIRE(sec["bar1"].orDefault(-.1f) == 1.2f);
@@ -826,7 +862,9 @@ TEST_CASE(TH " " SS " fail to parse field as float", "IniFile")
 {
     std::string str("[Foo]"
 		    "\nbar1=bla" "\nbar2=-2.5e4x" "\nbar3=");
-    INIF
+    std::vector<unsigned int> mult = {3u};
+    ini::IniFile inif(mult);
+INIF
       
     REQUIRE(inif.size() == 1);
     ini::IniSection sec = inif["Foo"];
@@ -857,8 +895,10 @@ TEST_CASE(TH " " SS " parse field as (unsigned) long int, fail if negative unsig
 		    "\nbarO1= 0x8000000000000000" // max          long + 1
 		    "\nbarO2= 0x10000000000000000"// max unsigned long + 1
 		    "\nbarO3=-0x8000000000000001");// min         long - 1
-    INIF
-
+    std::vector<unsigned int> mult = {16u};
+    ini::IniFile inif(mult);
+INIF
+ 
     REQUIRE(inif.size() == 1);
     ini::IniSection sec = inif["Foo"];
 #ifndef THROW_PREVENTED
@@ -950,14 +990,9 @@ TEST_CASE(TH " " SS " fail to parse field as (unsigned) long int", "IniFile")
 		    "\nbar1=bla" "\nbar2=" "\nbar3=2x" "\nbar4=+"
 		    "\nbar82=08" "\nbarG0=0x" "\nbarG1=0xg"
 		    );
-#ifdef THROW_PREVENTED
-    ini::IniFile inif;
-    bool isOk = inif.tryDecode(str).isOk();
-    REQUIRE(isOk);
-#else
-    ini::IniFile inif;
-    inif.decode(str);
-#endif
+    std::vector<unsigned int> mult = {7u};
+    ini::IniFile inif(mult);
+INIF
 
     REQUIRE(inif.size() == 1);
     ini::IniSection sec = inif["Foo"];
@@ -1038,14 +1073,9 @@ TEST_CASE(TH " " SS " parse field as (unsigned) int, fail if negative unsigned",
 		    "\nbarO1= 0x80000000"  // max          int + 1
 		    "\nbarO2= 0x100000000" // max unsigned int + 1
 		    "\nbarO3=-0x80000001");// min          int - 1
-#ifdef THROW_PREVENTED
-    ini::IniFile inif;
-    bool isOk = inif.tryDecode(str).isOk();
-    REQUIRE(isOk);
-#else
-    ini::IniFile inif;
-    inif.decode(str);
-#endif
+    std::vector<unsigned int> mult = {16u};
+    ini::IniFile inif(mult);
+INIF
 
     REQUIRE(inif.size() == 1);
     ini::IniSection sec = inif["Foo"];
@@ -1130,17 +1160,17 @@ TEST_CASE(TH " " SS " parse field as (unsigned) int, fail if negative unsigned",
 
 TEST_CASE(TH " " SS " fail to parse field as (unsigned) int", "IniFile")
 {
-    std::string str("[Foo]"
-		    "\nbar1=bla" "\nbar2=" "\nbar3=2x" "\nbar4=+"
-		    "\nbar82=08" "\nbarG0=0x" "\nbarG1=0xg");
-#ifdef THROW_PREVENTED
-    ini::IniFile inif;
-    bool isOk = inif.tryDecode(str).isOk();
-    REQUIRE(isOk);
-#else
-    ini::IniFile inif;
-    inif.decode(str);
-#endif
+    std::string str("[Foo]\n"
+		    "bar1=bla\n"
+		    "bar2=\n"
+		    "bar3=2x\n"
+		    "bar4=+\n"
+		    "bar82=08\n"
+		    "barG0=0x\n"
+		    "barG1=0xg");
+    std::vector<unsigned int> mult = {7u};
+    ini::IniFile inif(mult);
+INIF
 
     REQUIRE(inif.size() == 1);
     ini::IniSection sec = inif["Foo"];
@@ -1200,6 +1230,8 @@ TEST_CASE(TH " " SS " parse field as bool", "IniFile")
 		    "bar1=true\n"
 		    "bar2=false\n"
 		    "bar3=tRuE");
+    std::vector<unsigned int> mult = {3u};
+    ini::IniFile inif(mult);
 INIF
 
     REQUIRE(inif.size() == 1);
@@ -1225,6 +1257,8 @@ TEST_CASE(TH " " SS " failed to parse field as bool", "IniFile")
 {
     std::string str("[Foo]\n"
 		    "bar=yes");
+    std::vector<unsigned int> mult = {1u};
+    ini::IniFile inif(mult);
 INIF
   
     REQUIRE(inif.size() == 1);
@@ -1253,7 +1287,8 @@ TEST_CASE(TH " " SS " parse field with custom field sep", "IniFile")
 		    "bar2:false\n"
 		    "bar3:tRuE");
   
-    ini::IniFile inif(':', '#');
+    std::vector<unsigned int> mult = {3u};
+    ini::IniFile inif(mult, ':', '#');
 #ifdef THROW_PREVENTED
     bool isOk = inif.tryDecode(str).isOk();
     REQUIRE(isOk);
@@ -1272,6 +1307,8 @@ TEST_CASE(TH " " SS " parse file with comment", "IniFile")
     std::string str("[Foo]\n"
 		    "# this is a test\n"
 		    "bar=bla");
+    std::vector<unsigned int> mult = {1u};
+    ini::IniFile inif(mult);
 INIF
 
   REQUIRE(inif.size() == 1);
@@ -1281,7 +1318,8 @@ INIF
 
 TEST_CASE(TH " " SS " parse with custom comment char", "IniFile")
 {
-    ini::IniFile inif('=', '$');
+    std::vector<unsigned int> mult = {2u};
+    ini::IniFile inif(mult, '=', '$');
     std::string str("[Foo]\n"
 		    "$ this is a test\n"
 		    "bar=bla");
@@ -1295,7 +1333,8 @@ TEST_CASE(TH " " SS " parse with custom comment char", "IniFile")
 
 TEST_CASE(TH " " SS " save with bool fields", "IniFile")
 {
-    ini::IniFile inif;
+    std::vector<unsigned int> mult = {2u};
+    ini::IniFile inif(mult);
     inif["Foo"]["bar1"] = true;
     inif["Foo"]["bar2"] = false;
 
@@ -1315,7 +1354,8 @@ TEST_CASE(TH " " SS " save with bool fields", "IniFile")
 
 TEST_CASE(TH " " SS " save with (unsigned) (long) int fields", "IniFile")
 {
-    ini::IniFile inif;
+    std::vector<unsigned int> mult = {4u};
+    ini::IniFile inif(mult);
     inif["Foo"]["bar1"] =  1u;
     inif["Foo"]["bar2"] = -2;
     inif["Foo"]["bar3"] =  3lu;
@@ -1335,7 +1375,8 @@ TEST_CASE(TH " " SS " save with (unsigned) (long) int fields", "IniFile")
 // TBD: infinite and NaN
 TEST_CASE(TH " " SS " save with double/float fields", "IniFile")
 {
-    ini::IniFile inif;
+    std::vector<unsigned int> mult = {3u};
+    ini::IniFile inif(mult);
     inif["Foo"]["bar1"] = 1.2;
     inif["Foo"]["bar2"] = -2.4;
     inif["Foo"]["bar3"] = -2.5f;
@@ -1353,7 +1394,8 @@ TEST_CASE(TH " " SS " save with double/float fields", "IniFile")
 
 TEST_CASE(TH " " SS " save with custom field sep", "IniFile")
 {
-    ini::IniFile inif(':', '#');
+    std::vector<unsigned int> mult = {2u};
+    ini::IniFile inif(mult, ':', '#');
     inif["Foo"]["bar1"] = true;
     inif["Foo"]["bar2"] = false;
 
@@ -1382,6 +1424,8 @@ TEST_CASE(TH " " SS " spaces are not taken into account in field names", "IniFil
 {
     std::string str("[Foo]\n"
 		    "  \t  bar  \t  =hello world");
+    std::vector<unsigned int> mult = {1u};
+    ini::IniFile inif(mult);
     INIF
 
     REQUIRE(inif["Foo"]["bar"].toString() == "hello world");
@@ -1391,6 +1435,8 @@ TEST_CASE(TH " " SS " spaces are not taken into account in field values", "IniFi
 {
     std::string str("[Foo]\n"
 		    "bar=  \t  hello world  \t  ");
+    std::vector<unsigned int> mult = {1u};
+    ini::IniFile inif(mult);
     INIF
 
     REQUIRE(inif["Foo"]["bar"].toString() == "hello world");
@@ -1400,7 +1446,10 @@ TEST_CASE(TH " " SS " spaces are not taken into account in sections", "IniFile")
 {
     std::string str("  \t  [Foo]  \t  \n"
 		    "bar=bla");
-    INIF
+    
+    std::vector<unsigned int> mult = {1u};
+    ini::IniFile inif(mult);
+INIF
 
 // #ifdef THROW_PREVENTED
 //   ini::IniFile inif;
