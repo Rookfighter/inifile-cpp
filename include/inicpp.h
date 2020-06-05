@@ -1058,7 +1058,9 @@ namespace ini
 	    deResult.incLineNo();
 	    map.clear();
 	    unsigned int idxSec = -1;
-	    unsigned int idxFieldInSec;
+	    // superfluous, only to cause error if used uninitilized
+	    // (also to avoid compiler warnings)
+	    unsigned int idxFieldInSec = -1;
 	    IniSection *currentSection = NULL;
 	    for (std::string line; iStream.getLine(line); deResult.incLineNo())
             {
