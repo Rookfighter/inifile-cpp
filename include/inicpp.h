@@ -557,7 +557,7 @@ namespace ini
         unsigned int lengthText()
         {
 	    unsigned int res = 0;
-	    for (const auto &pair : *this)
+	    for (const auto &pair : map)
 	    {
 	        // for each entry length of key and of value
 	        // plus 2 for separator and newline 
@@ -1494,7 +1494,7 @@ namespace ini
         unsigned int lengthText()
         {
 	    unsigned int res = 0;
-	    for (auto &pair : *this)
+	    for (auto &pair : map)
 	    {
 	        // for each section length of name of section
 	        // plus 2 for enclosing [...] plus 1 for newline 
