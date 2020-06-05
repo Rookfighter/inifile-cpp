@@ -1092,7 +1092,7 @@ namespace ini
 		        return deResult.set(SECTION_NOT_UNIQUE);
 		    
 		    idxSec++;
-		    if (idxSec >= std::size(lenSections_))
+		    if (idxSec >= lenSections_.size())
 		    {
 		        return deResult.set(SECTION_UNEXPECTED);
 		    }
