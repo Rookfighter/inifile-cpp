@@ -251,7 +251,7 @@ TEST_CASE("spaces are not taken into account in sections", "IniFile")
     REQUIRE(inif.find("Foo") != inif.end());
 }
 
-TEST_CASE("fail to parse duplicate sections", "IniFile")
+TEST_CASE("fail to parse duplicated sections", "IniFile")
 {
     ini::IniFile inif;
     REQUIRE_THROWS(inif.decode("[Foo]\nbar=bla\n[Foo]\nbaz=ble\n"));
