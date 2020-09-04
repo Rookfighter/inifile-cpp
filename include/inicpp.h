@@ -295,6 +295,16 @@ namespace ini
 
                     // retrieve section name
                     std::string secName = line.substr(1, pos - 1);
+                    // check if the name of the section is already in use
+                    auto search = find(secName);
+                    if(search != end())
+                    {
+                        std::stringstream ss;
+                        ss << "l" << lineNo
+                           << ": ini parsing failed, duplicate section "
+                           << secName;
+                        throw std::logic_error(ss.str());
+                    }
                     currentSection = &((*this)[secName]);
                 }
                 else
