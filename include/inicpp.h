@@ -207,6 +207,13 @@ namespace ini
                 str = "";
         }
 
+        void erase_comment(std::string &str)
+        {
+            size_t startpos = str.find(comment_);
+            if(std::string::npos != startpos)
+                str = str.substr(0, startpos);
+        }
+
     public:
         IniFile() : IniFile('=', '#')
         {}
@@ -254,14 +261,12 @@ namespace ini
             {
                 std::string line;
                 std::getline(is, line, '\n');
+                erase_comment(line);
                 trim(line);
                 ++lineNo;
 
                 // skip if line is empty
                 if(line.size() == 0)
-                    continue;
-                // skip if line is a comment
-                if(line[0] == comment_)
                     continue;
                 if(line[0] == '[')
                 {

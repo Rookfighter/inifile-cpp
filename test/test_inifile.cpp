@@ -250,3 +250,19 @@ TEST_CASE("spaces are not taken into account in sections", "IniFile")
 
     REQUIRE(inif.find("Foo") != inif.end());
 }
+
+TEST_CASE("inline comments in sections are discarded", "IniFile")
+{
+    std::istringstream ss("[Foo] # This is an inline comment\nbar=Hello world!");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.find("Foo") != inif.end());
+}
+
+TEST_CASE("inline comments in fields are discarded", "IniFile")
+{
+    std::istringstream ss("[Foo]\nbar=Hello world! # This is an inline comment");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "Hello world!");
+}
