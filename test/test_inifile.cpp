@@ -124,6 +124,16 @@ TEST_CASE("parse with comment", "IniFile")
     REQUIRE(inif["Foo"]["bar"].as<std::string>() == "bla");
 }
 
+TEST_CASE("parse with multi char comment", "IniFile")
+{
+    std::istringstream ss("[Foo]\nREM this is a test\nbar=bla");
+    ini::IniFile inif(ss, '=', "REM");
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 1);
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "bla");
+}
+
 TEST_CASE("parse with custom comment char", "IniFile")
 {
     std::istringstream ss("[Foo]\n$ this is a test\nbar=bla");
