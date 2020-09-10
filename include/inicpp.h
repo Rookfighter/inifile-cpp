@@ -193,7 +193,7 @@ namespace ini
     {
     private:
         char fieldSep_;
-        char comment_;
+        std::vector<std::string> commentPrefixes_;
         char escape_;
 
         static void trim(std::string &str)
@@ -208,9 +208,9 @@ namespace ini
                 str = "";
         }
 
-        void erase_comment(std::string &str)
+        void erase_comment(const std::string &commentPrefix, std::string &str)
         {
-            size_t startpos = str.find(comment_);
+            size_t startpos = str.find(commentPrefix);
             if(std::string::npos == startpos)
                 return;
             // Found a comment prefix, is it escaped?
@@ -225,12 +225,19 @@ namespace ini
             }
         }
 
+        void erase_comments(std::string &str)
+        {
+            for(auto &commentPrefix : commentPrefixes_)
+                erase_comment(commentPrefix, str);
+        }
+
     public:
         IniFile() : IniFile('=', '#')
         {}
 
         IniFile(const char fieldSep, const char comment)
-            : fieldSep_(fieldSep), comment_(comment), escape_('\\')
+            : fieldSep_(fieldSep), commentPrefixes_(1, std::string(1, comment)),
+              escape_('\\')
         {}
 
         IniFile(const std::string &filename,
@@ -249,6 +256,27 @@ namespace ini
             decode(is);
         }
 
+        IniFile(const char fieldSep,
+            const std::vector<std::string> &commentPrefixes)
+            : fieldSep_(fieldSep), commentPrefixes_(commentPrefixes)
+        {}
+
+        IniFile(const std::string &filename,
+            const char fieldSep,
+            const std::vector<std::string> &commentPrefixes)
+            : fieldSep_(fieldSep), commentPrefixes_(commentPrefixes)
+        {
+            load(filename);
+        }
+
+        IniFile(std::istream &is,
+            const char fieldSep,
+            const std::vector<std::string> &commentPrefixes)
+            : fieldSep_(fieldSep), commentPrefixes_(commentPrefixes)
+        {
+            decode(is);
+        }
+
         ~IniFile()
         {}
 
@@ -259,7 +287,12 @@ namespace ini
 
         void setCommentChar(const char comment)
         {
-            comment_ = comment;
+            commentPrefixes_ = {std::string(1, comment)};
+        }
+
+        void setCommentPrefixes(const std::vector<std::string> &commentPrefixes)
+        {
+            commentPrefixes_ = commentPrefixes;
         }
 
         void decode(std::istream &is)
@@ -272,7 +305,7 @@ namespace ini
             {
                 std::string line;
                 std::getline(is, line, '\n');
-                erase_comment(line);
+                erase_comments(line);
                 trim(line);
                 ++lineNo;
 

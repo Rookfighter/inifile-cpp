@@ -124,10 +124,50 @@ TEST_CASE("parse with comment", "IniFile")
     REQUIRE(inif["Foo"]["bar"].as<std::string>() == "bla");
 }
 
-TEST_CASE("parse with custom comment char", "IniFile")
+TEST_CASE("parse with custom comment char prefix", "IniFile")
 {
     std::istringstream ss("[Foo]\n$ this is a test\nbar=bla");
     ini::IniFile inif(ss, '=', '$');
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 1);
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "bla");
+}
+
+TEST_CASE("parse with multi char comment prefix", "IniFile")
+{
+    std::istringstream ss("[Foo]\nREM this is a test\nbar=bla");
+    ini::IniFile inif(ss, '=', {"REM"});
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 1);
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "bla");
+}
+
+TEST_CASE("parse with multiple multi char comment prefixes", "IniFile")
+{
+    std::istringstream ss("[Foo]\n"
+                          "REM this is a comment\n"
+                          "#Also a comment\n"
+                          "//Even this is a comment\n"
+                          "bar=bla");
+    ini::IniFile inif(ss, '=', {"REM", "#", "//"});
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 1);
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "bla");
+}
+
+TEST_CASE("comment prefixes can be set after construction", "IniFile")
+{
+    std::istringstream ss("[Foo]\n"
+                          "REM this is a comment\n"
+                          "#Also a comment\n"
+                          "//Even this is a comment\n"
+                          "bar=bla");
+    ini::IniFile inif;
+    inif.setCommentPrefixes({"REM", "#", "//"});
+    inif.decode(ss);
 
     REQUIRE(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 1);
