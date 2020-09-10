@@ -193,7 +193,7 @@ namespace ini
     {
     private:
         char fieldSep_;
-        std::string comment_;
+        char comment_;
 
         static void trim(std::string &str)
         {
@@ -219,10 +219,6 @@ namespace ini
         {}
 
         IniFile(const char fieldSep, const char comment)
-            : fieldSep_(fieldSep), comment_(1, comment)
-        {}
-
-        IniFile(const char fieldSep, const std::string &comment)
             : fieldSep_(fieldSep), comment_(comment)
         {}
 
@@ -234,25 +230,9 @@ namespace ini
             load(filename);
         }
 
-        IniFile(const std::string &filename,
-            const char fieldSep,
-            const std::string &comment)
-            : IniFile(fieldSep, comment)
-        {
-            load(filename);
-        }
-
         IniFile(std::istream &is,
             const char fieldSep = '=',
             const char comment = '#')
-            : IniFile(fieldSep, comment)
-        {
-            decode(is);
-        }
-
-        IniFile(std::istream &is,
-            const char fieldSep,
-            const std::string &comment)
             : IniFile(fieldSep, comment)
         {
             decode(is);

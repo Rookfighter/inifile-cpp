@@ -124,16 +124,6 @@ TEST_CASE("parse with comment", "IniFile")
     REQUIRE(inif["Foo"]["bar"].as<std::string>() == "bla");
 }
 
-TEST_CASE("parse with multi char comment", "IniFile")
-{
-    std::istringstream ss("[Foo]\nREM this is a test\nbar=bla");
-    ini::IniFile inif(ss, '=', "REM");
-
-    REQUIRE(inif.size() == 1);
-    REQUIRE(inif["Foo"].size() == 1);
-    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "bla");
-}
-
 TEST_CASE("parse with custom comment char", "IniFile")
 {
     std::istringstream ss("[Foo]\n$ this is a test\nbar=bla");
@@ -182,6 +172,22 @@ TEST_CASE("save with custom field sep", "IniFile")
 
     std::string result = inif.encode();
     REQUIRE(result == "[Foo]\nbar1:true\nbar2:false\n");
+}
+
+TEST_CASE("inline comments in sections are discarded", "IniFile")
+{
+    std::istringstream ss("[Foo] # This is an inline comment\nbar=Hello world!");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.find("Foo") != inif.end());
+}
+
+TEST_CASE("inline comments in fields are discarded", "IniFile")
+{
+    std::istringstream ss("[Foo]\nbar=Hello world! # This is an inline comment");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "Hello world!");
 }
 
 /***************************************************
@@ -259,20 +265,4 @@ TEST_CASE("spaces are not taken into account in sections", "IniFile")
     ini::IniFile inif(ss);
 
     REQUIRE(inif.find("Foo") != inif.end());
-}
-
-TEST_CASE("inline comments in sections are discarded", "IniFile")
-{
-    std::istringstream ss("[Foo] # This is an inline comment\nbar=Hello world!");
-    ini::IniFile inif(ss);
-
-    REQUIRE(inif.find("Foo") != inif.end());
-}
-
-TEST_CASE("inline comments in fields are discarded", "IniFile")
-{
-    std::istringstream ss("[Foo]\nbar=Hello world! # This is an inline comment");
-    ini::IniFile inif(ss);
-
-    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "Hello world!");
 }
