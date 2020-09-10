@@ -184,10 +184,29 @@ TEST_CASE("inline comments in sections are discarded", "IniFile")
 
 TEST_CASE("inline comments in fields are discarded", "IniFile")
 {
-    std::istringstream ss("[Foo]\nbar=Hello world! # This is an inline comment");
+    std::istringstream ss("[Foo]\n"
+                          "bar=Hello #world!");
     ini::IniFile inif(ss);
 
-    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "Hello world!");
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "Hello");
+}
+
+TEST_CASE("inline comments can be escaped", "IniFile")
+{
+    std::istringstream ss("[Foo]\n"
+                          "bar=Hello \\#world!");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "Hello #world!");
+}
+
+TEST_CASE("escape characters are kept if not before a comment prefix", "IniFile")
+{
+    std::istringstream ss("[Foo]\n"
+                          "bar=Hello \\world!");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "Hello \\world!");
 }
 
 /***************************************************

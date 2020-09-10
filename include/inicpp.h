@@ -194,6 +194,7 @@ namespace ini
     private:
         char fieldSep_;
         char comment_;
+        char escape_;
 
         static void trim(std::string &str)
         {
@@ -210,8 +211,18 @@ namespace ini
         void erase_comment(std::string &str)
         {
             size_t startpos = str.find(comment_);
-            if(std::string::npos != startpos)
-                str = str.substr(0, startpos);
+            if(std::string::npos == startpos)
+                return;
+            // Found a comment prefix, is it escaped?
+            if(0 != startpos && str[startpos - 1] == escape_)
+            {
+                // The comment prefix is escaped, so just delete the escape char
+                str.erase(startpos - 1, 1);
+            }
+            else
+            {
+                str.erase(startpos);
+            }
         }
 
     public:
@@ -219,7 +230,7 @@ namespace ini
         {}
 
         IniFile(const char fieldSep, const char comment)
-            : fieldSep_(fieldSep), comment_(comment)
+            : fieldSep_(fieldSep), comment_(comment), escape_('\\')
         {}
 
         IniFile(const std::string &filename,
