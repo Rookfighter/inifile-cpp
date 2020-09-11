@@ -208,7 +208,7 @@ namespace ini
                 str = "";
         }
 
-        void erase_comment(std::string &str)
+        void eraseComment(std::string &str)
         {
             size_t startpos = str.find(comment_);
             if(std::string::npos == startpos)
@@ -272,7 +272,7 @@ namespace ini
             {
                 std::string line;
                 std::getline(is, line, '\n');
-                erase_comment(line);
+                eraseComment(line);
                 trim(line);
                 ++lineNo;
 
