@@ -208,7 +208,7 @@ namespace ini
                 str = "";
         }
 
-        void erase_comment(const std::string &commentPrefix, std::string &str)
+        void eraseComment(const std::string &commentPrefix, std::string &str)
         {
             size_t startpos = str.find(commentPrefix);
             if(std::string::npos == startpos)
@@ -225,10 +225,10 @@ namespace ini
             }
         }
 
-        void erase_comments(std::string &str)
+        void eraseComments(std::string &str)
         {
             for(auto &commentPrefix : commentPrefixes_)
-                erase_comment(commentPrefix, str);
+                eraseComment(commentPrefix, str);
         }
 
     public:
@@ -305,7 +305,7 @@ namespace ini
             {
                 std::string line;
                 std::getline(is, line, '\n');
-                erase_comments(line);
+                eraseComments(line);
                 trim(line);
                 ++lineNo;
 
