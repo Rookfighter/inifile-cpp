@@ -194,7 +194,6 @@ namespace ini
     private:
         char fieldSep_;
         std::vector<std::string> commentPrefixes_;
-        char escape_;
 
         static void trim(std::string &str)
         {
@@ -208,20 +207,25 @@ namespace ini
                 str = "";
         }
 
-        void eraseComment(const std::string &commentPrefix, std::string &str)
+        void eraseComment(const std::string &commentPrefix,
+            std::string &str,
+            std::string::size_type startpos = 0)
         {
-            size_t startpos = str.find(commentPrefix);
-            if(std::string::npos == startpos)
+            size_t prefixpos = str.find(commentPrefix, startpos);
+            if(std::string::npos == prefixpos)
                 return;
             // Found a comment prefix, is it escaped?
-            if(0 != startpos && str[startpos - 1] == escape_)
+            if(0 != prefixpos && '\\' == str[prefixpos - 1])
             {
                 // The comment prefix is escaped, so just delete the escape char
-                str.erase(startpos - 1, 1);
+                // and keep erasing after the comment prefix
+                str.erase(prefixpos - 1, 1);
+                eraseComment(
+                    commentPrefix, str, prefixpos - 1 + commentPrefix.size());
             }
             else
             {
-                str.erase(startpos);
+                str.erase(prefixpos);
             }
         }
 
@@ -236,8 +240,7 @@ namespace ini
         {}
 
         IniFile(const char fieldSep, const char comment)
-            : fieldSep_(fieldSep), commentPrefixes_(1, std::string(1, comment)),
-              escape_('\\')
+            : fieldSep_(fieldSep), commentPrefixes_(1, std::string(1, comment))
         {}
 
         IniFile(const std::string &filename,

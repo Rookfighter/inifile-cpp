@@ -174,6 +174,31 @@ TEST_CASE("comment prefixes can be set after construction", "IniFile")
     REQUIRE(inif["Foo"]["bar"].as<std::string>() == "bla");
 }
 
+TEST_CASE("comments are allowed after escaped comments", "IniFile")
+{
+    std::istringstream ss("[Foo]\n"
+                          "hello=world \\## this is a comment\n"
+                          "more=of this \\# \\#\n");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif["Foo"]["hello"].as<std::string>() == "world #");
+    REQUIRE(inif["Foo"]["more"].as<std::string>() == "of this # #");
+}
+
+TEST_CASE(
+    "escape char right before a comment prefix escapes all the comment prefix",
+    "IniFile")
+{
+    std::istringstream ss("[Foo]\n"
+                          "weird1=note \\### this is not a comment\n"
+                          "weird2=but \\#### this is a comment");
+    ini::IniFile inif(ss, '=', {"##"});
+
+    REQUIRE(inif["Foo"]["weird1"].as<std::string>() ==
+            "note ### this is not a comment");
+    REQUIRE(inif["Foo"]["weird2"].as<std::string>() == "but ##");
+}
+
 TEST_CASE("save with bool fields", "IniFile")
 {
     ini::IniFile inif;
