@@ -124,7 +124,7 @@ TEST_CASE("parse with comment", "IniFile")
     REQUIRE(inif["Foo"]["bar"].as<std::string>() == "bla");
 }
 
-TEST_CASE("parse with custom comment char", "IniFile")
+TEST_CASE("parse with custom comment char prefix", "IniFile")
 {
     std::istringstream ss("[Foo]\n$ this is a test\nbar=bla");
     ini::IniFile inif(ss, '=', '$');
@@ -132,6 +132,71 @@ TEST_CASE("parse with custom comment char", "IniFile")
     REQUIRE(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 1);
     REQUIRE(inif["Foo"]["bar"].as<std::string>() == "bla");
+}
+
+TEST_CASE("parse with multi char comment prefix", "IniFile")
+{
+    std::istringstream ss("[Foo]\nREM this is a test\nbar=bla");
+    ini::IniFile inif(ss, '=', {"REM"});
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 1);
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "bla");
+}
+
+TEST_CASE("parse with multiple multi char comment prefixes", "IniFile")
+{
+    std::istringstream ss("[Foo]\n"
+                          "REM this is a comment\n"
+                          "#Also a comment\n"
+                          "//Even this is a comment\n"
+                          "bar=bla");
+    ini::IniFile inif(ss, '=', {"REM", "#", "//"});
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 1);
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "bla");
+}
+
+TEST_CASE("comment prefixes can be set after construction", "IniFile")
+{
+    std::istringstream ss("[Foo]\n"
+                          "REM this is a comment\n"
+                          "#Also a comment\n"
+                          "//Even this is a comment\n"
+                          "bar=bla");
+    ini::IniFile inif;
+    inif.setCommentPrefixes({"REM", "#", "//"});
+    inif.decode(ss);
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 1);
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "bla");
+}
+
+TEST_CASE("comments are allowed after escaped comments", "IniFile")
+{
+    std::istringstream ss("[Foo]\n"
+                          "hello=world \\## this is a comment\n"
+                          "more=of this \\# \\#\n");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif["Foo"]["hello"].as<std::string>() == "world #");
+    REQUIRE(inif["Foo"]["more"].as<std::string>() == "of this # #");
+}
+
+TEST_CASE(
+    "escape char right before a comment prefix escapes all the comment prefix",
+    "IniFile")
+{
+    std::istringstream ss("[Foo]\n"
+                          "weird1=note \\### this is not a comment\n"
+                          "weird2=but \\#### this is a comment");
+    ini::IniFile inif(ss, '=', {"##"});
+
+    REQUIRE(inif["Foo"]["weird1"].as<std::string>() ==
+            "note ### this is not a comment");
+    REQUIRE(inif["Foo"]["weird2"].as<std::string>() == "but ##");
 }
 
 TEST_CASE("save with bool fields", "IniFile")

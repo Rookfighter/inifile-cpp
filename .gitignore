@@ -2,3 +2,4 @@ build
 .project
 .cproject
 .settings
+.vscode 
