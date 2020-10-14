@@ -15,6 +15,7 @@
 #include <map>
 #include <sstream>
 #include <stdexcept>
+#include <vector>
 
 namespace ini
 {
