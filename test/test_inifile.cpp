@@ -6,8 +6,8 @@
  *    License: MIT
  */
 
-#include <catch.hpp>
 #include "inicpp.h"
+#include <catch.hpp>
 
 #include <sstream>
 
