@@ -13,12 +13,276 @@
 #include <fstream>
 #include <istream>
 #include <map>
+#include <assert.h>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
 
 namespace ini
 {
+    /************************************************
+     * Conversion Functors
+     ************************************************/
+
+    inline bool strToLong(const std::string &value, long &result)
+    {
+        char *endptr;
+        // check if decimal
+        result = std::strtol(value.c_str(), &endptr, 10);
+        if(*endptr == '\0')
+            return true;
+        // check if octal
+        result = std::strtol(value.c_str(), &endptr, 8);
+        if(*endptr == '\0')
+            return true;
+        // check if hex
+        result = std::strtol(value.c_str(), &endptr, 16);
+        if(*endptr == '\0')
+            return true;
+
+        return false;
+    }
+
+    inline bool strToULong(const std::string &value, unsigned long &result)
+    {
+        char *endptr;
+        // check if decimal
+        result = std::strtoul(value.c_str(), &endptr, 10);
+        if(*endptr == '\0')
+            return true;
+        // check if octal
+        result = std::strtoul(value.c_str(), &endptr, 8);
+        if(*endptr == '\0')
+            return true;
+        // check if hex
+        result = std::strtoul(value.c_str(), &endptr, 16);
+        if(*endptr == '\0')
+            return true;
+
+        return false;
+    }
+
+    template<typename T>
+    struct Convert
+    {};
+
+    template<>
+    struct Convert<bool>
+    {
+        void from(const std::string &value, bool &result)
+        {
+            std::string str(value);
+            std::transform(str.begin(), str.end(), str.begin(), ::toupper);
+
+            if(str == "TRUE")
+                result = true;
+            else if(str == "FALSE")
+                result = false;
+            else
+                throw std::invalid_argument("field is not a bool");
+        }
+
+        void to(const bool value, std::string &result)
+        {
+            result = value ? "true" : "false";
+        }
+    };
+
+    template<>
+    struct Convert<char>
+    {
+        void from(const std::string &value, char &result)
+        {
+            assert(value.size() > 0);
+            result = value[0];
+        }
+
+        void to(const char value, std::string &result)
+        {
+            result = value;
+        }
+    };
+
+    template<>
+    struct Convert<unsigned char>
+    {
+        void from(const std::string &value, unsigned char &result)
+        {
+            assert(value.size() > 0);
+            result = value[0];
+        }
+
+        void to(const unsigned char value, std::string &result)
+        {
+            result = value;
+        }
+    };
+
+    template<>
+    struct Convert<short>
+    {
+        void from(const std::string &value, short &result)
+        {
+            long tmp;
+            if(!strToLong(value, tmp))
+                throw std::invalid_argument("field is not a short");
+            result = static_cast<short>(tmp);
+        }
+
+        void to(const short value, std::string &result)
+        {
+            std::stringstream ss;
+            ss << value;
+            result = ss.str();
+        }
+    };
+
+    template<>
+    struct Convert<unsigned short>
+    {
+        void from(const std::string &value, unsigned short &result)
+        {
+            unsigned long tmp;
+            if(!strToULong(value, tmp))
+                throw std::invalid_argument("field is not an unsigned short");
+            result = static_cast<unsigned short>(tmp);
+        }
+
+        void to(const unsigned short value, std::string &result)
+        {
+            std::stringstream ss;
+            ss << value;
+            result = ss.str();
+        }
+    };
+
+    template<>
+    struct Convert<int>
+    {
+        void from(const std::string &value, int &result)
+        {
+            long tmp;
+            if(!strToLong(value, tmp))
+                throw std::invalid_argument("field is not an int");
+            result = static_cast<int>(tmp);
+        }
+
+        void to(const int value, std::string &result)
+        {
+            std::stringstream ss;
+            ss << value;
+            result = ss.str();
+        }
+    };
+
+    template<>
+    struct Convert<unsigned int>
+    {
+        void from(const std::string &value, unsigned int &result)
+        {
+            unsigned long tmp;
+            if(!strToULong(value, tmp))
+                throw std::invalid_argument("field is not an unsigned int");
+            result = static_cast<unsigned int>(tmp);
+        }
+
+        void to(const unsigned int value, std::string &result)
+        {
+            std::stringstream ss;
+            ss << value;
+            result = ss.str();
+        }
+    };
+
+    template<>
+    struct Convert<long>
+    {
+        void from(const std::string &value, long &result)
+        {
+            if(!strToLong(value, result))
+                throw std::invalid_argument("field is not a long");
+        }
+
+        void to(const long value, std::string &result)
+        {
+            std::stringstream ss;
+            ss << value;
+            result = ss.str();
+        }
+    };
+
+    template<>
+    struct Convert<unsigned long>
+    {
+        void from(const std::string &value, unsigned long &result)
+        {
+            if(!strToULong(value, result))
+                throw std::invalid_argument("field is not an unsigned long");
+        }
+
+        void to(const unsigned long value, std::string &result)
+        {
+            std::stringstream ss;
+            ss << value;
+            result = ss.str();
+        }
+    };
+
+    template<>
+    struct Convert<double>
+    {
+        void from(const std::string &value, double &result)
+        {
+            result = std::stod(value);
+        }
+
+        void to(const double value, std::string &result)
+        {
+            std::stringstream ss;
+            ss << value;
+            result = ss.str();
+        }
+    };
+
+    template<>
+    struct Convert<float>
+    {
+        void from(const std::string &value, float &result)
+        {
+            result = std::stof(value);
+        }
+
+        void to(const float value, std::string &result)
+        {
+            std::stringstream ss;
+            ss << value;
+            result = ss.str();
+        }
+    };
+
+    template<>
+    struct Convert<std::string>
+    {
+        void from(const std::string &value, std::string &result)
+        {
+            result = value;
+        }
+
+        void to(const std::string &value, std::string &result)
+        {
+            result = value;
+        }
+    };
+
+    template<>
+    struct Convert<const char*>
+    {
+        void to(const char* &value, std::string &result)
+        {
+            result = value;
+        }
+    };
+
     class IniField
     {
     private:
@@ -39,22 +303,17 @@ namespace ini
         template<typename T>
         T as() const
         {
-            return static_cast<T>(*this);
+            Convert<T> conv;
+            T result;
+            conv.from(value_, result);
+            return result;
         }
 
-        /**********************************************************************
-         * Assignment Operators
-         *********************************************************************/
-
-        IniField &operator=(const char *value)
+        template<typename T>
+        IniField &operator=(const T &value)
         {
-            value_ = std::string(value);
-            return *this;
-        }
-
-        IniField &operator=(const std::string &value)
-        {
-            value_ = value;
+            Convert<T> conv;
+            conv.to(value, value_);
             return *this;
         }
 
@@ -62,122 +321,6 @@ namespace ini
         {
             value_ = field.value_;
             return *this;
-        }
-
-        IniField &operator=(const int value)
-        {
-            std::stringstream ss;
-            ss << value;
-            value_ = ss.str();
-            return *this;
-        }
-
-        IniField &operator=(const unsigned int value)
-        {
-            std::stringstream ss;
-            ss << value;
-            value_ = ss.str();
-            return *this;
-        }
-
-        IniField &operator=(const double value)
-        {
-            std::stringstream ss;
-            ss << value;
-            value_ = ss.str();
-            return *this;
-        }
-
-        IniField &operator=(const float value)
-        {
-            std::stringstream ss;
-            ss << value;
-            value_ = ss.str();
-            return *this;
-        }
-
-        IniField &operator=(const bool value)
-        {
-            if(value)
-                value_ = "true";
-            else
-                value_ = "false";
-            return *this;
-        }
-
-        /**********************************************************************
-         * Cast Operators
-         *********************************************************************/
-
-        explicit operator const char *() const
-        {
-            return value_.c_str();
-        }
-
-        explicit operator std::string() const
-        {
-            return value_;
-        }
-
-        explicit operator int() const
-        {
-            char *endptr;
-            // check if decimal
-            int result = std::strtol(value_.c_str(), &endptr, 10);
-            if(*endptr == '\0')
-                return result;
-            // check if octal
-            result = std::strtol(value_.c_str(), &endptr, 8);
-            if(*endptr == '\0')
-                return result;
-            // check if hex
-            result = std::strtol(value_.c_str(), &endptr, 16);
-            if(*endptr == '\0')
-                return result;
-
-            throw std::invalid_argument("field is not an int");
-        }
-
-        explicit operator unsigned int() const
-        {
-            char *endptr;
-            // check if decimal
-            int result = std::strtoul(value_.c_str(), &endptr, 10);
-            if(*endptr == '\0')
-                return result;
-            // check if octal
-            result = std::strtoul(value_.c_str(), &endptr, 8);
-            if(*endptr == '\0')
-                return result;
-            // check if hex
-            result = std::strtoul(value_.c_str(), &endptr, 16);
-            if(*endptr == '\0')
-                return result;
-
-            throw std::invalid_argument("field is not an unsigned int");
-        }
-
-        explicit operator float() const
-        {
-            return std::stof(value_);
-        }
-
-        explicit operator double() const
-        {
-            return std::stod(value_);
-        }
-
-        explicit operator bool() const
-        {
-            std::string str(value_);
-            std::transform(str.begin(), str.end(), str.begin(), ::toupper);
-
-            if(str == "TRUE")
-                return true;
-            else if(str == "FALSE")
-                return false;
-            else
-                throw std::invalid_argument("field is not a bool");
         }
     };
 
