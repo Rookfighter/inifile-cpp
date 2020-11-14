@@ -277,7 +277,25 @@ namespace ini
     template<>
     struct Convert<const char*>
     {
-        void to(const char* &value, std::string &result)
+        void to(const char* const &value, std::string &result)
+        {
+            result = value;
+        }
+    };
+
+    template<>
+    struct Convert<char*>
+    {
+        void to(const char* const &value, std::string &result)
+        {
+            result = value;
+        }
+    };
+
+    template<size_t n>
+    struct Convert<char[n]>
+    {
+        void to(const char *value, std::string &result)
         {
             result = value;
         }

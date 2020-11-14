@@ -209,24 +209,147 @@ TEST_CASE("save with bool fields", "IniFile")
     REQUIRE(result == "[Foo]\nbar1=true\nbar2=false\n");
 }
 
-TEST_CASE("save with int fields", "IniFile")
+TEST_CASE("save with char fields", "IniFile")
 {
     ini::IniFile inif;
-    inif["Foo"]["bar1"] = 1;
-    inif["Foo"]["bar2"] = -2;
+    inif["Foo"]["bar1"] = static_cast<char>('c');
+    inif["Foo"]["bar2"] = static_cast<char>('q');
+
+    std::string result = inif.encode();
+    REQUIRE(result == "[Foo]\nbar1=c\nbar2=q\n");
+}
+
+TEST_CASE("save with unsigned char fields", "IniFile")
+{
+    ini::IniFile inif;
+    inif["Foo"]["bar1"] = static_cast<unsigned char>('c');
+    inif["Foo"]["bar2"] = static_cast<unsigned char>('q');
+
+    std::string result = inif.encode();
+    REQUIRE(result == "[Foo]\nbar1=c\nbar2=q\n");
+}
+
+TEST_CASE("save with short fields", "IniFile")
+{
+    ini::IniFile inif;
+    inif["Foo"]["bar1"] = static_cast<short>(1);
+    inif["Foo"]["bar2"] = static_cast<short>(-2);
 
     std::string result = inif.encode();
     REQUIRE(result == "[Foo]\nbar1=1\nbar2=-2\n");
 }
 
+TEST_CASE("save with unsigned short fields", "IniFile")
+{
+    ini::IniFile inif;
+    inif["Foo"]["bar1"] = static_cast<unsigned short>(1);
+    inif["Foo"]["bar2"] = static_cast<unsigned short>(13);
+
+    std::string result = inif.encode();
+    REQUIRE(result == "[Foo]\nbar1=1\nbar2=13\n");
+}
+
+TEST_CASE("save with int fields", "IniFile")
+{
+    ini::IniFile inif;
+    inif["Foo"]["bar1"] = static_cast<int>(1);
+    inif["Foo"]["bar2"] = static_cast<int>(-2);
+
+    std::string result = inif.encode();
+    REQUIRE(result == "[Foo]\nbar1=1\nbar2=-2\n");
+}
+
+TEST_CASE("save with unsigned int fields", "IniFile")
+{
+    ini::IniFile inif;
+    inif["Foo"]["bar1"] = static_cast<unsigned int>(1);
+    inif["Foo"]["bar2"] = static_cast<unsigned int>(13);
+
+    std::string result = inif.encode();
+    REQUIRE(result == "[Foo]\nbar1=1\nbar2=13\n");
+}
+
+TEST_CASE("save with long fields", "IniFile")
+{
+    ini::IniFile inif;
+    inif["Foo"]["bar1"] = static_cast<long>(1);
+    inif["Foo"]["bar2"] = static_cast<long>(-2);
+
+    std::string result = inif.encode();
+    REQUIRE(result == "[Foo]\nbar1=1\nbar2=-2\n");
+}
+
+TEST_CASE("save with unsigned long fields", "IniFile")
+{
+    ini::IniFile inif;
+    inif["Foo"]["bar1"] = static_cast<unsigned long>(1);
+    inif["Foo"]["bar2"] = static_cast<unsigned long>(13);
+
+    std::string result = inif.encode();
+    REQUIRE(result == "[Foo]\nbar1=1\nbar2=13\n");
+}
+
 TEST_CASE("save with double fields", "IniFile")
 {
     ini::IniFile inif;
-    inif["Foo"]["bar1"] = 1.2;
-    inif["Foo"]["bar2"] = -2.4;
+    inif["Foo"]["bar1"] = static_cast<double>(1.2);
+    inif["Foo"]["bar2"] = static_cast<double>(-2.4);
 
     std::string result = inif.encode();
     REQUIRE(result == "[Foo]\nbar1=1.2\nbar2=-2.4\n");
+}
+
+TEST_CASE("save with float fields", "IniFile")
+{
+    ini::IniFile inif;
+    inif["Foo"]["bar1"] = static_cast<float>(1.2f);
+    inif["Foo"]["bar2"] = static_cast<float>(-2.4f);
+
+    std::string result = inif.encode();
+    REQUIRE(result == "[Foo]\nbar1=1.2\nbar2=-2.4\n");
+}
+
+
+TEST_CASE("save with std::string fields", "IniFile")
+{
+    ini::IniFile inif;
+    inif["Foo"]["bar1"] = static_cast<std::string>("hello");
+    inif["Foo"]["bar2"] = static_cast<std::string>("world");
+
+    std::string result = inif.encode();
+    REQUIRE(result == "[Foo]\nbar1=hello\nbar2=world\n");
+}
+
+TEST_CASE("save with const char* fields", "IniFile")
+{
+    ini::IniFile inif;
+    inif["Foo"]["bar1"] = static_cast<const char*>("hello");
+    inif["Foo"]["bar2"] = static_cast<const char*>("world");
+
+    std::string result = inif.encode();
+    REQUIRE(result == "[Foo]\nbar1=hello\nbar2=world\n");
+}
+
+TEST_CASE("save with char* fields", "IniFile")
+{
+    ini::IniFile inif;
+    char bar1[6] = "hello";
+    char bar2[6] = "world";
+    inif["Foo"]["bar1"] = static_cast<char*>(bar1);
+    inif["Foo"]["bar2"] = static_cast<char*>(bar2);
+
+    std::string result = inif.encode();
+    REQUIRE(result == "[Foo]\nbar1=hello\nbar2=world\n");
+}
+
+TEST_CASE("save with string literal fields", "IniFile")
+{
+    ini::IniFile inif;
+    inif["Foo"]["bar1"] = "hello";
+    inif["Foo"]["bar2"] = "world";
+
+    std::string result = inif.encode();
+    REQUIRE(result == "[Foo]\nbar1=hello\nbar2=world\n");
 }
 
 TEST_CASE("save with custom field sep", "IniFile")
