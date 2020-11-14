@@ -14,17 +14,25 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
-add_subdirectory("dep")
+if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    set(CMAKE_CXX_FLAGS "/WX")
+endif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+
+add_subdirectory(dep)
 
 include_directories(
-    "include"
-    ${CATCH2_INCLUDE_DIR}
+    include
 )
-
-set(TEST_SRC "test/main.cpp" "test/test_inifile.cpp")
-add_executable(run_tests ${TEST_SRC})
 
 install(
-    FILES include/inicpp.h
+    FILES "include/inicpp.h"
     DESTINATION include
 )
+
+if(${BUILD_TESTS})
+    add_subdirectory(test)
+endif(${BUILD_TESTS})
+
+if(${BUILD_EXAMPLES})
+    add_subdirectory(examples)
+endif(${BUILD_EXAMPLES})
