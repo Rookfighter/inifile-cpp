@@ -69,7 +69,7 @@ namespace ini
     template<>
     struct Convert<bool>
     {
-        void from(const std::string &value, bool &result)
+        void decode(const std::string &value, bool &result)
         {
             std::string str(value);
             std::transform(str.begin(), str.end(), str.begin(), ::toupper);
@@ -82,7 +82,7 @@ namespace ini
                 throw std::invalid_argument("field is not a bool");
         }
 
-        void to(const bool value, std::string &result)
+        void encode(const bool value, std::string &result)
         {
             result = value ? "true" : "false";
         }
@@ -91,13 +91,13 @@ namespace ini
     template<>
     struct Convert<char>
     {
-        void from(const std::string &value, char &result)
+        void decode(const std::string &value, char &result)
         {
             assert(value.size() > 0);
             result = value[0];
         }
 
-        void to(const char value, std::string &result)
+        void encode(const char value, std::string &result)
         {
             result = value;
         }
@@ -106,13 +106,13 @@ namespace ini
     template<>
     struct Convert<unsigned char>
     {
-        void from(const std::string &value, unsigned char &result)
+        void decode(const std::string &value, unsigned char &result)
         {
             assert(value.size() > 0);
             result = value[0];
         }
 
-        void to(const unsigned char value, std::string &result)
+        void encode(const unsigned char value, std::string &result)
         {
             result = value;
         }
@@ -121,7 +121,7 @@ namespace ini
     template<>
     struct Convert<short>
     {
-        void from(const std::string &value, short &result)
+        void decode(const std::string &value, short &result)
         {
             long tmp;
             if(!strToLong(value, tmp))
@@ -129,7 +129,7 @@ namespace ini
             result = static_cast<short>(tmp);
         }
 
-        void to(const short value, std::string &result)
+        void encode(const short value, std::string &result)
         {
             std::stringstream ss;
             ss << value;
@@ -140,7 +140,7 @@ namespace ini
     template<>
     struct Convert<unsigned short>
     {
-        void from(const std::string &value, unsigned short &result)
+        void decode(const std::string &value, unsigned short &result)
         {
             unsigned long tmp;
             if(!strToULong(value, tmp))
@@ -148,7 +148,7 @@ namespace ini
             result = static_cast<unsigned short>(tmp);
         }
 
-        void to(const unsigned short value, std::string &result)
+        void encode(const unsigned short value, std::string &result)
         {
             std::stringstream ss;
             ss << value;
@@ -159,7 +159,7 @@ namespace ini
     template<>
     struct Convert<int>
     {
-        void from(const std::string &value, int &result)
+        void decode(const std::string &value, int &result)
         {
             long tmp;
             if(!strToLong(value, tmp))
@@ -167,7 +167,7 @@ namespace ini
             result = static_cast<int>(tmp);
         }
 
-        void to(const int value, std::string &result)
+        void encode(const int value, std::string &result)
         {
             std::stringstream ss;
             ss << value;
@@ -178,7 +178,7 @@ namespace ini
     template<>
     struct Convert<unsigned int>
     {
-        void from(const std::string &value, unsigned int &result)
+        void decode(const std::string &value, unsigned int &result)
         {
             unsigned long tmp;
             if(!strToULong(value, tmp))
@@ -186,7 +186,7 @@ namespace ini
             result = static_cast<unsigned int>(tmp);
         }
 
-        void to(const unsigned int value, std::string &result)
+        void encode(const unsigned int value, std::string &result)
         {
             std::stringstream ss;
             ss << value;
@@ -197,13 +197,13 @@ namespace ini
     template<>
     struct Convert<long>
     {
-        void from(const std::string &value, long &result)
+        void decode(const std::string &value, long &result)
         {
             if(!strToLong(value, result))
                 throw std::invalid_argument("field is not a long");
         }
 
-        void to(const long value, std::string &result)
+        void encode(const long value, std::string &result)
         {
             std::stringstream ss;
             ss << value;
@@ -214,13 +214,13 @@ namespace ini
     template<>
     struct Convert<unsigned long>
     {
-        void from(const std::string &value, unsigned long &result)
+        void decode(const std::string &value, unsigned long &result)
         {
             if(!strToULong(value, result))
                 throw std::invalid_argument("field is not an unsigned long");
         }
 
-        void to(const unsigned long value, std::string &result)
+        void encode(const unsigned long value, std::string &result)
         {
             std::stringstream ss;
             ss << value;
@@ -231,12 +231,12 @@ namespace ini
     template<>
     struct Convert<double>
     {
-        void from(const std::string &value, double &result)
+        void decode(const std::string &value, double &result)
         {
             result = std::stod(value);
         }
 
-        void to(const double value, std::string &result)
+        void encode(const double value, std::string &result)
         {
             std::stringstream ss;
             ss << value;
@@ -247,12 +247,12 @@ namespace ini
     template<>
     struct Convert<float>
     {
-        void from(const std::string &value, float &result)
+        void decode(const std::string &value, float &result)
         {
             result = std::stof(value);
         }
 
-        void to(const float value, std::string &result)
+        void encode(const float value, std::string &result)
         {
             std::stringstream ss;
             ss << value;
@@ -263,12 +263,12 @@ namespace ini
     template<>
     struct Convert<std::string>
     {
-        void from(const std::string &value, std::string &result)
+        void decode(const std::string &value, std::string &result)
         {
             result = value;
         }
 
-        void to(const std::string &value, std::string &result)
+        void encode(const std::string &value, std::string &result)
         {
             result = value;
         }
@@ -277,12 +277,12 @@ namespace ini
     template<>
     struct Convert<const char*>
     {
-        void to(const char* const &value, std::string &result)
+        void encode(const char* const &value, std::string &result)
         {
             result = value;
         }
 
-        void from(const std::string &value, const char* &result)
+        void decode(const std::string &value, const char* &result)
         {
             result = value.c_str();
         }
@@ -291,7 +291,7 @@ namespace ini
     template<>
     struct Convert<char*>
     {
-        void to(const char* const &value, std::string &result)
+        void encode(const char* const &value, std::string &result)
         {
             result = value;
         }
@@ -300,7 +300,7 @@ namespace ini
     template<size_t n>
     struct Convert<char[n]>
     {
-        void to(const char *value, std::string &result)
+        void encode(const char *value, std::string &result)
         {
             result = value;
         }
@@ -328,7 +328,7 @@ namespace ini
         {
             Convert<T> conv;
             T result;
-            conv.from(value_, result);
+            conv.decode(value_, result);
             return result;
         }
 
@@ -336,7 +336,7 @@ namespace ini
         IniField &operator=(const T &value)
         {
             Convert<T> conv;
-            conv.to(value, value_);
+            conv.encode(value, value_);
             return *this;
         }
 
