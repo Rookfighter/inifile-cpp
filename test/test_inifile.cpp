@@ -8,7 +8,7 @@
 
 #include "inicpp.h"
 #include <catch.hpp>
-
+#include <cstring>
 #include <sstream>
 
 TEST_CASE("parse ini file", "IniFile")
@@ -67,16 +67,60 @@ TEST_CASE("parse section with duplicate field", "IniFile")
     REQUIRE(inif["Foo"]["bar"].as<std::string>() == "world");
 }
 
-TEST_CASE("parse field as double", "IniFile")
+TEST_CASE("parse field as bool", "IniFile")
 {
-    std::istringstream ss("[Foo]\nbar1=1.2\nbar2=1\nbar3=-2.4");
+    std::istringstream ss("[Foo]\nbar1=true\nbar2=false\nbar3=tRuE");
     ini::IniFile inif(ss);
 
     REQUIRE(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 3);
-    REQUIRE(inif["Foo"]["bar1"].as<double>() == 1.2);
-    REQUIRE(inif["Foo"]["bar2"].as<double>() == 1.0);
-    REQUIRE(inif["Foo"]["bar3"].as<double>() == -2.4);
+    REQUIRE(inif["Foo"]["bar1"].as<bool>());
+    REQUIRE_FALSE(inif["Foo"]["bar2"].as<bool>());
+    REQUIRE(inif["Foo"]["bar3"].as<bool>());
+}
+
+TEST_CASE("parse field as char", "IniFile")
+{
+    std::istringstream ss("[Foo]\nbar1=c\nbar2=q");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 2);
+    REQUIRE(inif["Foo"]["bar1"].as<char>() == 'c');
+    REQUIRE(inif["Foo"]["bar2"].as<char>() == 'q');
+}
+
+TEST_CASE("parse field as unsigned char", "IniFile")
+{
+    std::istringstream ss("[Foo]\nbar1=c\nbar2=q");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 2);
+    REQUIRE(inif["Foo"]["bar1"].as<unsigned char>() == 'c');
+    REQUIRE(inif["Foo"]["bar2"].as<unsigned char>() == 'q');
+}
+
+TEST_CASE("parse field as short", "IniFile")
+{
+    std::istringstream ss("[Foo]\nbar1=1\nbar2=-2");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 2);
+    REQUIRE(inif["Foo"]["bar1"].as<short>() == 1);
+    REQUIRE(inif["Foo"]["bar2"].as<short>() == -2);
+}
+
+TEST_CASE("parse field as unsigned short", "IniFile")
+{
+    std::istringstream ss("[Foo]\nbar1=1\nbar2=13");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 2);
+    REQUIRE(inif["Foo"]["bar1"].as<unsigned short>() == 1);
+    REQUIRE(inif["Foo"]["bar2"].as<unsigned short>() == 13);
 }
 
 TEST_CASE("parse field as int", "IniFile")
@@ -90,16 +134,83 @@ TEST_CASE("parse field as int", "IniFile")
     REQUIRE(inif["Foo"]["bar2"].as<int>() == -2);
 }
 
-TEST_CASE("parse field as bool", "IniFile")
+TEST_CASE("parse field as unsigned int", "IniFile")
 {
-    std::istringstream ss("[Foo]\nbar1=true\nbar2=false\nbar3=tRuE");
+    std::istringstream ss("[Foo]\nbar1=1\nbar2=13");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 2);
+    REQUIRE(inif["Foo"]["bar1"].as<unsigned int>() == 1);
+    REQUIRE(inif["Foo"]["bar2"].as<unsigned int>() == 13);
+}
+
+TEST_CASE("parse field as long", "IniFile")
+{
+    std::istringstream ss("[Foo]\nbar1=1\nbar2=-2");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 2);
+    REQUIRE(inif["Foo"]["bar1"].as<long>() == 1);
+    REQUIRE(inif["Foo"]["bar2"].as<long>() == -2);
+}
+
+TEST_CASE("parse field as unsigned long", "IniFile")
+{
+    std::istringstream ss("[Foo]\nbar1=1\nbar2=13");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 2);
+    REQUIRE(inif["Foo"]["bar1"].as<unsigned long>() == 1);
+    REQUIRE(inif["Foo"]["bar2"].as<unsigned long>() == 13);
+}
+
+TEST_CASE("parse field as double", "IniFile")
+{
+    std::istringstream ss("[Foo]\nbar1=1.2\nbar2=1\nbar3=-2.4");
     ini::IniFile inif(ss);
 
     REQUIRE(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 3);
-    REQUIRE(inif["Foo"]["bar1"].as<bool>());
-    REQUIRE_FALSE(inif["Foo"]["bar2"].as<bool>());
-    REQUIRE(inif["Foo"]["bar3"].as<bool>());
+    REQUIRE(inif["Foo"]["bar1"].as<double>() == Approx(1.2).margin(1e-3));
+    REQUIRE(inif["Foo"]["bar2"].as<double>() == Approx(1.0).margin(1e-3));
+    REQUIRE(inif["Foo"]["bar3"].as<double>() == Approx(-2.4).margin(1e-3));
+}
+
+TEST_CASE("parse field as float", "IniFile")
+{
+    std::istringstream ss("[Foo]\nbar1=1.2\nbar2=1\nbar3=-2.4");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 3);
+    REQUIRE(inif["Foo"]["bar1"].as<float>() == Approx(1.2f).margin(1e-3f));
+    REQUIRE(inif["Foo"]["bar2"].as<float>() == Approx(1.0f).margin(1e-3f));
+    REQUIRE(inif["Foo"]["bar3"].as<float>() == Approx(-2.4f).margin(1e-3f));
+}
+
+TEST_CASE("parse field as std::string", "IniFile")
+{
+    std::istringstream ss("[Foo]\nbar1=hello\nbar2=world");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 2);
+    REQUIRE(inif["Foo"]["bar1"].as<std::string>() == "hello");
+    REQUIRE(inif["Foo"]["bar2"].as<std::string>() == "world");
+}
+
+TEST_CASE("parse field as const char*", "IniFile")
+{
+    std::istringstream ss("[Foo]\nbar1=hello\nbar2=world");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 2);
+    REQUIRE(std::strcmp(inif["Foo"]["bar1"].as<const char*>(), "hello") == 0);
+    REQUIRE(std::strcmp(inif["Foo"]["bar2"].as<const char*>(), "world") == 0);
 }
 
 TEST_CASE("parse field with custom field sep", "IniFile")

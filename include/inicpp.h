@@ -281,6 +281,11 @@ namespace ini
         {
             result = value;
         }
+
+        void from(const std::string &value, const char* &result)
+        {
+            result = value.c_str();
+        }
     };
 
     template<>
