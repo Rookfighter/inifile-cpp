@@ -8,8 +8,7 @@
 #include <inicpp.h>
 #include <iostream>
 
-// the conversion functor must live in the
-// "ini" namespace
+// the conversion functor must live in the "ini" namespace
 namespace ini
 {
     /** Conversion functor to parse std::vectors from an ini field-
