@@ -1,5 +1,6 @@
 # inifile-cpp
 ![License](https://img.shields.io/packagist/l/doctrine/orm.svg)
+![CMake](https://github.com/Rookfighter/inifile-cpp/workflows/CMake/badge.svg)
 
 ```inifile-cpp``` is a simple and easy to use single header-only ini file en- and decoder for C++.
 
