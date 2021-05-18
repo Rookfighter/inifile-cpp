@@ -584,3 +584,11 @@ TEST_CASE("spaces are not taken into account in sections", "IniFile")
 
     REQUIRE(inif.find("Foo") != inif.end());
 }
+
+TEST_CASE("default is case sensitive", "IniFile")
+{
+    std::istringstream ss("[FOO]\nbar=bla");
+    ini::IniFile inif(ss);
+
+    REQUIRE_FALSE(inif.find("foo") != inif.end());
+}
