@@ -348,13 +348,11 @@ namespace ini
     };
 
     class CaseComparator{
-    private:
-        bool operator()(const std::string& str1, const std::string& str2) const {
-                std::string s1(s1.length(),' ');
-                std::string s2(s2.length(),' ');
-                std::transform(str1.begin(), str1.end(), s1.begin(), ::tolower);
-                std::transform(str2.begin(), str2.end(), s2.begin(), ::tolower);
-                return  s1 < s2;
+    public:
+        bool operator()(std::string str1, std::string str2) const {
+                std::transform(str1.begin(), str1.end(), str1.begin(), ::tolower);
+                std::transform(str2.begin(), str2.end(), str2.begin(), ::tolower);
+                return  str1 < str2;
         }
     };
 

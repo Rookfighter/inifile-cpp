@@ -592,3 +592,11 @@ TEST_CASE("default is case sensitive", "IniFile")
 
     REQUIRE_FALSE(inif.find("foo") != inif.end());
 }
+
+TEST_CASE("Case comparator not lesser when equal", "IniFile")
+{
+    ini::CaseComparator cc;
+
+    REQUIRE(cc("a", "b"));
+    REQUIRE_FALSE(cc("HELLO", "hello"));
+}
