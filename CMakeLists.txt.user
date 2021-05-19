@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.13.3, 2021-05-18T17:28:55. -->
+<!-- Written by QtCreator 4.13.3, 2021-05-19T17:19:11. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -65,11 +65,14 @@
     <value type="bool" key="AutoTest.Framework.QtTest">true</value>
    </valuemap>
    <valuemap type="QVariantMap" key="AutoTest.CheckStates">
-    <value type="Qt::CheckState" key="D:/FileIni/test/test_inifile.cpp:Case comparator not lesser when equal">Checked</value>
     <value type="Qt::CheckState" key="D:/FileIni/test/test_inifile.cpp:D:/FileIni/test/test_inifile.cpp">Checked</value>
+    <value type="Qt::CheckState" key="D:/FileIni/test/test_inifile.cpp:case comparator class operator returns false when same word differs only in case">Checked</value>
+    <value type="Qt::CheckState" key="D:/FileIni/test/test_inifile.cpp:case comparator returns true when left value is smaller but not equal">Checked</value>
+    <value type="Qt::CheckState" key="D:/FileIni/test/test_inifile.cpp:case insensitive inifile dirgeards case of field">Checked</value>
+    <value type="Qt::CheckState" key="D:/FileIni/test/test_inifile.cpp:case insensitive inifile disregards case of section">Checked</value>
     <value type="Qt::CheckState" key="D:/FileIni/test/test_inifile.cpp:comment prefixes can be set after construction">Checked</value>
     <value type="Qt::CheckState" key="D:/FileIni/test/test_inifile.cpp:comments are allowed after escaped comments">Checked</value>
-    <value type="Qt::CheckState" key="D:/FileIni/test/test_inifile.cpp:default is case sensitive">Checked</value>
+    <value type="Qt::CheckState" key="D:/FileIni/test/test_inifile.cpp:default inifile parser is case sensitive">Checked</value>
     <value type="Qt::CheckState" key="D:/FileIni/test/test_inifile.cpp:escape char right before a comment prefix escapes all the comment prefix">Checked</value>
     <value type="Qt::CheckState" key="D:/FileIni/test/test_inifile.cpp:escape characters are kept if not before a comment prefix">Checked</value>
     <value type="Qt::CheckState" key="D:/FileIni/test/test_inifile.cpp:fail to load field without equal">Checked</value>

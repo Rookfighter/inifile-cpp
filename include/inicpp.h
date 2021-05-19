@@ -347,7 +347,8 @@ namespace ini
         }
     };
 
-    class CaseComparator{
+    class StringInsensitiveLess
+    {
     public:
         bool operator()(std::string str1, std::string str2) const {
                 std::transform(str1.begin(), str1.end(), str1.begin(), ::tolower);
@@ -367,7 +368,7 @@ namespace ini
     };
 
     using IniSection = IniSectionBase<std::less<std::string>>;
-    using IniSectionCaseInsensitive = IniSectionBase<CaseComparator>;
+    using IniSectionCaseInsensitive = IniSectionBase<StringInsensitiveLess>;
 
     template <typename Comparator>
     class IniFileBase : public std::map<std::string, IniSectionBase<Comparator>, Comparator>
@@ -601,7 +602,7 @@ namespace ini
     };
 
     using IniFile = IniFileBase<std::less<std::string>>;
-    using IniFileCaseInsensitive = IniFileBase<CaseComparator>;
+    using IniFileCaseInsensitive = IniFileBase<StringInsensitiveLess>;
 }
 
 #endif
