@@ -508,6 +508,33 @@ TEST_CASE("escape characters are kept if not before a comment prefix", "IniFile"
     REQUIRE(inif["Foo"]["bar"].as<std::string>() == "Hello \\world!");
 }
 
+TEST_CASE("case comparator returns true when left value is smaller but not equal", "IniFile")
+{
+    ini::CaseComparator cc;
+
+    REQUIRE(cc("a", "b"));
+}
+
+TEST_CASE("case insensitive inifile disregards case of section", "IniFile")
+{
+    std::istringstream ss("[FOO]\nbar=bla");
+    ini::IniFileCaseInsensitive inif(ss);
+
+    REQUIRE(inif.find("foo") != inif.end());
+    REQUIRE(inif.find("FOO") != inif.end());
+    REQUIRE(inif["FOO"]["bar"].as<std::string>() == "bla");
+    REQUIRE(inif["foo"]["bar"].as<std::string>() == "bla");
+}
+
+TEST_CASE("case insensitive inifile dirgeards case of field")
+{
+    std::istringstream ss("[FOO]\nbar=bla");
+    ini::IniFileCaseInsensitive inif(ss);
+
+    REQUIRE(inif["FOO"].find("BAR") != inif["FOO"].end());
+    REQUIRE(inif["FOO"]["BAR"].as<std::string>() == "bla");
+}
+
 /***************************************************
  *                Failing Tests
  ***************************************************/
@@ -593,20 +620,9 @@ TEST_CASE("default is case sensitive", "IniFile")
     REQUIRE_FALSE(inif.find("foo") != inif.end());
 }
 
-TEST_CASE("Case comparator not lesser when equal", "IniFile")
+TEST_CASE("case comparator returns false when equal", "IniFile")
 {
     ini::CaseComparator cc;
 
-    REQUIRE(cc("a", "b"));
     REQUIRE_FALSE(cc("HELLO", "hello"));
 }
-
-TEST_CASE("case insensitive", "IniFile")
-{
-    std::istringstream ss("[FOO]\nbar=bla");
-    ini::IniFileCaseInsensitive inif(ss);
-
-    REQUIRE(inif.find("foo") != inif.end());
-    REQUIRE(inif.find("FOO") != inif.end());
-}
-
