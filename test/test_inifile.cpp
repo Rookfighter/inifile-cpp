@@ -600,3 +600,13 @@ TEST_CASE("Case comparator not lesser when equal", "IniFile")
     REQUIRE(cc("a", "b"));
     REQUIRE_FALSE(cc("HELLO", "hello"));
 }
+
+TEST_CASE("case insensitive", "IniFile")
+{
+    std::istringstream ss("[FOO]\nbar=bla");
+    ini::IniFileCaseInsensitive inif(ss);
+
+    REQUIRE(inif.find("foo") != inif.end());
+    REQUIRE(inif.find("FOO") != inif.end());
+}
+

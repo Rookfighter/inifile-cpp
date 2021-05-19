@@ -367,6 +367,7 @@ namespace ini
     };
 
     using IniSection = IniSectionBase<std::less<std::string>>;
+    using IniSectionCaseInsensitive = IniSectionBase<CaseComparator>;
 
     template <typename Comparator>
     class IniFileBase : public std::map<std::string, IniSectionBase<Comparator>, Comparator>
@@ -600,6 +601,7 @@ namespace ini
     };
 
     using IniFile = IniFileBase<std::less<std::string>>;
+    using IniFileCaseInsensitive = IniFileBase<CaseComparator>;
 }
 
 #endif
