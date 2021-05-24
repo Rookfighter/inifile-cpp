@@ -508,7 +508,7 @@ TEST_CASE("escape characters are kept if not before a comment prefix", "IniFile"
     REQUIRE(inif["Foo"]["bar"].as<std::string>() == "Hello \\world!");
 }
 
-TEST_CASE("functor stringInsensitiveLess returns true if and only if first parameter is less than the second ignoring sensitivity", "MapFunctor")
+TEST_CASE("stringInsensitiveLess operator() returns true if and only if first parameter is less than the second ignoring sensitivity", "StringInsensitiveLessFunctor")
 {
     ini::StringInsensitiveLess cc;
 
@@ -517,14 +517,14 @@ TEST_CASE("functor stringInsensitiveLess returns true if and only if first param
     REQUIRE(cc("aaa", "aaB"));
 }
 
-TEST_CASE("functor stringInsensitiveLess braces operator returns false when same word differs only in case", "MapFunctor")
+TEST_CASE("stringInsensitiveLess operator() returns false when words differs only in case", "StringInsensitiveLessFunctor")
 {
     ini::StringInsensitiveLess cc;
 
     REQUIRE(cc("AA", "aa") == false);
 }
 
-TEST_CASE("functor stringInsensitiveLess has a case insensitive strict weak ordering policy", "MapFunctor")
+TEST_CASE("stringInsensitiveLess operator() has a case insensitive strict weak ordering policy", "StringInsensitiveLessFunctor")
 {
     ini::StringInsensitiveLess cc;
 
