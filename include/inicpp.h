@@ -347,16 +347,31 @@ namespace ini
         }
     };
 
-    class IniSection : public std::map<std::string, IniField>
+    class StringInsensitiveLess
     {
     public:
-        IniSection()
+        bool operator()(std::string str1, std::string str2) const {
+                std::transform(str1.begin(), str1.end(), str1.begin(), ::tolower);
+                std::transform(str2.begin(), str2.end(), str2.begin(), ::tolower);
+                return  str1 < str2;
+        }
+    };
+
+    template <typename Comparator>
+    class IniSectionBase : public std::map<std::string, IniField, Comparator>
+    {
+    public:
+        IniSectionBase()
         {}
-        ~IniSection()
+        ~IniSectionBase()
         {}
     };
 
-    class IniFile : public std::map<std::string, IniSection>
+    using IniSection = IniSectionBase<std::less<std::string>>;
+    using IniSectionCaseInsensitive = IniSectionBase<StringInsensitiveLess>;
+
+    template <typename Comparator>
+    class IniFileBase : public std::map<std::string, IniSectionBase<Comparator>, Comparator>
     {
     private:
         char fieldSep_;
@@ -403,35 +418,35 @@ namespace ini
         }
 
     public:
-        IniFile() : IniFile('=', '#')
+        IniFileBase() : IniFileBase('=', '#')
         {}
 
-        IniFile(const char fieldSep, const char comment)
+        IniFileBase(const char fieldSep, const char comment)
             : fieldSep_(fieldSep), commentPrefixes_(1, std::string(1, comment))
         {}
 
-        IniFile(const std::string &filename,
+        IniFileBase(const std::string &filename,
             const char fieldSep = '=',
             const char comment = '#')
-            : IniFile(fieldSep, comment)
+            : IniFileBase(fieldSep, comment)
         {
             load(filename);
         }
 
-        IniFile(std::istream &is,
+        IniFileBase(std::istream &is,
             const char fieldSep = '=',
             const char comment = '#')
-            : IniFile(fieldSep, comment)
+            : IniFileBase(fieldSep, comment)
         {
             decode(is);
         }
 
-        IniFile(const char fieldSep,
+        IniFileBase(const char fieldSep,
             const std::vector<std::string> &commentPrefixes)
             : fieldSep_(fieldSep), commentPrefixes_(commentPrefixes)
         {}
 
-        IniFile(const std::string &filename,
+        IniFileBase(const std::string &filename,
             const char fieldSep,
             const std::vector<std::string> &commentPrefixes)
             : fieldSep_(fieldSep), commentPrefixes_(commentPrefixes)
@@ -439,7 +454,7 @@ namespace ini
             load(filename);
         }
 
-        IniFile(std::istream &is,
+        IniFileBase(std::istream &is,
             const char fieldSep,
             const std::vector<std::string> &commentPrefixes)
             : fieldSep_(fieldSep), commentPrefixes_(commentPrefixes)
@@ -447,7 +462,7 @@ namespace ini
             decode(is);
         }
 
-        ~IniFile()
+        ~IniFileBase()
         {}
 
         void setFieldSep(const char sep)
@@ -467,9 +482,9 @@ namespace ini
 
         void decode(std::istream &is)
         {
-            clear();
+            this -> clear();
             int lineNo = 0;
-            IniSection *currentSection = NULL;
+            IniSectionBase<Comparator> *currentSection = NULL;
             // iterate file by line
             while(!is.eof() && !is.fail())
             {
@@ -568,7 +583,7 @@ namespace ini
                 // iterate through all fields in the section
                 for(const auto &secPair : filePair.second)
                     os << secPair.first << fieldSep_
-                       << secPair.second.as<std::string>() << std::endl;
+                       << secPair.second.template as<std::string>() << std::endl;
             }
         }
 
@@ -585,6 +600,9 @@ namespace ini
             encode(os);
         }
     };
+
+    using IniFile = IniFileBase<std::less<std::string>>;
+    using IniFileCaseInsensitive = IniFileBase<StringInsensitiveLess>;
 }
 
 #endif
