@@ -204,3 +204,11 @@ namespace ini
     };
 }
 ```
+
+## Contributors
+
+Thanks to all contributors for extending, improving and fixing this small, but seemingly popular library:
+
+* [rjungheinrich](https://github.com/rjungheinrich)
+* [JGJunghein](https://github.com/JGJunghein)
+* [antonioborondo](https://github.com/antonioborondo)
