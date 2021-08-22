@@ -326,6 +326,46 @@ TEST_CASE("escape comment when writing", "IniFile")
             "world=he\\#llo\n");
 }
 
+
+TEST_CASE("decode what we encoded", "IniFile")
+{
+    std::string content = "[Fo\\#o]\n"
+            "he\\REMllo=worl\\REMd\n"
+            "world=he\\//llo\n";
+
+    ini::IniFile inif('=', {"#", "REM", "//"});
+
+    // decode the string
+    inif.decode(content);
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif.find("Fo#o") != inif.end());
+    REQUIRE(inif["Fo#o"].size() == 2);
+    REQUIRE(inif["Fo#o"].find("heREMllo") != inif["Fo#o"].end());
+    REQUIRE(inif["Fo#o"].find("world") != inif["Fo#o"].end());
+    REQUIRE(inif["Fo#o"]["heREMllo"].as<std::string>() == "worlREMd");
+    REQUIRE(inif["Fo#o"]["world"].as<std::string>() == "he//llo");
+
+    auto actual = inif.encode();
+
+    REQUIRE(content == actual);
+
+    inif.decode(actual);
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif.find("Fo#o") != inif.end());
+    REQUIRE(inif["Fo#o"].size() == 2);
+    REQUIRE(inif["Fo#o"].find("heREMllo") != inif["Fo#o"].end());
+    REQUIRE(inif["Fo#o"].find("world") != inif["Fo#o"].end());
+    REQUIRE(inif["Fo#o"]["heREMllo"].as<std::string>() == "worlREMd");
+    REQUIRE(inif["Fo#o"]["world"].as<std::string>() == "he//llo");
+
+
+    auto actual2 = inif.encode();
+
+    REQUIRE(content == actual2);
+}
+
 TEST_CASE("save with bool fields", "IniFile")
 {
     ini::IniFile inif;
