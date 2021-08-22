@@ -310,6 +310,22 @@ TEST_CASE(
     REQUIRE(inif["Foo"]["weird2"].as<std::string>() == "but ##");
 }
 
+TEST_CASE("escape comment when writing", "IniFile")
+{
+    ini::IniFile inif('=', {"#"});
+
+    inif["Fo#o"] = ini::IniSection();
+    inif["Fo#o"]["he#llo"] = "world";
+    inif["Fo#o"]["world"] = "he#llo";
+
+    std::string str = inif.encode();
+
+    REQUIRE(str ==
+            "[Fo\\#o]\n"
+            "he\\#llo=world\n"
+            "world=he\\#llo\n");
+}
+
 TEST_CASE("save with bool fields", "IniFile")
 {
     ini::IniFile inif;

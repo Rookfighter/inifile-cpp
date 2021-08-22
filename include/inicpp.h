@@ -21,6 +21,48 @@
 namespace ini
 {
     /************************************************
+     * Helper Functions
+     ************************************************/
+
+    /** Returns a string of whitespace characters. */
+    constexpr const char *whitespaces()
+    {
+        return " \t\n\r\f\v";
+    }
+
+    /** Trims a string in place.
+      * @param str string to be trimmed in place */
+    inline void trim(std::string &str)
+    {
+        // first erasing from end should be slighty more efficient
+        // because erasing from start potentially moves all chars
+        // multiple indices towards the front.
+
+        auto lastpos = str.find_last_not_of(whitespaces());
+        if(lastpos == std::string::npos)
+        {
+            str.clear();
+            return;
+        }
+
+        str.erase(lastpos + 1);
+        str.erase(0, str.find_first_not_of(whitespaces()));
+    }
+
+    /** Trims a string and returns the result as copy.
+      * @param str string to be trimmed
+      * @return trimmed string */
+    inline std::string trimCopy(const std::string &str)
+    {
+        auto firstpos = str.find_first_not_of(whitespaces());
+        if(firstpos == std::string::npos)
+            return "";
+
+        auto lastpos = str.find_last_not_of(whitespaces());
+        return str.substr(firstpos, lastpos);
+    }
+
+    /************************************************
      * Conversion Functors
      ************************************************/
 
@@ -347,13 +389,13 @@ namespace ini
         }
     };
 
-    class StringInsensitiveLess
+    struct StringInsensitiveLess
     {
-    public:
-        bool operator()(std::string str1, std::string str2) const {
-                std::transform(str1.begin(), str1.end(), str1.begin(), ::tolower);
-                std::transform(str2.begin(), str2.end(), str2.begin(), ::tolower);
-                return  str1 < str2;
+        bool operator()(std::string lhs, std::string rhs) const
+        {
+                std::transform(lhs.begin(), lhs.end(), lhs.begin(), ::tolower);
+                std::transform(rhs.begin(), rhs.end(), rhs.begin(), ::tolower);
+                return  lhs < rhs;
         }
     };
 
@@ -374,20 +416,9 @@ namespace ini
     class IniFileBase : public std::map<std::string, IniSectionBase<Comparator>, Comparator>
     {
     private:
-        char fieldSep_;
-        std::vector<std::string> commentPrefixes_;
-
-        static void trim(std::string &str)
-        {
-            size_t startpos = str.find_first_not_of(" \t");
-            if(std::string::npos != startpos)
-            {
-                size_t endpos = str.find_last_not_of(" \t");
-                str = str.substr(startpos, endpos - startpos + 1);
-            }
-            else
-                str = "";
-        }
+        char fieldSep_ = '=';
+        char esc_ = '\\';
+        std::vector<std::string> commentPrefixes_ = { "#" };
 
         void eraseComment(const std::string &commentPrefix,
             std::string &str,
@@ -397,7 +428,7 @@ namespace ini
             if(std::string::npos == prefixpos)
                 return;
             // Found a comment prefix, is it escaped?
-            if(0 != prefixpos && '\\' == str[prefixpos - 1])
+            if(0 != prefixpos && str[prefixpos - 1] == esc_)
             {
                 // The comment prefix is escaped, so just delete the escape char
                 // and keep erasing after the comment prefix
@@ -413,13 +444,59 @@ namespace ini
 
         void eraseComments(std::string &str)
         {
-            for(auto &commentPrefix : commentPrefixes_)
+            for(const std::string &commentPrefix : commentPrefixes_)
                 eraseComment(commentPrefix, str);
         }
 
+        /** Tries to find a suitable comment prefix for the string data at the given
+          * position. Returns commentPrefixes_.end() if not match was found. */
+        std::vector<std::string>::const_iterator findCommentPrefix(const std::string &str,
+            const std::size_t startpos) const
+        {
+            // if startpos is invalid simply return "not found"
+            if(startpos >= str.size())
+                return commentPrefixes_.end();
+
+            for(size_t i = 0; i < commentPrefixes_.size(); ++i)
+            {
+                const std::string &prefix = commentPrefixes_[i];
+                // if this comment prefix is longer than the string view itself
+                // then skip
+                if(prefix.size() + startpos > str.size())
+                    continue;
+
+                bool match = true;
+                for(size_t j = 0; j < prefix.size() && match; ++j)
+                    match = str[startpos + j] == prefix[j];
+
+                if(match)
+                    return commentPrefixes_.begin() + i;
+            }
+
+            return commentPrefixes_.end();
+        }
+
+        void writeEscaped(std::ostream &os, const std::string &str) const
+        {
+            for(size_t i = 0; i < str.length(); ++i)
+            {
+                auto prefixpos = findCommentPrefix(str, i);
+                // if no suitable prefix was found at this position
+                // then simply write the current character
+                if(prefixpos == commentPrefixes_.end())
+                    os.put(str[i]);
+                else
+                {
+                    const std::string &prefix = *prefixpos;
+                    os.put(esc_);
+                    os.write(prefix.c_str(), prefix.size());
+                    i += prefix.size() - 1;
+                }
+            }
+        }
+
     public:
-        IniFileBase() : IniFileBase('=', '#')
-        {}
+        IniFileBase() = default;
 
         IniFileBase(const char fieldSep, const char comment)
             : fieldSep_(fieldSep), commentPrefixes_(1, std::string(1, comment))
@@ -465,30 +542,52 @@ namespace ini
         ~IniFileBase()
         {}
 
+        /** Sets the separator charactor for fields in the INI file.
+          * @param sep separator character to be used. */
         void setFieldSep(const char sep)
         {
             fieldSep_ = sep;
         }
 
+        /** Sets the character that should be interpreted as the start of comments.
+          * Default is '#'.
+          * Note: If the inifile contains the comment character as data it must be prefixed with
+          * the configured escape character.
+          * @param comment comment character to be used. */
         void setCommentChar(const char comment)
         {
             commentPrefixes_ = {std::string(1, comment)};
         }
 
+        /** Sets the list of strings that should be interpreted as the start of comments.
+          * Default is [ "#" ].
+          * Note: If the inifile contains any comment string as data it must be prefixed with
+          * the configured escape character.
+          * @param commentPrefixes vector of comment prefix strings to be used. */
         void setCommentPrefixes(const std::vector<std::string> &commentPrefixes)
         {
             commentPrefixes_ = commentPrefixes;
         }
 
+        /** Sets the character that should be used to escape comment prefixes.
+          * Default is '\'.
+          * @param esc escape character to be used. */
+        void setEscapeChar(const char esc)
+        {
+            esc_ = esc;
+        }
+
+        /** Tries to decode a ini file from the given input stream.
+          * @param is input stream from which data should be read. */
         void decode(std::istream &is)
         {
-            this -> clear();
+            this->clear();
             int lineNo = 0;
-            IniSectionBase<Comparator> *currentSection = NULL;
-            // iterate file by line
+            IniSectionBase<Comparator> *currentSection = nullptr;
+            std::string line;
+            // iterate file line by line
             while(!is.eof() && !is.fail())
             {
-                std::string line;
                 std::getline(is, line, '\n');
                 eraseComments(line);
                 trim(line);
@@ -497,6 +596,7 @@ namespace ini
                 // skip if line is empty
                 if(line.size() == 0)
                     continue;
+
                 if(line[0] == '[')
                 {
                     // line is a section
@@ -505,7 +605,7 @@ namespace ini
                     if(pos == std::string::npos)
                     {
                         std::stringstream ss;
-                        ss << "l" << lineNo
+                        ss << "l." << lineNo
                            << ": ini parsing failed, section not closed";
                         throw std::logic_error(ss.str());
                     }
@@ -513,17 +613,8 @@ namespace ini
                     if(pos == 1)
                     {
                         std::stringstream ss;
-                        ss << "l" << lineNo
+                        ss << "l." << lineNo
                            << ": ini parsing failed, section is empty";
-                        throw std::logic_error(ss.str());
-                    }
-                    // check if there is a newline following closing bracket
-                    if(pos + 1 != line.length())
-                    {
-                        std::stringstream ss;
-                        ss << "l" << lineNo
-                           << ": ini parsing failed, no end of line after "
-                              "section";
                         throw std::logic_error(ss.str());
                     }
 
@@ -535,10 +626,10 @@ namespace ini
                 {
                     // line is a field definition
                     // check if section was already opened
-                    if(currentSection == NULL)
+                    if(currentSection == nullptr)
                     {
                         std::stringstream ss;
-                        ss << "l" << lineNo
+                        ss << "l." << lineNo
                            << ": ini parsing failed, field has no section";
                         throw std::logic_error(ss.str());
                     }
@@ -548,8 +639,10 @@ namespace ini
                     if(pos == std::string::npos)
                     {
                         std::stringstream ss;
-                        ss << "l" << lineNo
-                           << ": ini parsing failed, no '=' found";
+                        ss << "l." << lineNo
+                           << ": ini parsing failed, no '"
+                           << fieldSep_
+                           << "' found";
                         throw std::logic_error(ss.str());
                     }
                     // retrieve field name and value
@@ -562,31 +655,47 @@ namespace ini
             }
         }
 
+        /** Tries to decode a ini file from the given input string.
+          * @param content string to be decoded. */
         void decode(const std::string &content)
         {
             std::istringstream ss(content);
             decode(ss);
         }
 
+        /** Tries to load and decode a ini file from the file at the given path.
+          * @param fileName path to the file that should be loaded. */
         void load(const std::string &fileName)
         {
             std::ifstream is(fileName.c_str());
             decode(is);
         }
 
+        /** Encodes this inifile object and writes the output to the given stream.
+          * @param os target stream. */
         void encode(std::ostream &os) const
         {
             // iterate through all sections in this file
             for(const auto &filePair : *this)
             {
-                os << "[" << filePair.first << "]" << std::endl;
+                os.put('[');
+                writeEscaped(os, filePair.first);
+                os.put(']');
+                os.put('\n');
+
                 // iterate through all fields in the section
                 for(const auto &secPair : filePair.second)
-                    os << secPair.first << fieldSep_
-                       << secPair.second.template as<std::string>() << std::endl;
+                {
+                    writeEscaped(os, secPair.first);
+                    os.put(fieldSep_);
+                    writeEscaped(os, secPair.second.template as<std::string>());
+                    os.put('\n');
+                }
             }
         }
 
+        /** Encodes this inifile object as string and returns the result.
+          * @return encoded infile string. */
         std::string encode() const
         {
             std::ostringstream ss;
@@ -594,6 +703,8 @@ namespace ini
             return ss.str();
         }
 
+        /** Saves this inifile object to the file at the given path.
+          * @param fileName path to the file where the data should be stored. */
         void save(const std::string &fileName) const
         {
             std::ofstream os(fileName.c_str());
@@ -602,7 +713,9 @@ namespace ini
     };
 
     using IniFile = IniFileBase<std::less<std::string>>;
+    using IniSection = IniSectionBase<std::less<std::string>>;
     using IniFileCaseInsensitive = IniFileBase<StringInsensitiveLess>;
+    using IniSectionCaseInsensitive = IniSectionBase<StringInsensitiveLess>;
 }
 
 #endif
