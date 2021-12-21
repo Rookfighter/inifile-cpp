@@ -418,7 +418,7 @@ namespace ini
     private:
         char fieldSep_ = '=';
         char esc_ = '\\';
-        std::vector<std::string> commentPrefixes_ = { "#" };
+        std::vector<std::string> commentPrefixes_ = { "#" , ";" };
 
         void eraseComment(const std::string &commentPrefix,
             std::string &str,
