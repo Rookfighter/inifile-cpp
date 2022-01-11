@@ -502,18 +502,12 @@ namespace ini
             : fieldSep_(fieldSep), commentPrefixes_(1, std::string(1, comment))
         {}
 
-        IniFileBase(const std::string &filename,
-            const char fieldSep = '=',
-            const char comment = '#')
-            : IniFileBase(fieldSep, comment)
+        IniFileBase(const std::string &filename)
         {
             load(filename);
         }
 
-        IniFileBase(std::istream &is,
-            const char fieldSep = '=',
-            const char comment = '#')
-            : IniFileBase(fieldSep, comment)
+        IniFileBase(std::istream &is)
         {
             decode(is);
         }
