@@ -216,7 +216,10 @@ TEST_CASE("parse field as const char*", "IniFile")
 TEST_CASE("parse field with custom field sep", "IniFile")
 {
     std::istringstream ss("[Foo]\nbar1:true\nbar2:false\nbar3:tRuE");
-    ini::IniFile inif(ss, ':');
+    ini::IniFile inif;
+
+    inif.setFieldSep(':');
+    inif.decode(ss);
 
     REQUIRE(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 3);
@@ -238,7 +241,11 @@ TEST_CASE("parse with comment", "IniFile")
 TEST_CASE("parse with custom comment char prefix", "IniFile")
 {
     std::istringstream ss("[Foo]\n$ this is a test\nbar=bla");
-    ini::IniFile inif(ss, '=', '$');
+    ini::IniFile inif;
+
+    inif.setFieldSep('=');
+    inif.setCommentChar('$');
+    inif.decode(ss);
 
     REQUIRE(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 1);
