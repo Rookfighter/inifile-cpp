@@ -114,7 +114,9 @@ namespace ini
         void decode(const std::string &value, bool &result)
         {
             std::string str(value);
-            std::transform(str.begin(), str.end(), str.begin(), ::toupper);
+            std::transform(str.begin(), str.end(), str.begin(), [](auto c){
+                return static_cast<char>(::toupper(c));
+            });
 
             if(str == "TRUE")
                 result = true;
@@ -393,8 +395,12 @@ namespace ini
     {
         bool operator()(std::string lhs, std::string rhs) const
         {
-                std::transform(lhs.begin(), lhs.end(), lhs.begin(), ::tolower);
-                std::transform(rhs.begin(), rhs.end(), rhs.begin(), ::tolower);
+                std::transform(lhs.begin(), lhs.end(), lhs.begin(), [](auto c){
+                    return static_cast<char>(::tolower(c));
+                });
+                std::transform(rhs.begin(), rhs.end(), rhs.begin(), [](auto c){
+                    return static_cast<char>(::tolower(c));
+                });
                 return  lhs < rhs;
         }
     };
