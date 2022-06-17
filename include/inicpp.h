@@ -431,6 +431,7 @@ namespace ini
         char fieldSep_ = '=';
         char esc_ = '\\';
         std::vector<std::string> commentPrefixes_ = { "#" , ";" };
+        bool multiLineValues_ = false;
 
         void eraseComment(const std::string &commentPrefix,
             std::string &str,
@@ -495,15 +496,17 @@ namespace ini
                 auto prefixpos = findCommentPrefix(str, i);
                 // if no suitable prefix was found at this position
                 // then simply write the current character
-                if(prefixpos == commentPrefixes_.end())
-                    os.put(str[i]);
-                else
+                if(prefixpos != commentPrefixes_.end())
                 {
                     const std::string &prefix = *prefixpos;
                     os.put(esc_);
                     os.write(prefix.c_str(), prefix.size());
                     i += prefix.size() - 1;
                 }
+                else if (multiLineValues_ && str[i] == '\n')
+                    os.write("\n\t", 2);
+                else
+                    os.put(str[i]);
             }
         }
 
@@ -583,6 +586,14 @@ namespace ini
             esc_ = esc;
         }
 
+        /** Sets whether or not to parse multi-line field values.
+          * Default is false.
+          * @param enable enable or disable? */
+        void setMultiLineValues(bool enable)
+        {
+            multiLineValues_ = enable;
+        }
+
         /** Tries to decode a ini file from the given input stream.
           * @param is input stream from which data should be read. */
         void decode(std::istream &is)
@@ -648,24 +659,23 @@ namespace ini
 
                     // find key value separator
                     std::size_t pos = line.find(fieldSep_);
-                    if(pos == std::string::npos)
+                    if (multiLineValues_ && has_indent && multiline_value_field_name != "")
                     {
-                        if (has_indent && multiline_value_field_name != "")
-                        {
-                            // extend a multi-line value
-                            IniField previous_value = (*currentSection)[multiline_value_field_name];
-                            std::string value = previous_value.as<std::string>() + "\n" + line;
-                            (*currentSection)[multiline_value_field_name] = value;
-                        }
-                        else
-                        {
-                            std::stringstream ss;
-                            ss << "l." << lineNo
-                            << ": ini parsing failed, no '"
-                            << fieldSep_
-                            << "' found, and no multi-line value";
-                            throw std::logic_error(ss.str());
-                        }
+                        // extend a multi-line value
+                        IniField previous_value = (*currentSection)[multiline_value_field_name];
+                        std::string value = previous_value.as<std::string>() + "\n" + line;
+                        (*currentSection)[multiline_value_field_name] = value;
+                    }
+                    else if(pos == std::string::npos)
+                    {
+                        std::stringstream ss;
+                        ss << "l." << lineNo
+                           << ": ini parsing failed, no '"
+                           << fieldSep_
+                           << "' found";
+                        if (multiLineValues_)
+                            ss << ", and not a multi-line value continuation";
+                        throw std::logic_error(ss.str());
                     }
                     else
                     {

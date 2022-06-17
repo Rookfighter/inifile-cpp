@@ -55,6 +55,20 @@ int main()
 }
 ```
 
+You can enable decoding of multi-line values using the  ```setMultiLineValues(true)``` function.  If you do this, field values may be continued on the next line, after indentation.  Each line will be separated by the `\n` character in the final value, and the indentation will be removed.
+
+```cpp
+#include <inicpp.h>
+
+int main()
+{
+    // load an ini file
+    ini::IniFile myIni;
+    myIni.setMultiLineValues(true);
+    myIni.load("some/ini/path");
+}
+```
+
 Sections and fields can be accessed using the index operator ```[]```.
 The values can be converted to various native types:
 
@@ -212,3 +226,4 @@ Thanks to all contributors for extending, improving and fixing this small, but s
 * [rjungheinrich](https://github.com/rjungheinrich)
 * [JGJunghein](https://github.com/JGJunghein)
 * [antonioborondo](https://github.com/antonioborondo)
+* [jtikalsky](https://github.com/jtikalsky)
