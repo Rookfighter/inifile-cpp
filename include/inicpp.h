@@ -59,7 +59,7 @@ namespace ini
             return "";
 
         auto lastpos = str.find_last_not_of(whitespaces());
-        return str.substr(firstpos, lastpos);
+        return str.substr(firstpos, lastpos - firstpos + 1);
     }
 
     /************************************************
