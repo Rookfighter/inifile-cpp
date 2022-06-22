@@ -601,14 +601,14 @@ namespace ini
             this->clear();
             int lineNo = 0;
             IniSectionBase<Comparator> *currentSection = nullptr;
-            std::string multiline_value_field_name = "";
+            std::string mutliLineValueFieldName = "";
             std::string line;
             // iterate file line by line
             while(!is.eof() && !is.fail())
             {
                 std::getline(is, line, '\n');
                 eraseComments(line);
-                bool has_indent = line.find_first_not_of(indents()) != 0;
+                bool hasIndent = line.find_first_not_of(indents()) != 0;
                 trim(line);
                 ++lineNo;
 
@@ -643,7 +643,7 @@ namespace ini
 
                     // clear multiline value field name
                     // a new section means there is no value to continue
-                    multiline_value_field_name = "";
+                    mutliLineValueFieldName = "";
                 }
                 else
                 {
@@ -659,12 +659,12 @@ namespace ini
 
                     // find key value separator
                     std::size_t pos = line.find(fieldSep_);
-                    if (multiLineValues_ && has_indent && multiline_value_field_name != "")
+                    if (multiLineValues_ && hasIndent && mutliLineValueFieldName != "")
                     {
                         // extend a multi-line value
-                        IniField previous_value = (*currentSection)[multiline_value_field_name];
+                        IniField previous_value = (*currentSection)[mutliLineValueFieldName];
                         std::string value = previous_value.as<std::string>() + "\n" + line;
-                        (*currentSection)[multiline_value_field_name] = value;
+                        (*currentSection)[mutliLineValueFieldName] = value;
                     }
                     else if(pos == std::string::npos)
                     {
@@ -686,7 +686,7 @@ namespace ini
                         trim(value);
                         (*currentSection)[name] = value;
                         // store last field name for potential multi-line values
-                        multiline_value_field_name = name;
+                        mutliLineValueFieldName = name;
                     }
                 }
             }
