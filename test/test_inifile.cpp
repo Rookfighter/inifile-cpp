@@ -571,6 +571,97 @@ TEST_CASE("escape characters are kept if not before a comment prefix", "IniFile"
     REQUIRE(inif["Foo"]["bar"].as<std::string>() == "Hello \\world!");
 }
 
+TEST_CASE("multi-line values are read correctly with space indents", "IniFile")
+{
+    std::istringstream ss("[Foo]\n"
+                          "bar=Hello\n"
+                          "    world!");
+    ini::IniFile inif;
+    inif.setMultiLineValues(true);
+    inif.decode(ss);
+
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "Hello\nworld!");
+}
+
+TEST_CASE("multi-line values are read correctly with tab indents", "IniFile")
+{
+    std::istringstream ss("[Foo]\n"
+                          "bar=Hello\n"
+                          "\tworld!");
+    ini::IniFile inif;
+    inif.setMultiLineValues(true);
+    inif.decode(ss);
+
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "Hello\nworld!");
+}
+
+TEST_CASE("multi-line values discard end-of-line comments", "IniFile")
+{
+    std::istringstream ss("[Foo]\n"
+                          "bar=Hello ; everyone\n"
+                          "    world! ; comment");
+    ini::IniFile inif;
+    inif.setMultiLineValues(true);
+    inif.decode(ss);
+
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "Hello\nworld!");
+}
+
+TEST_CASE("multi-line values discard interspersed comment lines", "IniFile")
+{
+    std::istringstream ss("[Foo]\n"
+                          "bar=Hello\n"
+                          "; everyone\n"
+                          "    world!");
+    ini::IniFile inif;
+    inif.setMultiLineValues(true);
+    inif.decode(ss);
+
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "Hello\nworld!");
+}
+
+TEST_CASE("multi-line values should not be parsed when disabled", "IniFile")
+{
+    std::istringstream ss("[Foo]\n"
+                          "    bar=Hello\n"
+                          "    baz=world!");
+    ini::IniFile inif;
+    inif.setMultiLineValues(false);
+    inif.decode(ss);
+
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "Hello");
+	REQUIRE(inif["Foo"]["baz"].as<std::string>() == "world!");
+}
+
+TEST_CASE("multi-line values should be parsed when enabled, even when the continuation contains =", "IniFile")
+{
+    std::istringstream ss("[Foo]\n"
+                          "    bar=Hello\n"
+                          "    baz=world!");
+    ini::IniFile inif;
+    inif.setMultiLineValues(true);
+    inif.decode(ss);
+
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "Hello\nbaz=world!");
+	REQUIRE(inif["Foo"]["baz"].as<std::string>() == "");
+}
+
+TEST_CASE("when multi-line values are enabled, write newlines as multi-line value continuations", "IniFile")
+{
+    ini::IniFile inif;
+    inif.setMultiLineValues(true);
+
+    inif["Foo"] = ini::IniSection();
+    inif["Foo"]["bar"] = "Hello\nworld!";
+
+    std::string str = inif.encode();
+
+    REQUIRE(str ==
+            "[Foo]\n"
+            "bar=Hello\n"
+            "\tworld!\n");
+}
+
 TEST_CASE("stringInsensitiveLess operator() returns true if and only if first parameter is less than the second ignoring sensitivity", "StringInsensitiveLessFunctor")
 {
     ini::StringInsensitiveLess cc;
@@ -642,6 +733,34 @@ TEST_CASE("fail to load field without equal", "IniFile")
 {
     ini::IniFile inif;
     REQUIRE_THROWS(inif.decode("[Foo]\nbar"));
+}
+
+TEST_CASE("fail to parse a multi-line field without indentation (when enabled)", "IniFile")
+{
+    ini::IniFile inif;
+    inif.setMultiLineValues(true);
+    REQUIRE_THROWS(inif.decode("[Foo]\nbar=Hello\nworld!"));
+}
+
+TEST_CASE("fail to parse a multi-line field without indentation (when disabled)", "IniFile")
+{
+    ini::IniFile inif;
+    inif.setMultiLineValues(false);
+    REQUIRE_THROWS(inif.decode("[Foo]\nbar=Hello\nworld!"));
+}
+
+TEST_CASE("fail to continue multi-line field without start (when enabled)", "IniFile")
+{
+    ini::IniFile inif;
+    inif.setMultiLineValues(true);
+    REQUIRE_THROWS(inif.decode("[Foo]\n    world!\nbar=Hello"));
+}
+
+TEST_CASE("fail to continue multi-line field without start (when disabled)", "IniFile")
+{
+    ini::IniFile inif;
+    inif.setMultiLineValues(false);
+    REQUIRE_THROWS(inif.decode("[Foo]\n    world!\nbar=Hello"));
 }
 
 TEST_CASE("fail to parse as bool", "IniFile")

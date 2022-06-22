@@ -30,6 +30,12 @@ namespace ini
         return " \t\n\r\f\v";
     }
 
+    /** Returns a string of indentation characters. */
+    constexpr const char *indents()
+    {
+        return " \t";
+    }
+
     /** Trims a string in place.
       * @param str string to be trimmed in place */
     inline void trim(std::string &str)
@@ -425,6 +431,7 @@ namespace ini
         char fieldSep_ = '=';
         char esc_ = '\\';
         std::vector<std::string> commentPrefixes_ = { "#" , ";" };
+        bool multiLineValues_ = false;
 
         void eraseComment(const std::string &commentPrefix,
             std::string &str,
@@ -489,15 +496,17 @@ namespace ini
                 auto prefixpos = findCommentPrefix(str, i);
                 // if no suitable prefix was found at this position
                 // then simply write the current character
-                if(prefixpos == commentPrefixes_.end())
-                    os.put(str[i]);
-                else
+                if(prefixpos != commentPrefixes_.end())
                 {
                     const std::string &prefix = *prefixpos;
                     os.put(esc_);
                     os.write(prefix.c_str(), prefix.size());
                     i += prefix.size() - 1;
                 }
+                else if (multiLineValues_ && str[i] == '\n')
+                    os.write("\n\t", 2);
+                else
+                    os.put(str[i]);
             }
         }
 
@@ -577,6 +586,14 @@ namespace ini
             esc_ = esc;
         }
 
+        /** Sets whether or not to parse multi-line field values.
+          * Default is false.
+          * @param enable enable or disable? */
+        void setMultiLineValues(bool enable)
+        {
+            multiLineValues_ = enable;
+        }
+
         /** Tries to decode a ini file from the given input stream.
           * @param is input stream from which data should be read. */
         void decode(std::istream &is)
@@ -584,12 +601,14 @@ namespace ini
             this->clear();
             int lineNo = 0;
             IniSectionBase<Comparator> *currentSection = nullptr;
+            std::string mutliLineValueFieldName = "";
             std::string line;
             // iterate file line by line
             while(!is.eof() && !is.fail())
             {
                 std::getline(is, line, '\n');
                 eraseComments(line);
+                bool hasIndent = line.find_first_not_of(indents()) != 0;
                 trim(line);
                 ++lineNo;
 
@@ -621,6 +640,10 @@ namespace ini
                     // retrieve section name
                     std::string secName = line.substr(1, pos - 1);
                     currentSection = &((*this)[secName]);
+
+                    // clear multiline value field name
+                    // a new section means there is no value to continue
+                    mutliLineValueFieldName = "";
                 }
                 else
                 {
@@ -636,21 +659,35 @@ namespace ini
 
                     // find key value separator
                     std::size_t pos = line.find(fieldSep_);
-                    if(pos == std::string::npos)
+                    if (multiLineValues_ && hasIndent && mutliLineValueFieldName != "")
+                    {
+                        // extend a multi-line value
+                        IniField previous_value = (*currentSection)[mutliLineValueFieldName];
+                        std::string value = previous_value.as<std::string>() + "\n" + line;
+                        (*currentSection)[mutliLineValueFieldName] = value;
+                    }
+                    else if(pos == std::string::npos)
                     {
                         std::stringstream ss;
                         ss << "l." << lineNo
                            << ": ini parsing failed, no '"
                            << fieldSep_
                            << "' found";
+                        if (multiLineValues_)
+                            ss << ", and not a multi-line value continuation";
                         throw std::logic_error(ss.str());
                     }
-                    // retrieve field name and value
-                    std::string name = line.substr(0, pos);
-                    trim(name);
-                    std::string value = line.substr(pos + 1, std::string::npos);
-                    trim(value);
-                    (*currentSection)[name] = value;
+                    else
+                    {
+                        // retrieve field name and value
+                        std::string name = line.substr(0, pos);
+                        trim(name);
+                        std::string value = line.substr(pos + 1, std::string::npos);
+                        trim(value);
+                        (*currentSection)[name] = value;
+                        // store last field name for potential multi-line values
+                        mutliLineValueFieldName = name;
+                    }
                 }
             }
         }
