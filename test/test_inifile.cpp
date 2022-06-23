@@ -628,7 +628,7 @@ TEST_CASE(".as<>() works with IniFileCaseInsensitive", "IniFile")
     REQUIRE(inif["FOO"]["bar"].as<std::string>() == "bla");
 }
 
-TEST_CASE("trim() works with empty strings", "TrimFunctions")
+TEST_CASE("trim() works with empty strings", "TrimFunction")
 {
     std::string example1 = "";
     std::string example2 = "  \t\n  ";
@@ -640,7 +640,7 @@ TEST_CASE("trim() works with empty strings", "TrimFunctions")
     REQUIRE(example2.size() == 0);
 }
 
-TEST_CASE("trim() works with already trimmed strings", "TrimFunctions")
+TEST_CASE("trim() works with already trimmed strings", "TrimFunction")
 {
     std::string example1 = "example_text";
     std::string example2 = "example  \t\n  text";
@@ -652,7 +652,7 @@ TEST_CASE("trim() works with already trimmed strings", "TrimFunctions")
     REQUIRE(example2 == "example  \t\n  text");
 }
 
-TEST_CASE("trim() works with untrimmed strings", "TrimFunctions")
+TEST_CASE("trim() works with untrimmed strings", "TrimFunction")
 {
     std::string example1 = "example text      ";
     std::string example2 = "      example text";
@@ -668,37 +668,6 @@ TEST_CASE("trim() works with untrimmed strings", "TrimFunctions")
     REQUIRE(example2 == "example text");
     REQUIRE(example3 == "example text");
     REQUIRE(example4 == "example  \t\n  text");
-}
-
-TEST_CASE("trimCopy() works with empty strings", "TrimFunctions")
-{
-    std::string example1 = "";
-    std::string example2 = "  \t\n  ";
-
-    REQUIRE(ini::trimCopy(example1).size() == 0);
-    REQUIRE(ini::trimCopy(example2).size() == 0);
-}
-
-TEST_CASE("trimCopy() works with already trimmed strings", "TrimFunctions")
-{
-    std::string example1 = "example_text";
-    std::string example2 = "example  \t\n  text";
-
-    REQUIRE(ini::trimCopy(example1) == "example_text");
-    REQUIRE(ini::trimCopy(example2) == "example  \t\n  text");
-}
-
-TEST_CASE("trimCopy() works with untrimmed strings", "TrimFunctions")
-{
-    std::string example1 = "example text      ";
-    std::string example2 = "      example text";
-    std::string example3 = "      example text      ";
-    std::string example4 = "  \t\n  example  \t\n  text  \t\n  ";
-
-    REQUIRE(ini::trimCopy(example1) == "example text");
-    REQUIRE(ini::trimCopy(example2) == "example text");
-    REQUIRE(ini::trimCopy(example3) == "example text");
-    REQUIRE(ini::trimCopy(example4) == "example  \t\n  text");
 }
 
 /***************************************************

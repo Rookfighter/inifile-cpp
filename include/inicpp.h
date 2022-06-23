@@ -49,19 +49,6 @@ namespace ini
         str.erase(0, str.find_first_not_of(whitespaces()));
     }
 
-    /** Trims a string and returns the result as copy.
-      * @param str string to be trimmed
-      * @return trimmed string */
-    inline std::string trimCopy(const std::string &str)
-    {
-        auto firstpos = str.find_first_not_of(whitespaces());
-        if(firstpos == std::string::npos)
-            return "";
-
-        auto lastpos = str.find_last_not_of(whitespaces());
-        return str.substr(firstpos, lastpos - firstpos + 1);
-    }
-
     /************************************************
      * Conversion Functors
      ************************************************/
