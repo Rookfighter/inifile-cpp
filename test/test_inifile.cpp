@@ -719,6 +719,48 @@ TEST_CASE(".as<>() works with IniFileCaseInsensitive", "IniFile")
     REQUIRE(inif["FOO"]["bar"].as<std::string>() == "bla");
 }
 
+TEST_CASE("trim() works with empty strings", "TrimFunction")
+{
+    std::string example1 = "";
+    std::string example2 = "  \t\n  ";
+
+    ini::trim(example1);
+    ini::trim(example2);
+
+    REQUIRE(example1.size() == 0);
+    REQUIRE(example2.size() == 0);
+}
+
+TEST_CASE("trim() works with already trimmed strings", "TrimFunction")
+{
+    std::string example1 = "example_text";
+    std::string example2 = "example  \t\n  text";
+
+    ini::trim(example1);
+    ini::trim(example2);
+
+    REQUIRE(example1 == "example_text");
+    REQUIRE(example2 == "example  \t\n  text");
+}
+
+TEST_CASE("trim() works with untrimmed strings", "TrimFunction")
+{
+    std::string example1 = "example text      ";
+    std::string example2 = "      example text";
+    std::string example3 = "      example text      ";
+    std::string example4 = "  \t\n  example  \t\n  text  \t\n  ";
+
+    ini::trim(example1);
+    ini::trim(example2);
+    ini::trim(example3);
+    ini::trim(example4);
+
+    REQUIRE(example1 == "example text");
+    REQUIRE(example2 == "example text");
+    REQUIRE(example3 == "example text");
+    REQUIRE(example4 == "example  \t\n  text");
+}
+
 /***************************************************
  *                Failing Tests
  ***************************************************/
