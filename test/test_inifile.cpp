@@ -69,14 +69,16 @@ TEST_CASE("parse section with duplicate field", "IniFile")
 
 TEST_CASE("parse field as bool", "IniFile")
 {
-    std::istringstream ss("[Foo]\nbar1=true\nbar2=false\nbar3=tRuE");
+    std::istringstream ss("[Foo]\nbar1=true\nbar2=false\nbar3=tRuE\nbar4=1\nbar5=0\n");
     ini::IniFile inif(ss);
 
     REQUIRE(inif.size() == 1);
-    REQUIRE(inif["Foo"].size() == 3);
+    REQUIRE(inif["Foo"].size() == 5);
     REQUIRE(inif["Foo"]["bar1"].as<bool>());
     REQUIRE_FALSE(inif["Foo"]["bar2"].as<bool>());
     REQUIRE(inif["Foo"]["bar3"].as<bool>());
+    REQUIRE(inif["Foo"]["bar4"].as<bool>());
+    REQUIRE_FALSE(inif["Foo"]["bar5"].as<bool>());
 }
 
 TEST_CASE("parse field as char", "IniFile")
