@@ -419,6 +419,7 @@ namespace ini
         char esc_ = '\\';
         std::vector<std::string> commentPrefixes_ = { "#" , ";" };
         bool multiLineValues_ = false;
+        bool exceptionWhenDuplicateField_ = false;
 
         void eraseComment(const std::string &commentPrefix,
             std::string &str,
@@ -581,6 +582,14 @@ namespace ini
             multiLineValues_ = enable;
         }
 
+        /** Sets whether or not to throw an exception if duplicate fields are found in a section.
+          * Default is false.
+          * @param enable enable or disable? */
+        void setExceptionWhenDuplicateField(bool enable)
+        {
+            exceptionWhenDuplicateField_ = enable;
+        }
+
         /** Tries to decode a ini file from the given input stream.
           * @param is input stream from which data should be read. */
         void decode(std::istream &is)
@@ -670,6 +679,13 @@ namespace ini
                         // retrieve field name and value
                         std::string name = line.substr(0, pos);
                         trim(name);
+                        if (exceptionWhenDuplicateField_ && currentSection->count(name))
+                        {
+                            std::stringstream ss;
+                            ss << "l." << lineNo
+                               << ": ini parsing failed, duplicate field found";
+                            throw std::logic_error(ss.str());
+                        }
                         std::string value = line.substr(pos + 1, std::string::npos);
                         trim(value);
                         (*currentSection)[name] = value;
