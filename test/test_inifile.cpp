@@ -67,6 +67,17 @@ TEST_CASE("parse section with duplicate field", "IniFile")
     REQUIRE(inif["Foo"]["bar"].as<std::string>() == "world");
 }
 
+TEST_CASE("parse section with duplicate field and exceptionWhenDuplicateField_ set to disabled", "IniFile")
+{
+    ini::IniFile inif;
+    inif.setExceptionWhenDuplicateField(false);
+    inif.decode("[Foo]\nbar=hello\nbar=world");
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 1);
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "world");
+}
+
 TEST_CASE("parse field as bool", "IniFile")
 {
     std::istringstream ss("[Foo]\nbar1=true\nbar2=false\nbar3=tRuE");
@@ -864,4 +875,11 @@ TEST_CASE("spaces are not taken into account in sections", "IniFile")
     ini::IniFile inif(ss);
 
     REQUIRE(inif.find("Foo") != inif.end());
+}
+
+TEST_CASE("parse section with duplicate field and exceptionWhenDuplicateField_ set to enabled", "IniFile")
+{
+    ini::IniFile inif;
+    inif.setExceptionWhenDuplicateField(true);
+    REQUIRE_THROWS(inif.decode("[Foo]\nbar=hello\nbar=world"));
 }
