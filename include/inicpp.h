@@ -640,7 +640,8 @@ namespace ini
                     {
                         std::stringstream ss;
                         ss << "l." << lineNo
-                           << ": ini parsing failed, field has no section";
+                           << ": ini parsing failed, field has no section"
+                                " or ini file in use by another application";
                         throw std::logic_error(ss.str());
                     }
 
