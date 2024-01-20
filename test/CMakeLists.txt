@@ -4,13 +4,13 @@
 # Created On: 12 Jul 2019
 
 include_directories(
-    ${CMAKE_CURRENT_LIST_DIR}
     ${CATCH2_INCLUDE_DIR}
 )
 
-set(TEST_SRC
+add_executable(unit_tests
     "main.cpp"
     "test_inifile.cpp"
 )
+target_link_libraries(unit_tests inicpp::inicpp)
 
-add_executable(run_tests ${TEST_SRC})
+add_test(NAME unit_tests COMMAND unit_tests)

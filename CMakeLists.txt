@@ -4,9 +4,12 @@
 # Created On: 26 Dec 2015
 #    License: MIT
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.15)
 
 project(inifile-cpp)
+
+include(CTest)
+
 SET(CMAKE_CXX_STANDARD 11)
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -20,14 +23,12 @@ endif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 
 add_subdirectory(dep)
 
-include_directories(
-    include
-)
-
-install(
-    FILES "include/inicpp.h"
-    DESTINATION include
-)
+add_library(inicpp INTERFACE)
+target_include_directories(inicpp INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+add_library(inicpp::inicpp ALIAS inicpp)
+install(DIRECTORY inicpp TYPE INCLUDE)
 
 if(${BUILD_TESTS})
     add_subdirectory(test)
