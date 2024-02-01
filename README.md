@@ -69,6 +69,21 @@ int main()
 }
 ```
 
+When duplicate fields are decoded the previous value is simply overwritten by default. You can disallow duplicate fields from being overwritten by using the ```allowOverwriteDuplicateFields(false)``` function. If you do this, an exception will be thrown if a duplicate field is found inside a section.
+
+```cpp
+#include <inicpp.h>
+
+int main()
+{
+    // load an ini file
+    ini::IniFile myIni;
+    myIni.allowOverwriteDuplicateFields(false);
+    // throws an exception if the ini file has duplicate fields
+    myIni.load("some/ini/path");
+}
+```
+
 Sections and fields can be accessed using the index operator ```[]```.
 The values can be converted to various native types:
 
