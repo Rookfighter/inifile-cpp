@@ -111,9 +111,9 @@ namespace ini
                 return static_cast<char>(::toupper(c));
             });
 
-            if(str == "TRUE")
+            if(str == "TRUE" || str == "1")
                 result = true;
-            else if(str == "FALSE")
+            else if(str == "FALSE" || str == "0")
                 result = false;
             else
                 throw std::invalid_argument("field is not a bool");
