@@ -28,7 +28,7 @@ target_include_directories(inicpp INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 add_library(inicpp::inicpp ALIAS inicpp)
-install(DIRECTORY inicpp TYPE INCLUDE)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/inicpp.h TYPE INCLUDE)
 
 if(${BUILD_TESTS})
     add_subdirectory(test)
