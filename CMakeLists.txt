@@ -10,7 +10,9 @@ project(inifile-cpp)
 
 include(CTest)
 
-SET(CMAKE_CXX_STANDARD 11)
+set(INICPP_CXX_STANDARD "11" CACHE STRING "C++ standard to use when building tests & examples.")
+
+SET(CMAKE_CXX_STANDARD ${INICPP_CXX_STANDARD})
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(CMAKE_COMPILER_IS_GNUCXX)

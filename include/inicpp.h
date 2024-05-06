@@ -17,6 +17,11 @@
 #include <sstream>
 #include <stdexcept>
 #include <vector>
+#include <string>
+
+#ifdef __cpp_lib_string_view // This one is defined in <string> if we have std::string_view
+#   include <string_view>
+#endif
 
 namespace ini
 {
@@ -310,6 +315,22 @@ namespace ini
             result = value;
         }
     };
+
+#ifdef __cpp_lib_string_view
+    template<>
+    struct Convert<std::string_view>
+    {
+        void decode(const std::string &value, std::string_view &result)
+        {
+            result = value;
+        }
+
+        void encode(const std::string_view value, std::string &result)
+        {
+            result = value;
+        }
+    };
+#endif
 
     template<>
     struct Convert<const char*>

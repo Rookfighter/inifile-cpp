@@ -224,6 +224,19 @@ TEST_CASE("parse field as const char*", "IniFile")
     REQUIRE(std::strcmp(inif["Foo"]["bar2"].as<const char*>(), "world") == 0);
 }
 
+#ifdef __cpp_lib_string_view
+TEST_CASE("parse field as std::string_view", "IniFile")
+{
+    std::istringstream ss("[Foo]\nbar1=hello\nbar2=world");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif.size() == 1);
+    REQUIRE(inif["Foo"].size() == 2);
+    REQUIRE(inif["Foo"]["bar1"].as<std::string_view>() == "hello");
+    REQUIRE(inif["Foo"]["bar2"].as<std::string_view>() == "world");
+}
+#endif
+
 TEST_CASE("parse field with custom field sep", "IniFile")
 {
     std::istringstream ss("[Foo]\nbar1:true\nbar2:false\nbar3:tRuE");
@@ -536,6 +549,18 @@ TEST_CASE("save with string literal fields", "IniFile")
     std::string result = inif.encode();
     REQUIRE(result == "[Foo]\nbar1=hello\nbar2=world\n");
 }
+
+#ifdef __cpp_lib_string_view
+TEST_CASE("save with std::string_view fields", "IniFile")
+{
+    ini::IniFile inif;
+    inif["Foo"]["bar1"] = std::string_view("hello");
+    inif["Foo"]["bar2"] = std::string_view("world");
+
+    std::string result = inif.encode();
+    REQUIRE(result == "[Foo]\nbar1=hello\nbar2=world\n");
+}
+#endif
 
 TEST_CASE("save with custom field sep", "IniFile")
 {
