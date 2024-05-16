@@ -1,8 +1,19 @@
 name: CMake
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
+  format:
+    name: Check C++ Code Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Format
+        run: 'find test/ examples/ include/ -iname "*.h" -o -iname "*.cpp" -print0 | xargs -0 clang-format --dry-run --Werror'
   build:
     name: "${{matrix.config.name}} C++${{matrix.cxx}}"
     runs-on: ${{matrix.config.os}}
