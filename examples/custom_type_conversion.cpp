@@ -12,7 +12,7 @@
 namespace ini
 {
     /** Conversion functor to parse std::vectors from an ini field-
-      * The generic template can be passed down to the vector. */
+     * The generic template can be passed down to the vector. */
     template<typename T>
     struct Convert<std::vector<T>>
     {
@@ -49,7 +49,6 @@ namespace ini
                 Convert<T> conv;
                 conv.decode(tmp, decoded);
                 result.push_back(decoded);
-
             }
         }
 
@@ -106,11 +105,10 @@ int main()
 
     std::cout << std::endl;
 
-
     // create another ini file for encoding
     ini::IniFile outputIni;
-    outputIni["Bar"]["floatList"] =std::vector<float>{1.0f, 9.3f, 3.256f};
-    outputIni["Bar"]["boolList"] =std::vector<bool>{true, false, false, true};
+    outputIni["Bar"]["floatList"] = std::vector<float>{1.0f, 9.3f, 3.256f};
+    outputIni["Bar"]["boolList"] = std::vector<bool>{true, false, false, true};
 
     std::cout << "Encoded ini file" << std::endl;
     std::cout << "================" << std::endl;

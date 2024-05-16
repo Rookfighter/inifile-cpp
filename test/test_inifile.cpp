@@ -37,7 +37,6 @@ TEST_CASE("parse comment only file", "IniFile")
     REQUIRE(inif.size() == 0);
 }
 
-
 TEST_CASE("parse empty section", "IniFile")
 {
     std::istringstream ss("[Foo]");
@@ -220,8 +219,8 @@ TEST_CASE("parse field as const char*", "IniFile")
 
     REQUIRE(inif.size() == 1);
     REQUIRE(inif["Foo"].size() == 2);
-    REQUIRE(std::strcmp(inif["Foo"]["bar1"].as<const char*>(), "hello") == 0);
-    REQUIRE(std::strcmp(inif["Foo"]["bar2"].as<const char*>(), "world") == 0);
+    REQUIRE(std::strcmp(inif["Foo"]["bar1"].as<const char *>(), "hello") == 0);
+    REQUIRE(std::strcmp(inif["Foo"]["bar2"].as<const char *>(), "world") == 0);
 }
 
 #ifdef __cpp_lib_string_view
@@ -327,17 +326,14 @@ TEST_CASE("comments are allowed after escaped comments", "IniFile")
     REQUIRE(inif["Foo"]["more"].as<std::string>() == "of this # #");
 }
 
-TEST_CASE(
-    "escape char right before a comment prefix escapes all the comment prefix",
-    "IniFile")
+TEST_CASE("escape char right before a comment prefix escapes all the comment prefix", "IniFile")
 {
     std::istringstream ss("[Foo]\n"
                           "weird1=note \\### this is not a comment\n"
                           "weird2=but \\#### this is a comment");
     ini::IniFile inif(ss, '=', {"##"});
 
-    REQUIRE(inif["Foo"]["weird1"].as<std::string>() ==
-            "note ### this is not a comment");
+    REQUIRE(inif["Foo"]["weird1"].as<std::string>() == "note ### this is not a comment");
     REQUIRE(inif["Foo"]["weird2"].as<std::string>() == "but ##");
 }
 
@@ -351,18 +347,16 @@ TEST_CASE("escape comment when writing", "IniFile")
 
     std::string str = inif.encode();
 
-    REQUIRE(str ==
-            "[Fo\\#o]\n"
-            "he\\#llo=world\n"
-            "world=he\\#llo\n");
+    REQUIRE(str == "[Fo\\#o]\n"
+                   "he\\#llo=world\n"
+                   "world=he\\#llo\n");
 }
-
 
 TEST_CASE("decode what we encoded", "IniFile")
 {
     std::string content = "[Fo\\#o]\n"
-            "he\\REMllo=worl\\REMd\n"
-            "world=he\\//llo\n";
+                          "he\\REMllo=worl\\REMd\n"
+                          "world=he\\//llo\n";
 
     ini::IniFile inif('=', {"#", "REM", "//"});
 
@@ -390,7 +384,6 @@ TEST_CASE("decode what we encoded", "IniFile")
     REQUIRE(inif["Fo#o"].find("world") != inif["Fo#o"].end());
     REQUIRE(inif["Fo#o"]["heREMllo"].as<std::string>() == "worlREMd");
     REQUIRE(inif["Fo#o"]["world"].as<std::string>() == "he//llo");
-
 
     auto actual2 = inif.encode();
 
@@ -507,7 +500,6 @@ TEST_CASE("save with float fields", "IniFile")
     REQUIRE(result == "[Foo]\nbar1=1.2\nbar2=-2.4\n");
 }
 
-
 TEST_CASE("save with std::string fields", "IniFile")
 {
     ini::IniFile inif;
@@ -521,8 +513,8 @@ TEST_CASE("save with std::string fields", "IniFile")
 TEST_CASE("save with const char* fields", "IniFile")
 {
     ini::IniFile inif;
-    inif["Foo"]["bar1"] = static_cast<const char*>("hello");
-    inif["Foo"]["bar2"] = static_cast<const char*>("world");
+    inif["Foo"]["bar1"] = static_cast<const char *>("hello");
+    inif["Foo"]["bar2"] = static_cast<const char *>("world");
 
     std::string result = inif.encode();
     REQUIRE(result == "[Foo]\nbar1=hello\nbar2=world\n");
@@ -533,8 +525,8 @@ TEST_CASE("save with char* fields", "IniFile")
     ini::IniFile inif;
     char bar1[6] = "hello";
     char bar2[6] = "world";
-    inif["Foo"]["bar1"] = static_cast<char*>(bar1);
-    inif["Foo"]["bar2"] = static_cast<char*>(bar2);
+    inif["Foo"]["bar1"] = static_cast<char *>(bar1);
+    inif["Foo"]["bar2"] = static_cast<char *>(bar2);
 
     std::string result = inif.encode();
     REQUIRE(result == "[Foo]\nbar1=hello\nbar2=world\n");
@@ -666,7 +658,7 @@ TEST_CASE("multi-line values should not be parsed when disabled", "IniFile")
     inif.decode(ss);
 
     REQUIRE(inif["Foo"]["bar"].as<std::string>() == "Hello");
-	REQUIRE(inif["Foo"]["baz"].as<std::string>() == "world!");
+    REQUIRE(inif["Foo"]["baz"].as<std::string>() == "world!");
 }
 
 TEST_CASE("multi-line values should be parsed when enabled, even when the continuation contains =", "IniFile")
@@ -679,7 +671,7 @@ TEST_CASE("multi-line values should be parsed when enabled, even when the contin
     inif.decode(ss);
 
     REQUIRE(inif["Foo"]["bar"].as<std::string>() == "Hello\nbaz=world!");
-	REQUIRE(inif["Foo"]["baz"].as<std::string>() == "");
+    REQUIRE(inif["Foo"]["baz"].as<std::string>() == "");
 }
 
 TEST_CASE("when multi-line values are enabled, write newlines as multi-line value continuations", "IniFile")
@@ -692,13 +684,14 @@ TEST_CASE("when multi-line values are enabled, write newlines as multi-line valu
 
     std::string str = inif.encode();
 
-    REQUIRE(str ==
-            "[Foo]\n"
-            "bar=Hello\n"
-            "\tworld!\n");
+    REQUIRE(str == "[Foo]\n"
+                   "bar=Hello\n"
+                   "\tworld!\n");
 }
 
-TEST_CASE("stringInsensitiveLess operator() returns true if and only if first parameter is less than the second ignoring sensitivity", "StringInsensitiveLessFunctor")
+TEST_CASE("stringInsensitiveLess operator() returns true if and only if first parameter is less than the second "
+          "ignoring sensitivity",
+    "StringInsensitiveLessFunctor")
 {
     ini::StringInsensitiveLess cc;
 
@@ -707,14 +700,16 @@ TEST_CASE("stringInsensitiveLess operator() returns true if and only if first pa
     REQUIRE(cc("aaa", "aaB"));
 }
 
-TEST_CASE("stringInsensitiveLess operator() returns false when words differs only in case", "StringInsensitiveLessFunctor")
+TEST_CASE(
+    "stringInsensitiveLess operator() returns false when words differs only in case", "StringInsensitiveLessFunctor")
 {
     ini::StringInsensitiveLess cc;
 
     REQUIRE(cc("AA", "aa") == false);
 }
 
-TEST_CASE("stringInsensitiveLess operator() has a case insensitive strict weak ordering policy", "StringInsensitiveLessFunctor")
+TEST_CASE("stringInsensitiveLess operator() has a case insensitive strict weak ordering policy",
+    "StringInsensitiveLessFunctor")
 {
     ini::StringInsensitiveLess cc;
 
