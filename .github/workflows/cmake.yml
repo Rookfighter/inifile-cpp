@@ -30,7 +30,7 @@ jobs:
       - name: Build
         run: cmake --build ${{runner.workspace}}/build --config Debug
       - name: Test
-        run: ctest -C Debug ---output-on-failure -test-dir ${{runner.workspace}}/build
+        run: ctest -C Debug --output-on-failure --test-dir ${{runner.workspace}}/build
       - name: Generate Coverage
         run: |
           lcov --capture --directory ${{runner.workspace}}/build --output-file ${{runner.workspace}}/lcov.info
