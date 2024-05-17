@@ -33,8 +33,7 @@ jobs:
         run: ctest -C Debug --output-on-failure --test-dir ${{runner.workspace}}/build
       - name: Generate Coverage
         run: |
-          lcov --capture --directory ${{runner.workspace}}/build --output-file ${{runner.workspace}}/lcov.info
-          lcov --remove ${{runner.workspace}}/lcov.info '/usr/*' '*/dep/*' --output-file ${{runner.workspace}}/lcov.info
+          lcov --capture --directory ${{runner.workspace}}/build --include '*/inicpp.h' --output-file ${{runner.workspace}}/lcov.info
           lcov --list ${{runner.workspace}}/lcov.info
       - name: Codecov
         uses: codecov/codecov-action@v4
