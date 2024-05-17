@@ -8,12 +8,38 @@ on:
 
 jobs:
   format:
-    name: Check C++ Code Format
+    name: Check Code Format
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Check Format
         run: 'find test/ examples/ include/ -iname "*.h" -o -iname "*.cpp" -print0 | xargs -0 clang-format --dry-run --Werror'
+  coverage:
+    name: Generate Code Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Configure
+        run: cmake -S . -B ${{runner.workspace}}/build -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON -DGENERATE_COVERAGE=ON -DINICPP_CXX_STANDARD=17
+      - name: Build
+        run: cmake --build ${{runner.workspace}}/build --config Debug
+      - name: Test
+        run: ctest -C Debug ---output-on-failure -test-dir ${{runner.workspace}}/build
+      - name: Generate Coverage
+        run: |
+          lcov --capture --directory . --output-file ${{runner.workspace}}/lcov.info
+          lcov --remove ${{runner.workspace}}/lcov.info '/usr/*' '*/dep/*' --output-file ${{runner.workspace}}/lcov.info
+          lcov --list ${{runner.workspace}}/lcov.info
+      - name: Codecov
+        uses: codecov/codecov-action@v4
+        env:
+          CODECOV_TOKEN: ${{secrets.CODECOV_TOKEN}}
+        with:
+          file: ${{runner.workspace}}/lcov.info
+          verbose: true
+          fail_ci_if_error: true
   build:
     name: "${{matrix.config.name}} C++${{matrix.cxx}}"
     runs-on: ${{matrix.config.os}}
@@ -46,8 +72,8 @@ jobs:
       with:
         submodules: recursive
     - name: Configure
-      run: cmake -S . -B ${{runner.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.config.build_type}} -DBUILD_TESTS=True -DBUILD_EXAMPLES=True -DINICPP_CXX_STANDARD=${{matrix.cxx}}
+      run: cmake -S . -B ${{runner.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.config.build_type}} -DBUILD_TESTS=ON -DBUILD_EXAMPLES=ON -DINICPP_CXX_STANDARD=${{matrix.cxx}}
     - name: Build
       run: cmake --build ${{runner.workspace}}/build --config ${{matrix.config.build_type}}
     - name: Test
-      run: ctest -C ${{matrix.config.build_type}} --test-dir ${{runner.workspace}}/build
+      run: ctest -C ${{matrix.config.build_type}} --output-on-failure --test-dir ${{runner.workspace}}/build
