@@ -1,6 +1,7 @@
 # inifile-cpp
 ![License](https://img.shields.io/packagist/l/doctrine/orm.svg)
-![CMake](https://github.com/Rookfighter/inifile-cpp/workflows/CMake/badge.svg)
+[![CMake](https://github.com/Rookfighter/inifile-cpp/workflows/CMake/badge.svg)](https://github.com/Rookfighter/inifile-cpp/actions/workflows/cmake.yml)
+[![codecov](https://codecov.io/gh/Rookfighter/inifile-cpp/graph/badge.svg?token=39FL0C8NRK)](https://codecov.io/gh/Rookfighter/inifile-cpp)
 
 ```inifile-cpp``` is a simple and easy to use single header-only ini file en- and decoder for C++.
 
@@ -116,6 +117,7 @@ Natively supported types are:
 * ```double```
 * ```std::string```
 * ```const char *```
+* ```std::string_view```
 
 Custom type conversions can be added by implementing specialized template of the ```ini::Convert<T>``` functor (see examples).
 
@@ -234,11 +236,11 @@ namespace ini
 }
 ```
 
-## Contributors
+## Contributing
 
-Thanks to all contributors for extending, improving and fixing this small, but seemingly popular library:
+If you want to contribute new features or bug fixes, simply file a pull request.
+Make sure all CI checks pass, otherwise PRs will not be merged.
 
-* [rjungheinrich](https://github.com/rjungheinrich)
-* [JGJunghein](https://github.com/JGJunghein)
-* [antonioborondo](https://github.com/antonioborondo)
-* [jtikalsky](https://github.com/jtikalsky)
+## License
+
+`inifile-cpp` is licensed under the [MIT license](https://github.com/Rookfighter/inifile-cpp/blob/main/LICENSE.txt)
