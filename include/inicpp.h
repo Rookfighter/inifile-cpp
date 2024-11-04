@@ -742,7 +742,6 @@ namespace ini
             // iterate through all sections in this file
             for(const auto &filePair : *this)
             {
-                os.put('\n');
                 os.put('[');
                 writeEscaped(os, filePair.first);
                 os.put(']');
@@ -755,7 +754,10 @@ namespace ini
                     os.put(fieldSep_);
                     writeEscaped(os, secPair.second.template as<std::string>());
                     os.put('\n');
-                }
+                } 
+
+                // Add a newline after each section
+                os.put('\n');
             }
         }
 
