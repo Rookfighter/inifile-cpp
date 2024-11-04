@@ -684,9 +684,9 @@ TEST_CASE("when multi-line values are enabled, write newlines as multi-line valu
 
     std::string str = inif.encode();
 
-    REQUIRE(str == "\n[Foo]\n"
+    REQUIRE(str == "[Foo]\n"
                    "bar=Hello\n"
-                   "\tworld!\n");
+                   "\tworld!\n\n");
 }
 
 TEST_CASE("stringInsensitiveLess operator() returns true if and only if first parameter is less than the second "
