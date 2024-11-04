@@ -742,6 +742,7 @@ namespace ini
             // iterate through all sections in this file
             for(const auto &filePair : *this)
             {
+                os.put('\n');
                 os.put('[');
                 writeEscaped(os, filePair.first);
                 os.put(']');
