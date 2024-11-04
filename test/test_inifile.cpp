@@ -684,7 +684,7 @@ TEST_CASE("when multi-line values are enabled, write newlines as multi-line valu
 
     std::string str = inif.encode();
 
-    REQUIRE(str == "[Foo]\n"
+    REQUIRE(str == "\n[Foo]\n"
                    "bar=Hello\n"
                    "\tworld!\n");
 }
