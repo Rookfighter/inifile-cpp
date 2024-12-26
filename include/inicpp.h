@@ -441,6 +441,7 @@ namespace ini
         std::vector<std::string> commentPrefixes_ = { "#" , ";" };
         bool multiLineValues_ = false;
         bool overwriteDuplicateFields_ = true;
+        bool vectorFiedsFlag_ = false;
 
         void eraseComment(const std::string &commentPrefix,
             std::string &str,
@@ -603,6 +604,11 @@ namespace ini
             multiLineValues_ = enable;
         }
 
+        void setVectorFieldsFlag(bool enable)
+        {
+            vectorFiedsFlag_ = enable;
+        }
+
         /** Sets whether or not overwriting duplicate fields is allowed.
           * If overwriting duplicate fields is not allowed,
           * an exception is thrown when a duplicate field is found inside a section.
@@ -622,6 +628,7 @@ namespace ini
             IniSectionBase<Comparator> *currentSection = nullptr;
             std::string mutliLineValueFieldName = "";
             std::string line;
+            std::string secName;
             // iterate file line by line
             while(!is.eof() && !is.fail())
             {
@@ -657,7 +664,7 @@ namespace ini
                     }
 
                     // retrieve section name
-                    std::string secName = line.substr(1, pos - 1);
+                    secName = line.substr(1, pos - 1);
                     currentSection = &((*this)[secName]);
 
                     // clear multiline value field name
@@ -688,14 +695,20 @@ namespace ini
                     }
                     else if(pos == std::string::npos)
                     {
-                        std::stringstream ss;
-                        ss << "l." << lineNo
-                           << ": ini parsing failed, no '"
-                           << fieldSep_
-                           << "' found";
-                        if (multiLineValues_)
-                            ss << ", and not a multi-line value continuation";
-                        throw std::logic_error(ss.str());
+                        if(vectorFiedsFlag_ && secName != "")
+                        {
+                            IniField previous_value = (*currentSection)[secName];
+                            std::string value = previous_value.as<std::string>() + "\n" + line;
+                            (*currentSection)[secName] = value;
+                        }
+                        else
+                        {
+                            std::stringstream ss;
+                            ss << "l." << lineNo << ": ini parsing failed, no '" << fieldSep_ << "' found";
+                            if(multiLineValues_)
+                                ss << ", and not a multi-line value continuation";
+                            throw std::logic_error(ss.str());
+                        }
                     }
                     else
                     {
@@ -739,22 +752,34 @@ namespace ini
           * @param os target stream. */
         void encode(std::ostream &os) const
         {
+            static bool flag = true;
             // iterate through all sections in this file
             for(const auto &filePair : *this)
             {
+                if(flag)
+                {
+                    flag = false;
+                }
+                else
+                {
+                    os.put('\n');
+                }
                 os.put('[');
                 writeEscaped(os, filePair.first);
                 os.put(']');
-                os.put('\n');
 
                 // iterate through all fields in the section
                 for(const auto &secPair : filePair.second)
                 {
-                    writeEscaped(os, secPair.first);
-                    os.put(fieldSep_);
+                    if(filePair.first != secPair.first)
+                    {
+                        os.put('\n');
+                        writeEscaped(os, secPair.first);
+                        os.put(fieldSep_);
+                    }
                     writeEscaped(os, secPair.second.template as<std::string>());
-                    os.put('\n');
                 }
+                os.put('\n');
             }
         }
 
