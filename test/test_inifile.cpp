@@ -349,14 +349,14 @@ TEST_CASE("escape comment when writing", "IniFile")
 
     REQUIRE(str == "[Fo\\#o]\n"
                    "he\\#llo=world\n"
-                   "world=he\\#llo\n");
+                   "world=he\\#llo\n\n");
 }
 
 TEST_CASE("decode what we encoded", "IniFile")
 {
     std::string content = "[Fo\\#o]\n"
                           "he\\REMllo=worl\\REMd\n"
-                          "world=he\\//llo\n";
+                          "world=he\\//llo\n\n";
 
     ini::IniFile inif('=', {"#", "REM", "//"});
 
@@ -397,7 +397,7 @@ TEST_CASE("save with bool fields", "IniFile")
     inif["Foo"]["bar2"] = false;
 
     std::string result = inif.encode();
-    REQUIRE(result == "[Foo]\nbar1=true\nbar2=false\n");
+    REQUIRE(result == "[Foo]\nbar1=true\nbar2=false\n\n");
 }
 
 TEST_CASE("save with char fields", "IniFile")
@@ -407,7 +407,7 @@ TEST_CASE("save with char fields", "IniFile")
     inif["Foo"]["bar2"] = static_cast<char>('q');
 
     std::string result = inif.encode();
-    REQUIRE(result == "[Foo]\nbar1=c\nbar2=q\n");
+    REQUIRE(result == "[Foo]\nbar1=c\nbar2=q\n\n");
 }
 
 TEST_CASE("save with unsigned char fields", "IniFile")
@@ -417,7 +417,7 @@ TEST_CASE("save with unsigned char fields", "IniFile")
     inif["Foo"]["bar2"] = static_cast<unsigned char>('q');
 
     std::string result = inif.encode();
-    REQUIRE(result == "[Foo]\nbar1=c\nbar2=q\n");
+    REQUIRE(result == "[Foo]\nbar1=c\nbar2=q\n\n");
 }
 
 TEST_CASE("save with short fields", "IniFile")
@@ -427,7 +427,7 @@ TEST_CASE("save with short fields", "IniFile")
     inif["Foo"]["bar2"] = static_cast<short>(-2);
 
     std::string result = inif.encode();
-    REQUIRE(result == "[Foo]\nbar1=1\nbar2=-2\n");
+    REQUIRE(result == "[Foo]\nbar1=1\nbar2=-2\n\n");
 }
 
 TEST_CASE("save with unsigned short fields", "IniFile")
@@ -437,7 +437,7 @@ TEST_CASE("save with unsigned short fields", "IniFile")
     inif["Foo"]["bar2"] = static_cast<unsigned short>(13);
 
     std::string result = inif.encode();
-    REQUIRE(result == "[Foo]\nbar1=1\nbar2=13\n");
+    REQUIRE(result == "[Foo]\nbar1=1\nbar2=13\n\n");
 }
 
 TEST_CASE("save with int fields", "IniFile")
@@ -447,7 +447,7 @@ TEST_CASE("save with int fields", "IniFile")
     inif["Foo"]["bar2"] = static_cast<int>(-2);
 
     std::string result = inif.encode();
-    REQUIRE(result == "[Foo]\nbar1=1\nbar2=-2\n");
+    REQUIRE(result == "[Foo]\nbar1=1\nbar2=-2\n\n");
 }
 
 TEST_CASE("save with unsigned int fields", "IniFile")
@@ -457,7 +457,7 @@ TEST_CASE("save with unsigned int fields", "IniFile")
     inif["Foo"]["bar2"] = static_cast<unsigned int>(13);
 
     std::string result = inif.encode();
-    REQUIRE(result == "[Foo]\nbar1=1\nbar2=13\n");
+    REQUIRE(result == "[Foo]\nbar1=1\nbar2=13\n\n");
 }
 
 TEST_CASE("save with long fields", "IniFile")
@@ -467,7 +467,7 @@ TEST_CASE("save with long fields", "IniFile")
     inif["Foo"]["bar2"] = static_cast<long>(-2);
 
     std::string result = inif.encode();
-    REQUIRE(result == "[Foo]\nbar1=1\nbar2=-2\n");
+    REQUIRE(result == "[Foo]\nbar1=1\nbar2=-2\n\n");
 }
 
 TEST_CASE("save with unsigned long fields", "IniFile")
@@ -477,7 +477,7 @@ TEST_CASE("save with unsigned long fields", "IniFile")
     inif["Foo"]["bar2"] = static_cast<unsigned long>(13);
 
     std::string result = inif.encode();
-    REQUIRE(result == "[Foo]\nbar1=1\nbar2=13\n");
+    REQUIRE(result == "[Foo]\nbar1=1\nbar2=13\n\n");
 }
 
 TEST_CASE("save with double fields", "IniFile")
@@ -487,7 +487,7 @@ TEST_CASE("save with double fields", "IniFile")
     inif["Foo"]["bar2"] = static_cast<double>(-2.4);
 
     std::string result = inif.encode();
-    REQUIRE(result == "[Foo]\nbar1=1.2\nbar2=-2.4\n");
+    REQUIRE(result == "[Foo]\nbar1=1.2\nbar2=-2.4\n\n");
 }
 
 TEST_CASE("save with float fields", "IniFile")
@@ -497,7 +497,7 @@ TEST_CASE("save with float fields", "IniFile")
     inif["Foo"]["bar2"] = static_cast<float>(-2.4f);
 
     std::string result = inif.encode();
-    REQUIRE(result == "[Foo]\nbar1=1.2\nbar2=-2.4\n");
+    REQUIRE(result == "[Foo]\nbar1=1.2\nbar2=-2.4\n\n");
 }
 
 TEST_CASE("save with std::string fields", "IniFile")
@@ -507,7 +507,7 @@ TEST_CASE("save with std::string fields", "IniFile")
     inif["Foo"]["bar2"] = static_cast<std::string>("world");
 
     std::string result = inif.encode();
-    REQUIRE(result == "[Foo]\nbar1=hello\nbar2=world\n");
+    REQUIRE(result == "[Foo]\nbar1=hello\nbar2=world\n\n");
 }
 
 TEST_CASE("save with const char* fields", "IniFile")
@@ -517,7 +517,7 @@ TEST_CASE("save with const char* fields", "IniFile")
     inif["Foo"]["bar2"] = static_cast<const char *>("world");
 
     std::string result = inif.encode();
-    REQUIRE(result == "[Foo]\nbar1=hello\nbar2=world\n");
+    REQUIRE(result == "[Foo]\nbar1=hello\nbar2=world\n\n");
 }
 
 TEST_CASE("save with char* fields", "IniFile")
@@ -529,7 +529,7 @@ TEST_CASE("save with char* fields", "IniFile")
     inif["Foo"]["bar2"] = static_cast<char *>(bar2);
 
     std::string result = inif.encode();
-    REQUIRE(result == "[Foo]\nbar1=hello\nbar2=world\n");
+    REQUIRE(result == "[Foo]\nbar1=hello\nbar2=world\n\n");
 }
 
 TEST_CASE("save with string literal fields", "IniFile")
@@ -539,7 +539,7 @@ TEST_CASE("save with string literal fields", "IniFile")
     inif["Foo"]["bar2"] = "world";
 
     std::string result = inif.encode();
-    REQUIRE(result == "[Foo]\nbar1=hello\nbar2=world\n");
+    REQUIRE(result == "[Foo]\nbar1=hello\nbar2=world\n\n");
 }
 
 #ifdef __cpp_lib_string_view
@@ -550,7 +550,7 @@ TEST_CASE("save with std::string_view fields", "IniFile")
     inif["Foo"]["bar2"] = std::string_view("world");
 
     std::string result = inif.encode();
-    REQUIRE(result == "[Foo]\nbar1=hello\nbar2=world\n");
+    REQUIRE(result == "[Foo]\nbar1=hello\nbar2=world\n\n");
 }
 #endif
 
@@ -561,7 +561,7 @@ TEST_CASE("save with custom field sep", "IniFile")
     inif["Foo"]["bar2"] = false;
 
     std::string result = inif.encode();
-    REQUIRE(result == "[Foo]\nbar1:true\nbar2:false\n");
+    REQUIRE(result == "[Foo]\nbar1:true\nbar2:false\n\n");
 }
 
 TEST_CASE("inline comments in sections are discarded", "IniFile")
@@ -686,7 +686,7 @@ TEST_CASE("when multi-line values are enabled, write newlines as multi-line valu
 
     REQUIRE(str == "[Foo]\n"
                    "bar=Hello\n"
-                   "\tworld!\n");
+                   "\tworld!\n\n");
 }
 
 TEST_CASE("stringInsensitiveLess operator() returns true if and only if first parameter is less than the second "
