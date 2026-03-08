@@ -903,3 +903,76 @@ TEST_CASE("parse section with duplicate field and overwriteDuplicateFields_ set 
     inif.allowOverwriteDuplicateFields(false);
     REQUIRE_THROWS(inif.decode("[Foo]\nbar=hello\nbar=world"));
 }
+
+// Tests numeric parsing: hex (0x/0X, negative), decimal (with/without leading zeros), unsigned, and invalid conversions
+TEST_CASE("numeric parsing", "IniFile")
+{
+    std::istringstream ss("[Foo]\n"
+                          "hex=0x10\n"
+                          "hex_upper=0X2A\n"
+                          "hex_neg=-0x10\n"
+                          "dec=42\n"
+                          "dec_leading_zero=010\n"
+                          "dec_neg=-15\n");
+    ini::IniFile inif(ss);
+
+    SECTION("hex numbers")
+    {
+        REQUIRE(inif["Foo"]["hex"].as<int>() == 16);
+        REQUIRE(inif["Foo"]["hex_upper"].as<int>() == 42);
+        REQUIRE(inif["Foo"]["hex_neg"].as<int>() == -16);
+    }
+
+    SECTION("decimal numbers")
+    {
+        REQUIRE(inif["Foo"]["dec"].as<int>() == 42);
+        REQUIRE(inif["Foo"]["dec_leading_zero"].as<int>() == 10);
+        REQUIRE(inif["Foo"]["dec_neg"].as<int>() == -15);
+    }
+}
+
+TEST_CASE("parse unsigned numbers", "IniFile")
+{
+    std::istringstream ss("[Foo]\n"
+                          "uhex=0xFF\n"
+                          "udec=100\n");
+    ini::IniFile inif(ss);
+
+    REQUIRE(inif["Foo"]["uhex"].as<unsigned>() == 255);
+    REQUIRE(inif["Foo"]["udec"].as<unsigned>() == 100);
+}
+
+TEST_CASE("invalid numeric conversion", "IniFile")
+{
+    std::istringstream ss("[Foo]\n"
+                          "bad=xyz\n");
+    ini::IniFile inif(ss);
+
+    REQUIRE_THROWS_AS(inif["Foo"]["bad"].as<int>(), std::invalid_argument);
+}
+
+TEST_CASE("custom escape char", "IniFile")
+{
+    std::istringstream ss("[Foo]\nbar=hello !#world");
+    ini::IniFile inif;
+
+    inif.setEscapeChar('!');
+    inif.decode(ss);
+
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "hello #world");
+}
+
+TEST_CASE("escape char affects comment escaping", "IniFile")
+{
+    std::istringstream ss("[Foo]\nkey=val\\#notacomment\n");
+    ini::IniFile inif(ss);
+
+    inif.setEscapeChar('\\');
+    std::string encoded = inif.encode();
+    REQUIRE(encoded.find("\\#notacomment") != std::string::npos);
+
+    inif.setEscapeChar('$');
+    inif["Foo"]["key"] = "value$#comment";
+    encoded = inif.encode();
+    REQUIRE(encoded.find("$#comment") != std::string::npos);
+}
