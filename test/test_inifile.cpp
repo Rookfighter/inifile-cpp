@@ -8,8 +8,104 @@
 
 #include "inicpp.h"
 #include <catch2/catch.hpp>
+#include <cstdio>
 #include <cstring>
+#include <fstream>
 #include <sstream>
+
+TEST_CASE("load and save with std::string filename", "IniFile")
+{
+    const std::string filename = "inicpp-load-save-string-test.ini";
+    ini::IniFile inif;
+    inif["Foo"]["bar"] = "hello world";
+    inif.save(filename);
+
+    ini::IniFile loaded;
+    loaded.load(filename);
+    REQUIRE(loaded["Foo"]["bar"].as<std::string>() == "hello world");
+    REQUIRE(std::remove(filename.c_str()) == 0);
+}
+
+TEST_CASE("construct with std::string filename", "IniFile")
+{
+    const std::string filename = "inicpp-construct-string-test.ini";
+    std::ofstream(filename) << "[Foo]\nbar=hello world\n";
+    ini::IniFile inif(filename);
+
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "hello world");
+    REQUIRE(std::remove(filename.c_str()) == 0);
+}
+
+TEST_CASE("load and save with const char* filename", "IniFile")
+{
+    const char *filename = "inicpp-load-save-pointer-test.ini";
+    ini::IniFile inif;
+    inif["Foo"]["bar"] = "hello world";
+    inif.save(filename);
+
+    ini::IniFile loaded;
+    loaded.load(filename);
+    REQUIRE(loaded["Foo"]["bar"].as<std::string>() == "hello world");
+    REQUIRE(std::remove(filename) == 0);
+}
+
+TEST_CASE("construct with const char* filename", "IniFile")
+{
+    const char *filename = "inicpp-construct-pointer-test.ini";
+    std::ofstream(filename) << "[Foo]\nbar=hello world\n";
+    ini::IniFile inif(filename);
+
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "hello world");
+    REQUIRE(std::remove(filename) == 0);
+}
+
+TEST_CASE("load and save with string literal filename", "IniFile")
+{
+    const char *filename = "inicpp-load-save-literal-test.ini";
+    ini::IniFile inif;
+    inif["Foo"]["bar"] = "hello world";
+    inif.save("inicpp-load-save-literal-test.ini");
+
+    ini::IniFile loaded;
+    loaded.load("inicpp-load-save-literal-test.ini");
+    REQUIRE(loaded["Foo"]["bar"].as<std::string>() == "hello world");
+    REQUIRE(std::remove(filename) == 0);
+}
+
+TEST_CASE("construct with string literal filename", "IniFile")
+{
+    const char *filename = "inicpp-construct-literal-test.ini";
+    std::ofstream(filename) << "[Foo]\nbar=hello world\n";
+    ini::IniFile inif("inicpp-construct-literal-test.ini");
+
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "hello world");
+    REQUIRE(std::remove(filename) == 0);
+}
+
+#ifdef __cpp_lib_filesystem
+TEST_CASE("load and save with std::filesystem::path filename", "IniFile")
+{
+    const std::filesystem::path filename(u"inicpp-load-save-\u8def\u5f84 with spaces.ini");
+    ini::IniFile inif;
+    inif["Foo"]["bar"] = "hello world";
+    inif.save(filename);
+
+    ini::IniFile loaded;
+    loaded.load(filename);
+    REQUIRE(loaded["Foo"]["bar"].as<std::string>() == "hello world");
+    REQUIRE(std::filesystem::remove(filename));
+}
+
+TEST_CASE("construct with std::filesystem::path filename", "IniFile")
+{
+    const std::filesystem::path filename(u"inicpp-construct-\u8def\u5f84 with spaces.ini");
+    std::ofstream(filename) << "[Foo]\nbar=hello world\n";
+    ini::IniFile inif(filename);
+
+    REQUIRE(inif["Foo"]["bar"].as<std::string>() == "hello world");
+    REQUIRE(std::filesystem::remove(filename));
+}
+#endif
 
 TEST_CASE("parse ini file", "IniFile")
 {

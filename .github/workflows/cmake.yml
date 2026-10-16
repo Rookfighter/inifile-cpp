@@ -11,14 +11,14 @@ jobs:
     name: Check Code Format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
       - name: Check Format
         run: 'find test/ examples/ include/ -iname "*.h" -o -iname "*.cpp" -print0 | xargs -0 clang-format --dry-run --Werror'
   coverage:
     name: Generate Code Coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         with:
           submodules: recursive
       - name: Install LCOV
@@ -36,11 +36,11 @@ jobs:
           lcov --capture --directory ${{runner.workspace}}/build --include '*/inicpp.h' --output-file ${{runner.workspace}}/lcov.info
           lcov --list ${{runner.workspace}}/lcov.info
       - name: Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7.1.1
         env:
           CODECOV_TOKEN: ${{secrets.CODECOV_TOKEN}}
         with:
-          file: ${{runner.workspace}}/lcov.info
+          files: ${{runner.workspace}}/lcov.info
           verbose: true
           fail_ci_if_error: true
   build:
@@ -71,7 +71,7 @@ jobs:
           - 11
           - 17
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7.0.1
       with:
         submodules: recursive
     - name: Configure

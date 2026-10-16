@@ -19,6 +19,11 @@
 #include <vector>
 #include <string>
 
+#if __cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+#   include <filesystem>
+#   include <type_traits>
+#endif
+
 #ifdef __cpp_lib_string_view // This one is defined in <string> if we have std::string_view
 #   include <string_view>
 #endif
@@ -531,6 +536,15 @@ namespace ini
             load(filename);
         }
 
+#ifdef __cpp_lib_filesystem
+        // Constrain path overloads so string literals keep using the std::string overloads.
+        template<typename Path, std::enable_if_t<std::is_same_v<Path, std::filesystem::path>, int> = 0>
+        IniFileBase(const Path &filename)
+        {
+            load(filename);
+        }
+#endif
+
         IniFileBase(std::istream &is)
         {
             decode(is);
@@ -548,6 +562,17 @@ namespace ini
         {
             load(filename);
         }
+
+#ifdef __cpp_lib_filesystem
+        template<typename Path, std::enable_if_t<std::is_same_v<Path, std::filesystem::path>, int> = 0>
+        IniFileBase(const Path &filename,
+            const char fieldSep,
+            const std::vector<std::string> &commentPrefixes)
+            : fieldSep_(fieldSep), commentPrefixes_(commentPrefixes)
+        {
+            load(filename);
+        }
+#endif
 
         IniFileBase(std::istream &is,
             const char fieldSep,
@@ -735,6 +760,15 @@ namespace ini
             decode(is);
         }
 
+#ifdef __cpp_lib_filesystem
+        template<typename Path, std::enable_if_t<std::is_same_v<Path, std::filesystem::path>, int> = 0>
+        void load(const Path &fileName)
+        {
+            std::ifstream is(fileName);
+            decode(is);
+        }
+#endif
+
         /** Encodes this inifile object and writes the output to the given stream.
           * @param os target stream. */
         void encode(std::ostream &os) const
@@ -777,6 +811,15 @@ namespace ini
             std::ofstream os(fileName.c_str());
             encode(os);
         }
+
+#ifdef __cpp_lib_filesystem
+        template<typename Path, std::enable_if_t<std::is_same_v<Path, std::filesystem::path>, int> = 0>
+        void save(const Path &fileName) const
+        {
+            std::ofstream os(fileName);
+            encode(os);
+        }
+#endif
     };
 
     using IniFile = IniFileBase<std::less<std::string>>;
